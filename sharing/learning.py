@@ -41,6 +41,7 @@ def train(fn_in, **kwargs):
         clf.fit(X[train], y[train])
         preds = clf.predict(X[test])
         trues = y[test]
+        print preds
         acc = metrics.mean_squared_error(trues, preds)
         clfs.append((clf, acc))
     return min(clfs, key=lambda v: v[1])
@@ -53,6 +54,6 @@ def write_clf(fn_out, clf):
 
 
 if __name__ == "__main__":
-    clf, acc = train("data/trip_data_5_features_short.csv", n_components=20)
-    write_clf("models/svm.model", clf)
+    clf, acc = train("data/trip_data_5_features.csv", n_components=6)
+    write_clf("models/dpgmm.model", clf)
     print acc
