@@ -101,6 +101,7 @@ def extract_features(fn_in, fn_out, **kwargs):
 
 
 if __name__ == "__main__":
-    extract_features("data/trip_data_5.csv",
-                     "data/trip_data_5_features.csv",
-                     n_clusters=30)
+    # extract_features("data/trip_data_5.csv",
+    #                  "data/trip_data_5_features.csv",
+    #                  n_clusters=30)
+    pass
