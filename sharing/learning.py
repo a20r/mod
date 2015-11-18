@@ -1,8 +1,11 @@
 
-# import sklearn
 import csv
 import io
+import pickle
 import numpy as np
+import sklearn.mixture as mixture
+import sklearn.metrics as metrics
+import sklearn.cross_validation as cv
 from features import feature_names
 
 
@@ -17,7 +20,7 @@ def training_matrices(fn_in):
         fl = reader_length(reader)
         fin.seek(0)
         X = np.zeros((fl, 4))
-        Y = np.zeros((fl, 1))
+        y = np.zeros((fl,))
         for i, row in enumerate(reader):
             if i == 0:
                 continue
@@ -25,13 +28,31 @@ def training_matrices(fn_in):
             X[i - 1][1] = row["p_day"]
             X[i - 1][2] = row["p_station"]
             X[i - 1][3] = row["d_station"]
-            Y[i - 1] = row["passenger_count"]
-        return X, Y
+            y[i - 1] = row["passenger_count"]
+        return X, y, fl
 
 
-def learn(fn_in):
-    pass
+def train(fn_in, **kwargs):
+    X, y, n = training_matrices(fn_in)
+    kf = cv.KFold(n, n_folds=kwargs.get("folds", 5), shuffle=True)
+    clfs = list()
+    for train, test in kf:
+        clf = mixture.DPGMM(**kwargs)
+        clf.fit(X[train], y[train])
+        preds = clf.predict(X[test])
+        trues = y[test]
+        acc = metrics.mean_squared_error(trues, preds)
+        clfs.append((clf, acc))
+    return min(clfs, key=lambda v: v[1])
+
+
+def write_clf(fn_out, clf):
+    with open(fn_out, "w") as fout:
+        pstr = pickle.dumps(clf)
+        fout.write(pstr)
 
 
 if __name__ == "__main__":
-    training_matrices("data/trip_data_5_features_short.csv")
+    clf, acc = train("data/trip_data_5_features_short.csv", n_components=20)
+    write_clf("models/svm.model", clf)
+    print acc
