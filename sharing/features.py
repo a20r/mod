@@ -6,10 +6,9 @@ import numpy as np
 import sklearn.cluster as cluster
 
 
-feature_names = ["p_time", "d_time", "p_day",
-                 "passenger_count", "p_station_lon",
-                 "p_station_lat", "d_station_lon",
-                 "d_station_lat"]
+feature_names = ["p_time", "d_time", "p_day", "passenger_count",
+                 "p_station_lon", "p_station_lat", "d_station_lon",
+                 "d_station_lat", "p_station", "d_station"]
 
 
 def percent_time(str_time):
@@ -43,25 +42,31 @@ def find_stations(fn_in, **kwargs):
         reader = csv.reader(fin)
         fl = sum(1 for _ in reader) - 1
         fin.seek(0)
-        kmeans = cluster.KMeans(**kwargs)
+        kmeans = cluster.MiniBatchKMeans(**kwargs)
         points = np.zeros((2 * fl, 2))
         for i, row in enumerate(reader):
             if i == 0:
                 continue
-            points[i - 1][0] = float(row[10])
-            points[i - 1][1] = float(row[11])
-            points[i - 1 + fl][0] = float(row[12])
-            points[i - 1 + fl][1] = float(row[13])
+            try:
+                pts = np.zeros((2, 2))
+                pts[0][0] = float(row[10])
+                pts[0][1] = float(row[11])
+                pts[1][0] = float(row[12])
+                pts[1][1] = float(row[13])
+                points[i - 1] = pts[0]
+                points[i - 1 + fl] = pts[1]
+            except:
+                pass
         kmeans.fit(points)
         return kmeans, points
 
 
-def extract_features(fn_in, fn_out):
+def extract_features(fn_in, fn_out, **kwargs):
     """
     Extracts features from the in put file `fn_in` and writes the features
     as a csv file to `fn_out`
     """
-    stations, points = find_stations(fn_in)
+    stations, points = find_stations(fn_in, **kwargs)
     with io.open(fn_in, "rb") as fin:
         with io.open(fn_out, "wb") as fout:
             reader = csv.DictReader(fin)
@@ -70,23 +75,32 @@ def extract_features(fn_in, fn_out):
             for i, row in enumerate(reader):
                 if i == 0:
                     continue
-                row = clean_dict(row)
-                features = dict()
-                locs = np.array([
-                    [row["pickup_longitude"], row["pickup_latitude"]],
-                    [row["dropoff_longitude"], row["dropoff_longitude"]]])
-                sts = points[stations.predict(locs)]
-                features["passenger_count"] = row["passenger_count"]
-                features["p_day"] = percent_time(row["pickup_datetime"])[1]
-                features["p_time"] = percent_time(row["pickup_datetime"])[0]
-                features["d_time"] = percent_time(row["dropoff_datetime"])[0]
-                features["p_station_lon"] = sts[0][0]
-                features["p_station_lat"] = sts[0][1]
-                features["d_station_lon"] = sts[1][0]
-                features["d_station_lat"] = sts[1][1]
-                writer.writerow(features)
+                try:
+                    row = clean_dict(row)
+                    features = dict()
+                    locs = np.array([
+                        [row["pickup_longitude"], row["pickup_latitude"]],
+                        [row["dropoff_longitude"], row["dropoff_longitude"]]])
+                    sts_inds = stations.predict(locs)
+                    sts = points[sts_inds]
+                    features["passenger_count"] = row["passenger_count"]
+                    features["p_day"] = percent_time(row["pickup_datetime"])[1]
+                    features["p_time"] = percent_time(
+                        row["pickup_datetime"])[0]
+                    features["d_time"] = percent_time(
+                        row["dropoff_datetime"])[0]
+                    features["p_station_lon"] = sts[0][0]
+                    features["p_station_lat"] = sts[0][1]
+                    features["d_station_lon"] = sts[1][0]
+                    features["d_station_lat"] = sts[1][1]
+                    features["p_station"] = sts_inds[0]
+                    features["d_station"] = sts_inds[1]
+                    writer.writerow(features)
+                except ValueError:
+                    pass
 
 
 if __name__ == "__main__":
-    extract_features("data/trip_data_5_short.csv",
-                     "data/trip_data_5_features.csv")
+    extract_features("data/trip_data_5.csv",
+                     "data/trip_data_5_features.csv",
+                     n_clusters=30)
