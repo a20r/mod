@@ -4,8 +4,8 @@ import io
 import pickle
 import numpy as np
 import sklearn.mixture as mixture
-import sklearn.metrics as metrics
-import sklearn.cross_validation as cv
+# import sklearn.metrics as metrics
+# import sklearn.cross_validation as cv
 from features import feature_names
 
 
@@ -33,18 +33,10 @@ def training_matrices(fn_in):
 
 
 def train(fn_in, **kwargs):
-    X, y, n = training_matrices(fn_in)
-    kf = cv.KFold(n, n_folds=kwargs.get("folds", 5), shuffle=True)
-    clfs = list()
-    for train, test in kf:
-        clf = mixture.DPGMM(**kwargs)
-        clf.fit(X[train], y[train])
-        preds = clf.predict(X[test])
-        trues = y[test]
-        print preds
-        acc = metrics.mean_squared_error(trues, preds)
-        clfs.append((clf, acc))
-    return min(clfs, key=lambda v: v[1])
+    X, y, _ = training_matrices(fn_in)
+    clf = mixture.DPGMM(**kwargs)
+    clf.fit(X, y)
+    return clf, clf.aic(X)
 
 
 def write_clf(fn_out, clf):
@@ -54,6 +46,6 @@ def write_clf(fn_out, clf):
 
 
 if __name__ == "__main__":
-    clf, acc = train("data/trip_data_5_features.csv", n_components=6)
+    clf, acc = train("data/trip_data_5_features_short.csv", n_components=6)
     write_clf("models/dpgmm.model", clf)
     print acc
