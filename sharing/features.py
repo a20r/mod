@@ -86,9 +86,9 @@ def extract_features(fn_in, fn_out, **kwargs):
                     features["passenger_count"] = row["passenger_count"]
                     features["p_day"] = percent_time(row["pickup_datetime"])[1]
                     features["p_time"] = percent_time(
-                        row["pickup_datetime"])[0]
+                        row["pickup_datetime"])[0] * 24 * 60
                     features["d_time"] = percent_time(
-                        row["dropoff_datetime"])[0]
+                        row["dropoff_datetime"])[0] * 24 * 60
                     features["p_station_lon"] = sts[0][0]
                     features["p_station_lat"] = sts[0][1]
                     features["d_station_lon"] = sts[1][0]
