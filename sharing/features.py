@@ -78,17 +78,17 @@ def extract_features(fn_in, fn_out, **kwargs):
                 try:
                     row = clean_dict(row)
                     features = dict()
-                    locs = np.array([
-                        [row["pickup_longitude"], row["pickup_latitude"]],
-                        [row["dropoff_longitude"], row["dropoff_longitude"]]])
+                    p_time, p_day = percent_time(row["pickup_datetime"])
+                    d_time, d_day = percent_time(row["pickup_datetime"])
+                    p_l = [row["pickup_longitude"], row["pickup_latitude"]]
+                    d_l = [row["dropoff_longitude"], row["dropoff_longitude"]]
+                    locs = np.array([p_l, d_l])
                     sts_inds = stations.predict(locs)
                     sts = points[sts_inds]
                     features["passenger_count"] = row["passenger_count"]
-                    features["p_day"] = percent_time(row["pickup_datetime"])[1]
-                    features["p_time"] = percent_time(
-                        row["pickup_datetime"])[0] * 24 * 60
-                    features["d_time"] = percent_time(
-                        row["dropoff_datetime"])[0] * 24 * 60
+                    features["p_time"] = int(2 * 24 * p_time)
+                    features["d_time"] = int(2 * 24 * d_time)
+                    features["p_day"] = p_day
                     features["p_station_lon"] = sts[0][0]
                     features["p_station_lat"] = sts[0][1]
                     features["d_station_lon"] = sts[1][0]
@@ -101,7 +101,6 @@ def extract_features(fn_in, fn_out, **kwargs):
 
 
 if __name__ == "__main__":
-    # extract_features("data/trip_data_5.csv",
-    #                  "data/trip_data_5_features.csv",
-    #                  n_clusters=30)
-    pass
+    extract_features("data/trip_data_5.csv",
+                     "data/trip_data_5_features.csv",
+                     n_clusters=100)

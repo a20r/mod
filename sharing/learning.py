@@ -6,12 +6,18 @@ import numpy as np
 import sklearn.mixture as mixture
 # import sklearn.metrics as metrics
 # import sklearn.cross_validation as cv
+from collections import defaultdict
+from pprint import pprint
 from features import feature_names
 
 
 def reader_length(reader):
     fl = sum(1 for _ in reader) - 1
     return fl
+
+
+def time_interval(t):
+    return int(24 * 2 * t)
 
 
 def training_matrices(fn_in):
@@ -32,6 +38,22 @@ def training_matrices(fn_in):
         return X, y, fl
 
 
+def occs_dict(fn_in):
+    with io.open(fn_in, "rb") as fin:
+        reader = csv.DictReader(fin, fieldnames=feature_names)
+        occs = defaultdict(int)
+        for i, row in enumerate(reader):
+            if i == 0:
+                continue
+            tau = int(float(row["p_time"]) * 24 * 2)
+            p = int(row["p_station"])
+            d = int(row["d_station"])
+            pc = int(float(row["passenger_count"]))
+            day = int(row["p_day"])
+            occs[(p, d, tau, day)] += pc
+        return occs
+
+
 def train(fn_in, **kwargs):
     X, y, _ = training_matrices(fn_in)
     clf = mixture.DPGMM(**kwargs)
@@ -46,6 +68,5 @@ def write_clf(fn_out, clf):
 
 
 if __name__ == "__main__":
-    clf, acc = train("data/trip_data_5_features_short.csv", n_components=6)
-    write_clf("models/dpgmm.model", clf)
-    print acc
+    occs = occs_dict("data/trip_data_5_features_short.csv")
+    pprint(occs)
