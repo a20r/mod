@@ -1,72 +1,53 @@
 
 import csv
 import io
-import pickle
-import numpy as np
-import sklearn.mixture as mixture
-# import sklearn.metrics as metrics
-# import sklearn.cross_validation as cv
 from collections import defaultdict
-from pprint import pprint
 from features import feature_names
 
 
-def reader_length(reader):
-    fl = sum(1 for _ in reader) - 1
-    return fl
+class DemandProbability(object):
 
+    def fit(self, fn_in):
+        with io.open(fn_in, "rb") as fin:
+            reader = csv.DictReader(fin, fieldnames=feature_names)
+            num_pd = defaultdict(lambda: defaultdict(float))
+            num_p = defaultdict(lambda: defaultdict(float))
+            num_tau = defaultdict(float)
+            for i, row in enumerate(reader):
+                if i == 0:
+                    continue
+                t = int(float(row["p_time"]) * 24 * 4)
+                p = int(row["p_station"])
+                d = int(row["d_station"])
+                pc = int(float(row["passenger_count"]))
+                day = int(row["p_day"])
+                tau = (t, day)
+                num_pd[tau][(p, d)] += pc
+                num_p[tau][p] += pc
+                num_tau[tau] += pc
+            self.num_pd = num_pd
+            self.num_p = num_p
+            self.num_tau = num_tau
+            return self
 
-def time_interval(t):
-    return int(24 * 2 * t)
+    def __call__(self, p, d, t, day):
+        tau = (t, day)
+        prob_pd = self.num_pd[tau][(p, d)] / self.num_tau[tau]
+        return prob_pd
 
-
-def training_matrices(fn_in):
-    with io.open(fn_in, "rb") as fin:
-        reader = csv.DictReader(fin, fieldnames=feature_names)
-        fl = reader_length(reader)
-        fin.seek(0)
-        X = np.zeros((fl, 4))
-        y = np.zeros((fl,))
-        for i, row in enumerate(reader):
-            if i == 0:
-                continue
-            X[i - 1][0] = row["p_time"]
-            X[i - 1][1] = row["p_day"]
-            X[i - 1][2] = row["p_station"]
-            X[i - 1][3] = row["d_station"]
-            y[i - 1] = row["passenger_count"]
-        return X, y, fl
-
-
-def occs_dict(fn_in):
-    with io.open(fn_in, "rb") as fin:
-        reader = csv.DictReader(fin, fieldnames=feature_names)
-        occs = defaultdict(int)
-        for i, row in enumerate(reader):
-            if i == 0:
-                continue
-            tau = int(float(row["p_time"]) * 24 * 2)
-            p = int(row["p_station"])
-            d = int(row["d_station"])
-            pc = int(float(row["passenger_count"]))
-            day = int(row["p_day"])
-            occs[(p, d, tau, day)] += pc
-        return occs
-
-
-def train(fn_in, **kwargs):
-    X, y, _ = training_matrices(fn_in)
-    clf = mixture.DPGMM(**kwargs)
-    clf.fit(X, y)
-    return clf, clf.aic(X)
-
-
-def write_clf(fn_out, clf):
-    with open(fn_out, "w") as fout:
-        pstr = pickle.dumps(clf)
-        fout.write(pstr)
+    def dump(self, fn_out):
+        cols = ["time", "day", "pickup", "dropoff", "probability"]
+        with io.open(fn_out, "wb") as fout:
+            writer = csv.writer(fout)
+            writer.writerow(cols)
+            for (t, day) in self.num_pd.keys():
+                for (p, d) in self.num_pd[(t, day)].keys():
+                    prob = self(p, d, t, day)
+                    writer.writerow([t, day, p, d, prob])
+        return self
 
 
 if __name__ == "__main__":
-    occs = occs_dict("data/trip_data_5_features_short.csv")
-    pprint(occs)
+    dp = DemandProbability()
+    dp.fit("data/trip_data_5_features.csv")
+    dp.dump("models/probs.csv")
