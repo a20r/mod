@@ -4,11 +4,15 @@ import time
 import csv
 import numpy as np
 import sklearn.cluster as cluster
+from collections import defaultdict
 
 
-feature_names = ["p_time", "d_time", "p_day", "passenger_count",
-                 "p_station_lon", "p_station_lat", "d_station_lon",
-                 "d_station_lat", "p_station", "d_station"]
+feature_names = ["p_time", "p_day", "passenger_count",
+                 "p_station", "d_station"]
+
+fn_stations_fields = ["id", "latitude", "longitude"]
+
+fn_probs_fields = ["tau", "day", "pickup", "dropoff", "probability"]
 
 
 def percent_time(str_time):
@@ -58,49 +62,67 @@ def find_stations(fn_in, **kwargs):
             except:
                 pass
         kmeans.fit(points)
-        return kmeans, points
+        return kmeans
 
 
-def extract_features(fn_in, fn_out, **kwargs):
-    """
-    Extracts features from the in put file `fn_in` and writes the features
-    as a csv file to `fn_out`
-    """
-    stations, points = find_stations(fn_in, **kwargs)
-    with io.open(fn_in, "rb") as fin:
-        with io.open(fn_out, "wb") as fout:
-            reader = csv.DictReader(fin)
-            writer = csv.DictWriter(fout, fieldnames=feature_names)
-            writer.writeheader()
-            for i, row in enumerate(reader):
-                if i == 0:
-                    continue
-                try:
-                    row = clean_dict(row)
-                    features = dict()
-                    p_time, p_day = percent_time(row["pickup_datetime"])
-                    d_time, d_day = percent_time(row["pickup_datetime"])
-                    p_l = [row["pickup_longitude"], row["pickup_latitude"]]
-                    d_l = [row["dropoff_longitude"], row["dropoff_longitude"]]
-                    locs = np.array([p_l, d_l])
-                    sts_inds = stations.predict(locs)
-                    sts = points[sts_inds]
-                    features["passenger_count"] = row["passenger_count"]
-                    features["p_time"] = int(2 * 24 * p_time)
-                    features["d_time"] = int(2 * 24 * d_time)
-                    features["p_day"] = p_day
-                    features["p_station_lon"] = sts[0][0]
-                    features["p_station_lat"] = sts[0][1]
-                    features["d_station_lon"] = sts[1][0]
-                    features["d_station_lat"] = sts[1][1]
-                    features["p_station"] = sts_inds[0]
-                    features["d_station"] = sts_inds[1]
-                    writer.writerow(features)
-                except ValueError:
-                    pass
+def create_stations_file(fn_raw, fn_stations, **kwargs):
+    kmeans = find_stations(fn_raw, **kwargs)
+    with io.open(fn_stations, "wb") as fout:
+        writer = csv.DictWriter(fout, fieldnames=fn_stations_fields)
+        writer.writeheader()
+        for i, center in enumerate(kmeans.cluster_centers_):
+            row = dict()
+            row["id"] = i
+            row["latitude"] = center[0]
+            row["longitude"] = center[0]
+            writer.writerow(row)
+    return kmeans
+
+
+def extract_frequencies(fn_raw, kmeans):
+    num_pd = defaultdict(lambda: defaultdict(float))
+    num_ti = defaultdict(float)
+    with io.open(fn_raw, "rb") as fin:
+        reader = csv.DictReader(fin)
+        for i, row in enumerate(reader):
+            if i == 0:
+                continue
+            try:
+                row = clean_dict(row)
+                p_time, p_day = percent_time(row["pickup_datetime"])
+                d_time, d_day = percent_time(row["pickup_datetime"])
+                p_l = [row["pickup_longitude"], row["pickup_latitude"]]
+                d_l = [row["dropoff_longitude"], row["dropoff_longitude"]]
+                locs = np.array([p_l, d_l])
+                sts = kmeans.predict(locs)
+                tau = int(4 * 24 * p_time)
+                ti = (tau, p_day)
+                num_pd[ti][(sts[0], sts[1])] += row["passenger_count"]
+                num_ti[ti] += row["passenger_count"]
+            except ValueError:
+                pass
+    return num_pd, num_ti
+
+
+def create_probs_file(fn_raw, fn_probs, kmeans):
+    num_pd, num_ti = extract_frequencies(fn_raw, kmeans)
+    with io.open(fn_probs, "wb") as fout:
+        writer = csv.writer(fout)
+        writer.writerow(fn_probs_fields)
+        for (t, day) in num_pd.keys():
+            for (p, d) in num_pd[(t, day)].keys():
+                ti = (t, day)
+                prob = num_pd[ti][(p, d)] / num_ti[ti]
+                writer.writerow([t, day, p, d, prob])
+
+
+def create_feature_files(fn_raw, fn_stations, fn_probs, **kwargs):
+    kmeans = create_stations_file(fn_raw, fn_stations, **kwargs)
+    create_probs_file(fn_raw, fn_probs, kmeans)
 
 
 if __name__ == "__main__":
-    extract_features("data/trip_data_5.csv",
-                     "data/trip_data_5_features.csv",
-                     n_clusters=100)
+    create_feature_files("data/trip_data_5_short.csv",
+                         "data/trip_data_5_stations_short.csv",
+                         "data/trip_data_5_probs_short.csv",
+                         n_clusters=10)

@@ -6,26 +6,34 @@
 #include <fstream>
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include <functional>
+#include <cmath>
 
 using namespace std;
 
 class GeoLocation {
     public:
-        double lon, lat;
+        double lat, lon;
         GeoLocation() {};
         ~GeoLocation() {};
-        GeoLocation(double lon, double lat) : lon(lon), lat(lat) {};
+        GeoLocation(double lat, double lon) : lat(lat), lon(lon) {};
+
+        double distance(GeoLocation& gl) {
+            double dlat2 = pow(gl.lat - lat, 2);
+            double dlon2 = pow(gl.lon - lon, 2);
+            return sqrt(dlat2 + dlon2);
+        }
 };
 
 class Demand {
     public:
-        int time, day, pickup, dropoff;
+        int tau, day, pickup, dropoff;
 
         Demand() {};
 
-        Demand(int time, int day, int pickup, int dropoff) {
-            this->time = time;
+        Demand(int tau, int day, int pickup, int dropoff) {
+            this->tau = tau;
             this->day = day;
             this->pickup = pickup;
             this->dropoff = dropoff;
@@ -36,7 +44,7 @@ class DemandHash {
     public:
         size_t operator() (const Demand& demand) const {
             stringstream buffer;
-            buffer << demand.time << " ";
+            buffer << demand.tau << " ";
             buffer << demand.day << " ";
             buffer << demand.pickup << " ";
             buffer << demand.dropoff;
@@ -45,7 +53,7 @@ class DemandHash {
 };
 
 inline bool operator== (Demand const& lhs, Demand const& rhs) {
-    return lhs.time == rhs.time and lhs.day == rhs.day and
+    return lhs.tau == rhs.tau and lhs.day == rhs.day and
         lhs.pickup == rhs.pickup and lhs.dropoff == rhs.dropoff;
 };
 
@@ -53,19 +61,24 @@ class DemandLookup {
 
     private:
         unordered_map<Demand, double, DemandHash> demands;
+        vector<GeoLocation> stations;
 
     public:
         DemandLookup() {};
         ~DemandLookup() {};
 
-        DemandLookup(string prob_fn, string feat_fn) {
-            int time, day, pickup, dropoff;
+        DemandLookup(string fn_stations, string fn_probs) {
+            load_probs(fn_probs);
+            load_stations(fn_stations);
+        }
+
+        void load_probs(string fn_probs) {
+            int tau, day, pickup, dropoff;
             double prob;
-
-            ifstream data(prob_fn);
+            ifstream data(fn_probs);
             string line;
-
             getline(data, line);
+
             while(getline(data, line)) {
                 stringstream lineStream(line);
                 string cell;
@@ -73,26 +86,47 @@ class DemandLookup {
                 while(std::getline(lineStream, cell, ',')) {
                     switch (counter++) {
                         case 0:
-                            time = stoi(cell);
-                            break;
+                            tau = stoi(cell);
                         case 1:
                             day = stoi(cell);
-                            break;
                         case 2:
                             pickup = stoi(cell);
-                            break;
                         case 3:
                             dropoff = stoi(cell);
-                            break;
                         case 4:
                             prob = stof(cell);
-                            break;
                         default:
                             break;
                     }
                 }
-                Demand dem(time, day, pickup, dropoff);
+                Demand dem(tau, day, pickup, dropoff);
                 demands[dem] = prob;
+            }
+
+        }
+
+        void load_stations(string fn_stations) {
+            double lat, lon;
+            ifstream data(fn_stations);
+            string line;
+            getline(data, line);
+
+            while(getline(data, line)) {
+                stringstream lineStream(line);
+                string cell;
+                int counter = 0;
+                while(std::getline(lineStream, cell, ',')) {
+                    switch (counter++) {
+                        case 1:
+                            lat = stof(cell);
+                        case 2:
+                            lon = stof(cell);
+                        default:
+                            break;
+                    }
+                }
+
+                stations.push_back(GeoLocation(lat, lon));
             }
         }
 
@@ -104,13 +138,34 @@ class DemandLookup {
             }
         }
 
-        double query_demand(int time, int day, int pickup, int dropoff) {
-            return query_demand(Demand(time, day, pickup, dropoff));
+        double query_demand(int tau, int day, int pickup, int dropoff) {
+            return query_demand(Demand(tau, day, pickup, dropoff));
         }
 
         double query_demand(int secs, int day, GeoLocation pickup,
                 GeoLocation dropoff) {
-            return 0;
+            int p_st = get_station(pickup);
+            int d_st = get_station(dropoff);
+            int tau = secs / (60 * 15);
+            return query_demand(tau, day, p_st, d_st);
+        }
+
+        int get_station(GeoLocation gl) {
+            double min_dist;
+            int min_id;
+            for (size_t i = 0; i < stations.size(); i++) {
+                double dist = stations[i].distance(gl);
+                if (i == 0) {
+                    min_id = 0;
+                    min_dist = dist;
+                } else {
+                    if (dist < min_dist) {
+                        min_id = i;
+                        min_dist = dist;
+                    }
+                }
+            }
+            return min_id;
         }
 };
 
