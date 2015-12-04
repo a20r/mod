@@ -3,6 +3,7 @@ import io
 import time
 import csv
 import numpy as np
+import argparse
 import sklearn.cluster as cluster
 from collections import defaultdict
 
@@ -122,7 +123,26 @@ def create_feature_files(fn_raw, fn_stations, fn_probs, **kwargs):
 
 
 if __name__ == "__main__":
-    create_feature_files("data/trip_data_5_short.csv",
-                         "data/trip_data_5_stations_short.csv",
-                         "data/trip_data_5_probs_short.csv",
-                         n_clusters=10)
+    parser = argparse.ArgumentParser(
+        description="Creates feature files for taxi demand prediction.\
+        It creates a file containing the geo-location of the stations and\
+        a file containing the probability of a given origin, destination,\
+        for a given time interval.")
+    parser.add_argument(
+        "--n_stations", dest="n_stations", type=int, default=10,
+        help="Number of stations discovered using MiniBatchKMeans.")
+    parser.add_argument(
+        "--fn_raw", dest="fn_raw", type=str,
+        default="data/trip_data_5_short.csv",
+        help="CSV file containing the raw NY taxi data.")
+    parser.add_argument(
+        "--fn_stations", dest="fn_stations", type=str,
+        default="data/trip_data_5_stations_short.csv",
+        help="Output CSV file for listing the stations.")
+    parser.add_argument(
+        "--fn_probs", dest="fn_probs", type=str,
+        default="data/trip_data_5_probs_short.csv",
+        help="Output CSV file for listing the demand probabilities.")
+    args = parser.parse_args()
+    create_feature_files(args.fn_raw, args.fn_stations, args.fn_probs,
+                         n_clusters=args.n_stations)
