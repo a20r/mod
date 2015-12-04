@@ -134,7 +134,6 @@ class DemandLookup {
                         default: break;
                     }
                 }
-
                 stations.push_back(GeoLocation(lat, lon));
             }
         }
