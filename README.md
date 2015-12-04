@@ -1,5 +1,5 @@
-# TaxiSharing
-Predicting taxi demand using taxi location history
+# mod
+Machine learning for (m)obility (o)n (d)emand
 
 # Extracting Taxi Demand Probabilities
 For help on extracting taxi demand probabilities run
