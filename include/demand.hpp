@@ -100,18 +100,12 @@ class DemandLookup {
                 int counter = 0;
                 while(std::getline(lineStream, cell, ',')) {
                     switch (counter++) {
-                        case 0:
-                            tau = stoi(cell);
-                        case 1:
-                            day = stoi(cell);
-                        case 2:
-                            pickup = stoi(cell);
-                        case 3:
-                            dropoff = stoi(cell);
-                        case 4:
-                            prob = stof(cell);
-                        default:
-                            break;
+                        case 0: tau = stoi(cell);
+                        case 1: day = stoi(cell);
+                        case 2: pickup = stoi(cell);
+                        case 3: dropoff = stoi(cell);
+                        case 4: prob = stof(cell);
+                        default: break;
                     }
                 }
 
@@ -135,12 +129,9 @@ class DemandLookup {
                 int counter = 0;
                 while(std::getline(lineStream, cell, ',')) {
                     switch (counter++) {
-                        case 1:
-                            lat = stof(cell);
-                        case 2:
-                            lon = stof(cell);
-                        default:
-                            break;
+                        case 1: lat = stof(cell);
+                        case 2: lon = stof(cell);
+                        default: break;
                     }
                 }
 
