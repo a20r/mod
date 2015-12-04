@@ -5,7 +5,7 @@ import csv
 import numpy as np
 import argparse
 import sklearn.cluster as cluster
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 
 feature_names = ["p_time", "p_day", "passenger_count",
@@ -81,8 +81,8 @@ def create_stations_file(fn_raw, fn_stations, **kwargs):
 
 
 def extract_frequencies(fn_raw, kmeans):
-    num_pd = defaultdict(lambda: defaultdict(float))
-    num_ti = defaultdict(float)
+    num_pd = OrderedDict()
+    num_ti = OrderedDict()
     with io.open(fn_raw, "rb") as fin:
         reader = csv.DictReader(fin)
         for i, row in enumerate(reader):
@@ -91,13 +91,18 @@ def extract_frequencies(fn_raw, kmeans):
             try:
                 row = clean_dict(row)
                 p_time, p_day = percent_time(row["pickup_datetime"])
-                d_time, d_day = percent_time(row["pickup_datetime"])
                 p_l = [row["pickup_longitude"], row["pickup_latitude"]]
                 d_l = [row["dropoff_longitude"], row["dropoff_longitude"]]
                 locs = np.array([p_l, d_l])
                 sts = kmeans.predict(locs)
                 tau = int(4 * 24 * p_time)
                 ti = (tau, p_day)
+
+                if not ti in num_pd.keys():
+                    num_pd[ti] = defaultdict(float)
+                if not ti in num_ti:
+                    num_ti[ti] = 0.0
+
                 num_pd[ti][(sts[0], sts[1])] += row["passenger_count"]
                 num_ti[ti] += row["passenger_count"]
             except ValueError:
