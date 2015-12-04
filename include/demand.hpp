@@ -183,7 +183,8 @@ class DemandLookup {
 
         void sample(int num, Demand dem[]) {
             for (int i = 0; i < num; i++) {
-                double r = (double) rand() / (double) (RAND_MAX);
+                double rnd = (double) rand() / (double) (RAND_MAX);
+                double r = cum_sum.back() * rnd;
                 for (size_t j = 0; j < cum_sum.size(); j++) {
                     if (r < cum_sum[j]) {
                         dem[i] = demand_vec[j];
