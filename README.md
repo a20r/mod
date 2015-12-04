@@ -3,6 +3,7 @@ Predicting taxi demand using taxi location history
 
 # Extracting Taxi Demand Probabilities
 For help on extracting taxi demand probabilities run
+
     $ python scripts/features.py --help
 
 # Using Demand Predictions in C++
