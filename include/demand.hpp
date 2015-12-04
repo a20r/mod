@@ -9,6 +9,7 @@
 #include <vector>
 #include <functional>
 #include <cmath>
+#include <random>
 
 using namespace std;
 
@@ -57,11 +58,24 @@ inline bool operator== (Demand const& lhs, Demand const& rhs) {
         lhs.pickup == rhs.pickup and lhs.dropoff == rhs.dropoff;
 };
 
+inline ostream& operator<<(ostream& os, const Demand& demand) {
+    os << "Demand(";
+    os << demand.tau << ", ";
+    os << demand.day << ", ";
+    os << demand.pickup << ", ";
+    os << demand.dropoff;
+    os << ")";
+    return os;
+};
+
 class DemandLookup {
 
     private:
         unordered_map<Demand, double, DemandHash> demands;
+        vector<Demand> demand_vec;
+        vector<double> cum_sum;
         vector<GeoLocation> stations;
+        default_random_engine generator;
 
     public:
         DemandLookup() {};
@@ -79,6 +93,7 @@ class DemandLookup {
             string line;
             getline(data, line);
 
+            double lp = 0;
             while(getline(data, line)) {
                 stringstream lineStream(line);
                 string cell;
@@ -99,10 +114,13 @@ class DemandLookup {
                             break;
                     }
                 }
+
                 Demand dem(tau, day, pickup, dropoff);
                 demands[dem] = prob;
+                demand_vec.push_back(dem);
+                cum_sum.push_back(lp + prob);
+                lp += prob;
             }
-
         }
 
         void load_stations(string fn_stations) {
@@ -166,6 +184,22 @@ class DemandLookup {
                 }
             }
             return min_id;
+        }
+
+        GeoLocation get_station(int id) {
+            return stations[id];
+        }
+
+        void sample(int num, Demand dem[]) {
+            for (int i = 0; i < num; i++) {
+                double r = (double) rand() / (double) (RAND_MAX);
+                for (size_t j = 0; j < cum_sum.size(); j++) {
+                    if (r < cum_sum[j]) {
+                        dem[i] = demand_vec[j];
+                        break;
+                    }
+                }
+            }
         }
 };
 
