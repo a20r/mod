@@ -5,6 +5,7 @@ import csv
 import numpy as np
 import argparse
 import sklearn.cluster as cluster
+import maps
 from collections import defaultdict, OrderedDict
 
 
@@ -69,13 +70,13 @@ def find_stations(fn_in, **kwargs):
 def create_stations_file(fn_raw, fn_stations, **kwargs):
     kmeans = find_stations(fn_raw, **kwargs)
     with io.open(fn_stations, "wb") as fout:
-        writer = csv.DictWriter(fout, fieldnames=fn_stations_fields)
-        writer.writeheader()
+        writer = csv.writer(fout)
+        writer.writerow(fn_stations_fields)
         for i, center in enumerate(kmeans.cluster_centers_):
-            row = dict()
-            row["id"] = i
-            row["latitude"] = center[0]
-            row["longitude"] = center[0]
+            row = list()
+            row.append(i)
+            row.append(center[1])
+            row.append(center[0])
             writer.writerow(row)
     return kmeans
 
@@ -122,9 +123,18 @@ def create_probs_file(fn_raw, fn_probs, kmeans):
                 writer.writerow([t, day, p, d, prob])
 
 
-def create_feature_files(fn_raw, fn_stations, fn_probs, **kwargs):
+def create_times_file(kmeans, fn_times):
+    times = maps.travel_times(kmeans.cluster_centers_, 0)
+    with io.open(fn_times, "wb") as fout:
+        writer = csv.writer(fout)
+        for row in times:
+            writer.writerow(row)
+
+
+def create_feature_files(fn_raw, fn_stations, fn_probs, fn_times, **kwargs):
     kmeans = create_stations_file(fn_raw, fn_stations, **kwargs)
     create_probs_file(fn_raw, fn_probs, kmeans)
+    create_times_file(kmeans, fn_times)
 
 
 if __name__ == "__main__":
@@ -148,6 +158,10 @@ if __name__ == "__main__":
         "--fn_probs", dest="fn_probs", type=str,
         default="data/trip_data_5_probs_short.csv",
         help="Output CSV file for listing the demand probabilities.")
+    parser.add_argument(
+        "--fn_times", dest="fn_times", type=str,
+        default="data/trip_data_5_times_short.csv",
+        help="Output CSV file for listing the travel times between stations")
     args = parser.parse_args()
     create_feature_files(args.fn_raw, args.fn_stations, args.fn_probs,
-                         n_clusters=args.n_stations)
+                         args.fn_times, n_clusters=args.n_stations)
