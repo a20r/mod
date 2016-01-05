@@ -234,7 +234,7 @@ namespace mod
             {
                 int p_st = get_station(pickup);
                 int d_st = get_station(dropoff);
-                int tau = secs / (/*BACK TO HERE*/ 1);
+                int tau = secs / (60 * 15);
                 return query_demand(tau, day, p_st, d_st);
             }
 
