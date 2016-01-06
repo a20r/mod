@@ -179,12 +179,13 @@ def create_probs_file(fn_raw, fn_probs, kmeans):
 
 
 def create_times_file(kmeans, fn_times):
-    times = maps.travel_times(kmeans.cluster_centers_, 0)
+    times = maps.travel_times(kmeans.cluster_centers_)
     pbar = ProgressBar(widgets=["Creating Times File: ", Bar(),
                                 Percentage(), "|", ETA()],
                        maxval=kmeans.cluster_centers_.shape[0]).start()
     with io.open(fn_times, "wb") as fout:
         writer = csv.writer(fout, delimiter=" ")
+        writer.writerow([kmeans.cluster_centers_.shape[0]])
         for i, row in enumerate(times):
             writer.writerow(row)
             pbar.update(i + 1)
@@ -241,7 +242,7 @@ if __name__ == "__main__":
         a file containing the probability of a given origin, destination,\
         for a given time interval.")
     parser.add_argument(
-        "--n_stations", dest="n_stations", type=int, default=10,
+        "--n_stations", dest="n_stations", type=int, default=101,
         help="Number of stations discovered using MiniBatchKMeans.")
     parser.add_argument(
         "--fn_raw", dest="fn_raw", type=str,
