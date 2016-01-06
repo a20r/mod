@@ -7,6 +7,7 @@ import argparse
 import sklearn.cluster as cluster
 import maps
 from collections import defaultdict, OrderedDict
+from progressbar import ProgressBar, ETA, Percentage, Bar
 
 
 feature_names = ["p_time", "p_day", "passenger_count",
@@ -35,6 +36,10 @@ def percent_time(str_time):
 
 def epoch_seconds(str_time):
     return int(time.mktime(time.strptime(str_time, date_format)))
+
+
+def clean_file(fn_raw, fn_cleaned):
+    pass
 
 
 def clean_dict(val_dict):
@@ -68,6 +73,7 @@ def find_stations(fn_in, **kwargs):
                 pts[0][1] = float(row[11])
                 pts[1][0] = float(row[12])
                 pts[1][1] = float(row[13])
+                print pts
                 points[i - 1] = pts[0]
                 points[i - 1 + fl] = pts[1]
             except:
@@ -149,6 +155,8 @@ def create_demands_file(kmeans, fn_raw, fn_demands):
             writer = csv.writer(fout, delimiter=' ')
             writer.writerow(fn_demands_fields)
             writer.writerow([fl])
+            pbar = ProgressBar(widgets=[Percentage(), ETA(), Bar()],
+                               maxval=300).start()
             for i, row in enumerate(reader):
                 if i == 0:
                     continue
@@ -167,6 +175,8 @@ def create_demands_file(kmeans, fn_raw, fn_demands):
                 nrow[6] = row["pickup_longitude"]
                 nrow[7] = row["pickup_latitude"]
                 writer.writerow(nrow)
+                pbar.update(i)
+            pbar.finish()
 
 
 def create_feature_files(fn_raw, fn_stations, fn_probs, fn_times,
@@ -179,6 +189,7 @@ def create_feature_files(fn_raw, fn_stations, fn_probs, fn_times,
     create_times_file(kmeans, fn_times)
     print "Creating demands file..."
     create_demands_file(kmeans, fn_raw, fn_demands)
+    print "Done :D"
 
 
 if __name__ == "__main__":

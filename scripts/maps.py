@@ -28,5 +28,9 @@ def travel_times(stations, departure_time):
         times = np.zeros((len(stations), len(stations)))
         for i, row in enumerate(tt["rows"]):
             for j, element in enumerate(row["elements"]):
-                times[i][j] = element["duration"]["value"]
+                print element
+                try:
+                    times[i][j] = element["duration"]["value"]
+                except:
+                    print stations[i], stations[j]
         return times
