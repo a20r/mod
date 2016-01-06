@@ -20,6 +20,6 @@ destination) for 15 minutes intervals of a day. Store it in a file.
 from the distribution above.
 
 ## Next
-visualization, given all the requests, positions of the
+A visualization, given all the requests, positions of the
 vehicles, pickups and dropoffs through out a day, visualize them on
 top of a map.
