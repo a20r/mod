@@ -39,7 +39,22 @@ def epoch_seconds(str_time):
 
 
 def clean_file(fn_raw, fn_cleaned):
-    pass
+    with io.open(fn_raw, "rb") as fin:
+        with io.open(fn_cleaned, "wb") as fout:
+            reader = csv.reader(fin)
+            writer = csv.writer(fout)
+            for i, row in enumerate(reader):
+                if i == 0:
+                    writer.writerow(row)
+                else:
+                    p_lat_zero = int(float(row[10])) == 0
+                    p_lon_zero = int(float(row[11])) == 0
+                    d_lat_zero = int(float(row[12])) == 0
+                    d_lon_zero = int(float(row[13])) == 0
+                    p_zero = p_lat_zero and p_lon_zero
+                    d_zero = d_lat_zero and d_lon_zero
+                    if not (p_zero and d_zero):
+                        writer.writerow(row)
 
 
 def clean_dict(val_dict):
@@ -73,7 +88,6 @@ def find_stations(fn_in, **kwargs):
                 pts[0][1] = float(row[11])
                 pts[1][0] = float(row[12])
                 pts[1][1] = float(row[13])
-                print pts
                 points[i - 1] = pts[0]
                 points[i - 1 + fl] = pts[1]
             except:
@@ -181,14 +195,17 @@ def create_demands_file(kmeans, fn_raw, fn_demands):
 
 def create_feature_files(fn_raw, fn_stations, fn_probs, fn_times,
                          fn_demands, **kwargs):
+    print "Cleaning input file..."
+    fn_cleaned = fn_raw.split(".")[0] + "_cleaned.csv"
+    clean_file(fn_raw, fn_cleaned)
     print "Creating stations file..."
-    kmeans = create_stations_file(fn_raw, fn_stations, **kwargs)
+    kmeans = create_stations_file(fn_cleaned, fn_stations, **kwargs)
     print "Creating probability file..."
-    create_probs_file(fn_raw, fn_probs, kmeans)
+    create_probs_file(fn_cleaned, fn_probs, kmeans)
     print "Creating travel times file..."
     create_times_file(kmeans, fn_times)
     print "Creating demands file..."
-    create_demands_file(kmeans, fn_raw, fn_demands)
+    create_demands_file(kmeans, fn_cleaned, fn_demands)
     print "Done :D"
 
 
