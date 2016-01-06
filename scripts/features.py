@@ -16,16 +16,25 @@ fn_stations_fields = ["id", "latitude", "longitude"]
 
 fn_probs_fields = ["tau", "day", "pickup", "dropoff", "probability"]
 
+fn_demands_fields = ["pickup_datetime", "pickup_station", "dropoff_datetime",
+                     "dropoff_GPS_lon", "dropoff_GPS_lat", "dropoff_station",
+                     "pickup_GPS_lon", "pickup_GPS_lat"]
+
+date_format = "%Y-%m-%d %H:%M:%S"
+
 
 def percent_time(str_time):
     """
     Given a string representation of a date, this returns the percent of the
     day that the time is (i.e. 0.5 would be 12 noon)
     """
-    date_format = "%Y-%m-%d %H:%M:%S"
     t = time.strptime(str_time, date_format)
     secs = t.tm_hour * 60 * 60 + t.tm_min * 60 + t.tm_sec
     return secs / (24 * 60 * 60.0), t.tm_wday
+
+
+def epoch_seconds(str_time):
+    return int(time.mktime(time.strptime(str_time, date_format)))
 
 
 def clean_dict(val_dict):
@@ -67,20 +76,6 @@ def find_stations(fn_in, **kwargs):
         return kmeans
 
 
-def create_stations_file(fn_raw, fn_stations, **kwargs):
-    kmeans = find_stations(fn_raw, **kwargs)
-    with io.open(fn_stations, "wb") as fout:
-        writer = csv.writer(fout)
-        writer.writerow(fn_stations_fields)
-        for i, center in enumerate(kmeans.cluster_centers_):
-            row = list()
-            row.append(i)
-            row.append(center[1])
-            row.append(center[0])
-            writer.writerow(row)
-    return kmeans
-
-
 def extract_frequencies(fn_raw, kmeans):
     num_pd = OrderedDict()
     num_ti = OrderedDict()
@@ -111,6 +106,20 @@ def extract_frequencies(fn_raw, kmeans):
     return num_pd, num_ti
 
 
+def create_stations_file(fn_raw, fn_stations, **kwargs):
+    kmeans = find_stations(fn_raw, **kwargs)
+    with io.open(fn_stations, "wb") as fout:
+        writer = csv.writer(fout)
+        writer.writerow(fn_stations_fields)
+        for i, center in enumerate(kmeans.cluster_centers_):
+            row = list()
+            row.append(i)
+            row.append(center[1])
+            row.append(center[0])
+            writer.writerow(row)
+    return kmeans
+
+
 def create_probs_file(fn_raw, fn_probs, kmeans):
     num_pd, num_ti = extract_frequencies(fn_raw, kmeans)
     with io.open(fn_probs, "wb") as fout:
@@ -126,15 +135,50 @@ def create_probs_file(fn_raw, fn_probs, kmeans):
 def create_times_file(kmeans, fn_times):
     times = maps.travel_times(kmeans.cluster_centers_, 0)
     with io.open(fn_times, "wb") as fout:
-        writer = csv.writer(fout)
+        writer = csv.writer(fout, delimiter=" ")
         for row in times:
             writer.writerow(row)
 
 
-def create_feature_files(fn_raw, fn_stations, fn_probs, fn_times, **kwargs):
+def create_demands_file(kmeans, fn_raw, fn_demands):
+    with io.open(fn_raw, "rb") as fin:
+        with io.open(fn_demands, "wb") as fout:
+            reader = csv.DictReader(fin)
+            fl = sum(1 for _ in reader) - 1
+            fin.seek(0)
+            writer = csv.writer(fout, delimiter=' ')
+            writer.writerow(fn_demands_fields)
+            writer.writerow([fl])
+            for i, row in enumerate(reader):
+                if i == 0:
+                    continue
+                nrow = [None] * len(fn_demands_fields)
+                row = clean_dict(row)
+                p_l = [row["pickup_longitude"], row["pickup_latitude"]]
+                d_l = [row["dropoff_longitude"], row["dropoff_longitude"]]
+                locs = np.array([p_l, d_l])
+                sts = kmeans.predict(locs)
+                nrow[0] = epoch_seconds(row["pickup_datetime"])
+                nrow[1] = sts[0]
+                nrow[2] = epoch_seconds(row["dropoff_datetime"])
+                nrow[3] = row["dropoff_longitude"]
+                nrow[4] = row["dropoff_latitude"]
+                nrow[5] = sts[1]
+                nrow[6] = row["pickup_longitude"]
+                nrow[7] = row["pickup_latitude"]
+                writer.writerow(nrow)
+
+
+def create_feature_files(fn_raw, fn_stations, fn_probs, fn_times,
+                         fn_demands, **kwargs):
+    print "Creating stations file..."
     kmeans = create_stations_file(fn_raw, fn_stations, **kwargs)
+    print "Creating probability file..."
     create_probs_file(fn_raw, fn_probs, kmeans)
+    print "Creating travel times file..."
     create_times_file(kmeans, fn_times)
+    print "Creating demands file..."
+    create_demands_file(kmeans, fn_raw, fn_demands)
 
 
 if __name__ == "__main__":
@@ -162,6 +206,11 @@ if __name__ == "__main__":
         "--fn_times", dest="fn_times", type=str,
         default="data/trip_data_5_times_short.csv",
         help="Output CSV file for listing the travel times between stations")
+    parser.add_argument(
+        "--fn_demands", dest="fn_demands", type=str,
+        default="data/trip_data_5_demands_short.csv",
+        help="Output CSV file for time series demands data")
     args = parser.parse_args()
     create_feature_files(args.fn_raw, args.fn_stations, args.fn_probs,
-                         args.fn_times, n_clusters=args.n_stations)
+                         args.fn_times, args.fn_demands,
+                         n_clusters=args.n_stations)
