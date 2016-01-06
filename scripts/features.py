@@ -6,7 +6,7 @@ import numpy as np
 import argparse
 import sklearn.cluster as cluster
 import maps
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict
 from progressbar import ProgressBar, ETA, Percentage, Bar
 
 
@@ -43,6 +43,11 @@ def clean_file(fn_raw, fn_cleaned):
         with io.open(fn_cleaned, "wb") as fout:
             reader = csv.reader(fin)
             writer = csv.writer(fout)
+            fl = sum(1 for _ in reader) - 1
+            fin.seek(0)
+            pbar = ProgressBar(widgets=["Cleaning File: ", Bar(),
+                                        Percentage(), "|", ETA()],
+                               maxval=fl + 1).start()
             for i, row in enumerate(reader):
                 if i == 0:
                     writer.writerow(row)
@@ -55,6 +60,8 @@ def clean_file(fn_raw, fn_cleaned):
                     d_zero = d_lat_zero and d_lon_zero
                     if not (p_zero and d_zero):
                         writer.writerow(row)
+                    pbar.update(i + 1)
+            pbar.finish()
 
 
 def clean_dict(val_dict):
@@ -79,6 +86,9 @@ def find_stations(fn_in, **kwargs):
         fin.seek(0)
         kmeans = cluster.MiniBatchKMeans(**kwargs)
         points = np.zeros((2 * fl, 2))
+        pbar = ProgressBar(widgets=["Finding Stations: ", Bar(),
+                                    Percentage(), "|", ETA()],
+                           maxval=fl + 1).start()
         for i, row in enumerate(reader):
             if i == 0:
                 continue
@@ -92,13 +102,16 @@ def find_stations(fn_in, **kwargs):
                 points[i - 1 + fl] = pts[1]
             except:
                 pass
+            pbar.update(i + 1)
+        pbar.finish()
         kmeans.fit(points)
-        return kmeans
+        return kmeans, fl
 
 
 def extract_frequencies(fn_raw, kmeans):
     num_pd = OrderedDict()
     num_ti = OrderedDict()
+    counter = 0
     with io.open(fn_raw, "rb") as fin:
         reader = csv.DictReader(fin)
         for i, row in enumerate(reader):
@@ -113,64 +126,81 @@ def extract_frequencies(fn_raw, kmeans):
                 sts = kmeans.predict(locs)
                 tau = int(4 * 24 * p_time)
                 ti = (tau, p_day)
-
                 if not ti in num_pd.keys():
-                    num_pd[ti] = defaultdict(float)
+                    num_pd[ti] = dict()
                 if not ti in num_ti:
                     num_ti[ti] = 0.0
-
+                if not (sts[0], sts[1]) in num_pd[ti]:
+                    num_pd[ti][(sts[0], sts[1])] = 0
+                    counter += 1
                 num_pd[ti][(sts[0], sts[1])] += row["passenger_count"]
                 num_ti[ti] += row["passenger_count"]
             except ValueError:
                 pass
-    return num_pd, num_ti
+    return num_pd, num_ti, counter
 
 
 def create_stations_file(fn_raw, fn_stations, **kwargs):
-    kmeans = find_stations(fn_raw, **kwargs)
+    kmeans, fl = find_stations(fn_raw, **kwargs)
     with io.open(fn_stations, "wb") as fout:
         writer = csv.writer(fout)
         writer.writerow(fn_stations_fields)
+        pbar = ProgressBar(widgets=["Creating Stations File: ", Bar(),
+                                    Percentage(), "|", ETA()],
+                           maxval=kmeans.cluster_centers_.shape[0]).start()
         for i, center in enumerate(kmeans.cluster_centers_):
             row = list()
             row.append(i)
             row.append(center[1])
             row.append(center[0])
             writer.writerow(row)
-    return kmeans
+            pbar.update(i + 1)
+        pbar.finish()
+    return kmeans, fl
 
 
 def create_probs_file(fn_raw, fn_probs, kmeans):
-    num_pd, num_ti = extract_frequencies(fn_raw, kmeans)
+    num_pd, num_ti, counter = extract_frequencies(fn_raw, kmeans)
+    pbar = ProgressBar(widgets=["Creating Probabilities File: ", Bar(),
+                                Percentage(), "|", ETA()],
+                       maxval=counter).start()
     with io.open(fn_probs, "wb") as fout:
         writer = csv.writer(fout)
         writer.writerow(fn_probs_fields)
+        i = 0
         for (t, day) in num_pd.keys():
             for (p, d) in num_pd[(t, day)].keys():
                 ti = (t, day)
                 prob = num_pd[ti][(p, d)] / num_ti[ti]
                 writer.writerow([t, day, p, d, prob])
+                pbar.update(i + 1)
+                i += 1
+        pbar.finish()
 
 
 def create_times_file(kmeans, fn_times):
     times = maps.travel_times(kmeans.cluster_centers_, 0)
+    pbar = ProgressBar(widgets=["Creating Times File: ", Bar(),
+                                Percentage(), "|", ETA()],
+                       maxval=kmeans.cluster_centers_.shape[0]).start()
     with io.open(fn_times, "wb") as fout:
         writer = csv.writer(fout, delimiter=" ")
-        for row in times:
+        for i, row in enumerate(times):
             writer.writerow(row)
+            pbar.update(i + 1)
+        pbar.finish()
 
 
-def create_demands_file(kmeans, fn_raw, fn_demands):
+def create_demands_file(kmeans, fn_raw, fn_demands, fl):
     with io.open(fn_raw, "rb") as fin:
         with io.open(fn_demands, "wb") as fout:
             reader = csv.DictReader(fin)
-            fl = sum(1 for _ in reader) - 1
-            fin.seek(0)
             writer = csv.writer(fout, delimiter=' ')
             writer.writerow(fn_demands_fields)
             writer.writerow([fl])
-            pbar = ProgressBar(widgets=[Percentage(), ETA(), Bar()],
-                               maxval=300).start()
+            pbar = ProgressBar(widgets=["Creating Demands File: ", Bar(),
+                                        Percentage(), "|", ETA()],
+                               maxval=fl + 1).start()
             for i, row in enumerate(reader):
                 if i == 0:
                     continue
@@ -195,17 +225,12 @@ def create_demands_file(kmeans, fn_raw, fn_demands):
 
 def create_feature_files(fn_raw, fn_stations, fn_probs, fn_times,
                          fn_demands, **kwargs):
-    print "Cleaning input file..."
     fn_cleaned = fn_raw.split(".")[0] + "_cleaned.csv"
     clean_file(fn_raw, fn_cleaned)
-    print "Creating stations file..."
-    kmeans = create_stations_file(fn_cleaned, fn_stations, **kwargs)
-    print "Creating probability file..."
+    kmeans, fl = create_stations_file(fn_cleaned, fn_stations, **kwargs)
     create_probs_file(fn_cleaned, fn_probs, kmeans)
-    print "Creating travel times file..."
     create_times_file(kmeans, fn_times)
-    print "Creating demands file..."
-    create_demands_file(kmeans, fn_cleaned, fn_demands)
+    create_demands_file(kmeans, fn_cleaned, fn_demands, fl)
     print "Done :D"
 
 
