@@ -151,7 +151,7 @@ def extract_frequencies(fn_raw, kmeans, fl):
 
 def create_stations_file(fn_raw, fn_stations, **kwargs):
     kmeans, fl = find_stations(fn_raw, **kwargs)
-    fn_javier = fn_stations.split(".")[0] + "_LUT.txt"
+    fn_javier = fn_stations.split(".")[0] + "_LUT.csv"
     pbar = ProgressBar(widgets=["Creating Stations File: ", Bar(),
                                 Percentage(), "|", ETA()],
                        maxval=kmeans.cluster_centers_.shape[0]).start()

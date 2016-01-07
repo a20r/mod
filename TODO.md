@@ -19,7 +19,14 @@ destination) for 15 minutes intervals of a day. Store it in a file.
 - [x] In C++, function that given (N, time) outputs N sampled requests
 from the distribution above.
 
+- [ ] Determine the expected number of requests for a given time interval
+
+- [ ] Record the expected number of requests in a day
+
+- [ ] Determine the number of taxis and save to file or something like that
+
 ## Next
 A visualization, given all the requests, positions of the
 vehicles, pickups and dropoffs through out a day, visualize them on
 top of a map.
+
