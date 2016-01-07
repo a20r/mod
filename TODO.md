@@ -4,7 +4,7 @@
 destination, like the demands.txt attached. Also store in another file
 the # taxis.
 
-- [ ] Compute N stations (N=100 initially, later N=1000) and store them in
+- [x] Compute N stations (N=100 initially, later N=1000) and store them in
 two files, one with positions and the other one with travel times,
 like distances.txt and stationLUT.txt
 
@@ -16,7 +16,7 @@ closest_station is queried from KD-tree.
 - [ ] Compute from several days the predicted requests (origin ->
 destination) for 15 minutes intervals of a day. Store it in a file.
 
-- [ ] In C++, function that given (N, time) outputs N sampled requests
+- [x] In C++, function that given (N, time) outputs N sampled requests
 from the distribution above.
 
 ## Next
