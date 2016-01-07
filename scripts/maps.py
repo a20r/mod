@@ -1,5 +1,6 @@
 
 import requests
+import math
 import numpy as np
 
 
@@ -39,7 +40,7 @@ def travel_times_requests(stations):
     return reqs
 
 
-def travel_times(stations):
+def travel_times_gmaps(stations):
     reqs = travel_times_requests(stations)
     times = np.zeros((len(stations), len(stations)))
     for i, st_reqs in enumerate(reqs):
@@ -53,7 +54,15 @@ def travel_times(stations):
     return times
 
 
-def travel_times_old(stations):
+def travel_times(stations):
+    times = np.zeros((len(stations), len(stations)))
+    for i, m in enumerate(stations):
+        for j, n in enumerate(stations):
+            times[i][j] = math.sqrt(pow(m[0] - n[0], 2) + pow(m[1] - n[1], 2))
+    return times
+
+
+def travel_times_gmaps_old(stations):
     r = travel_times_request(stations)
     if r.status_code == 200:
         tt = r.json()
