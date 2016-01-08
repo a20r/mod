@@ -59,7 +59,7 @@ def clean_file(fn_raw, fn_cleaned):
                     try:
                         if not row[0] in medals:
                             taxi_count += 1
-                            medals.add(row[2])
+                            medals.add(row[0])
                         p_lat_zero = int(float(row[10])) == 0
                         p_lon_zero = int(float(row[11])) == 0
                         d_lat_zero = int(float(row[12])) == 0
