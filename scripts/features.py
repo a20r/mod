@@ -6,7 +6,7 @@ import numpy as np
 import argparse
 import sklearn.cluster as cluster
 import maps
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from progressbar import ProgressBar, ETA, Percentage, Bar
 
 
@@ -20,6 +20,8 @@ fn_probs_fields = ["tau", "day", "pickup", "dropoff", "probability"]
 fn_demands_fields = ["pickup_datetime", "pickup_station", "dropoff_datetime",
                      "dropoff_GPS_lon", "dropoff_GPS_lat", "dropoff_station",
                      "pickup_GPS_lon", "pickup_GPS_lat"]
+
+fn_freqs_fields = ["time_interval", "expected_requests"]
 
 date_format = "%Y-%m-%d %H:%M:%S"
 
@@ -39,6 +41,8 @@ def epoch_seconds(str_time):
 
 
 def clean_file(fn_raw, fn_cleaned):
+    medals = set()
+    taxi_count = 0
     with io.open(fn_raw, "rb") as fin:
         with io.open(fn_cleaned, "wb") as fout:
             reader = csv.reader(fin)
@@ -53,6 +57,9 @@ def clean_file(fn_raw, fn_cleaned):
                     writer.writerow(row)
                 else:
                     try:
+                        if not row[0] in medals:
+                            taxi_count += 1
+                            medals.add(row[2])
                         p_lat_zero = int(float(row[10])) == 0
                         p_lon_zero = int(float(row[11])) == 0
                         d_lat_zero = int(float(row[12])) == 0
@@ -65,6 +72,7 @@ def clean_file(fn_raw, fn_cleaned):
                         pass
                     pbar.update(i + 1)
             pbar.finish()
+    return taxi_count
 
 
 def clean_dict(val_dict):
@@ -115,7 +123,8 @@ def find_stations(fn_in, **kwargs):
 def extract_frequencies(fn_raw, kmeans, fl):
     num_pd = OrderedDict()
     num_ti = OrderedDict()
-    num_tau = OrderedDict()
+    num_tau = defaultdict(int)
+    num_tau_occ = defaultdict(set)
     counter = 0
     pbar = ProgressBar(
         widgets=["Extracting Frequencies: ", Bar(), Percentage(), "|", ETA()],
@@ -129,13 +138,11 @@ def extract_frequencies(fn_raw, kmeans, fl):
                 row = clean_dict(row)
                 p_time, p_day = percent_time(row["pickup_datetime"])
                 p_l = [row["pickup_longitude"], row["pickup_latitude"]]
-                d_l = [row["dropoff_longitude"], row["dropoff_longitude"]]
+                d_l = [row["dropoff_longitude"], row["dropoff_latitude"]]
                 locs = np.array([p_l, d_l])
                 sts = kmeans.predict(locs)
                 tau = int(4 * 24 * p_time)
                 ti = (tau, p_day)
-                if not tau in num_tau:
-                    num_tau[tau] = 0
                 if not ti in num_pd.keys():
                     num_pd[ti] = dict()
                 if not ti in num_ti:
@@ -145,11 +152,13 @@ def extract_frequencies(fn_raw, kmeans, fl):
                     counter += 1
                 num_pd[ti][(sts[0], sts[1])] += row["passenger_count"]
                 num_ti[ti] += row["passenger_count"]
+                num_tau[tau] += row["passenger_count"]
+                num_tau_occ[tau].add(p_day)
             except ValueError:
                 pass
             pbar.update(i + 1)
         pbar.finish()
-    return num_pd, num_ti, counter
+    return num_pd, num_ti, num_tau, num_tau_occ, counter
 
 
 def create_stations_file(fn_raw, fn_stations, **kwargs):
@@ -181,23 +190,32 @@ def create_stations_file(fn_raw, fn_stations, **kwargs):
 
 
 def create_probs_file(fn_raw, fn_probs, fn_freqs, kmeans, fl):
-    num_pd, num_ti, counter = extract_frequencies(fn_raw, kmeans, fl)
+    num_pd, num_ti, num_tau, num_tau_occ, counter = extract_frequencies(
+        fn_raw, kmeans, fl)
     pbar = ProgressBar(
         widgets=["Creating Probabilities File: ", Bar(), Percentage(), "|",
                  ETA()],
         maxval=counter).start()
     with io.open(fn_probs, "wb") as fout:
-        writer = csv.writer(fout)
-        writer.writerow(fn_probs_fields)
-        i = 0
-        for (t, day) in num_pd.keys():
-            for (p, d) in num_pd[(t, day)].keys():
-                ti = (t, day)
-                prob = num_pd[ti][(p, d)] / num_ti[ti]
-                writer.writerow([t, day, p, d, prob])
-                pbar.update(i + 1)
-                i += 1
-        pbar.finish()
+        with io.open(fn_freqs, "wb") as fout_freqs:
+            writer = csv.writer(fout)
+            writer.writerow(fn_probs_fields)
+            freqs_writer = csv.writer(fout_freqs)
+            freqs_writer.writerow(fn_freqs_fields)
+            seen = set()
+            i = 0
+            for (t, day) in num_pd.keys():
+                for (p, d) in num_pd[(t, day)].keys():
+                    ti = (t, day)
+                    prob = num_pd[ti][(p, d)] / num_ti[ti]
+                    writer.writerow([t, day, p, d, prob])
+                    exp_reqs = num_tau[t] / float(len(num_tau_occ[t]))
+                    if not t in seen:
+                        freqs_writer.writerow([t, exp_reqs])
+                        seen.add(t)
+                    pbar.update(i + 1)
+                    i += 1
+            pbar.finish()
 
 
 def create_times_file(kmeans, fn_times):
@@ -250,11 +268,12 @@ def create_demands_file(kmeans, fn_raw, fn_demands, fl):
 def create_feature_files(fn_raw, fn_stations, fn_probs, fn_times,
                          fn_demands, fn_freqs, **kwargs):
     fn_cleaned = fn_raw.split(".")[0] + "_cleaned.csv"
-    clean_file(fn_raw, fn_cleaned)
+    taxi_count = clean_file(fn_raw, fn_cleaned)
     kmeans, fl = create_stations_file(fn_cleaned, fn_stations, **kwargs)
     create_probs_file(fn_cleaned, fn_probs, fn_freqs, kmeans, fl)
     create_times_file(kmeans, fn_times)
     create_demands_file(kmeans, fn_cleaned, fn_demands, fl)
+    print "Taxi Count:", taxi_count
     print "Done :D"
 
 
