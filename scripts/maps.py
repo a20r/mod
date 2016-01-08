@@ -11,6 +11,24 @@ origin = "{},{}"
 n_dest = 35
 
 
+def geo_dist(p1, p2):
+    lat1 = p1[1]
+    lon1 = p1[0]
+    lat2 = p2[1]
+    lon2 = p2[0]
+    lon1 = lon1 * (math.pi / 180.0)
+    lat1 = lat1 * (math.pi / 180.0)
+    lon2 = lon2 * (math.pi / 180.0)
+    lat2 = lat2 * (math.pi / 180.0)
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = pow(math.sin(dlat / 2.0), 2) + math.cos(lat1) * \
+        math.cos(lat2) * pow(math.sin(dlon / 2.0), 2)
+    c = 2 * math.asin(math.sqrt(a))
+    dist_km = 6367 * c
+    return dist_km
+
+
 def google_list(strs):
     return "|".join(st for st in strs)
 
@@ -58,7 +76,7 @@ def travel_times(stations):
     times = np.zeros((len(stations), len(stations)))
     for i, m in enumerate(stations):
         for j, n in enumerate(stations):
-            times[i][j] = math.sqrt(pow(m[0] - n[0], 2) + pow(m[1] - n[1], 2))
+            times[i][j] = geo_dist(m, n)
     return times
 
 
