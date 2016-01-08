@@ -21,7 +21,7 @@ from the distribution above.
 
 - [x] Determine the expected number of requests for a given time interval
 
-- [ ] Record the expected number of requests in a day
+- [x] Record the expected number of requests in a day
 
 - [x] Determine the number of taxis and save to file or something like that
 
