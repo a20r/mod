@@ -24,6 +24,7 @@ fn_demands_fields = ["pickup_datetime", "pickup_station", "dropoff_datetime",
 fn_freqs_fields = ["time_interval", "expected_requests"]
 
 date_format = "%Y-%m-%d %H:%M:%S"
+date_format_tz = "%Y-%m-%d %H:%M:%S %Z"
 
 
 def percent_time(str_time):
@@ -38,6 +39,18 @@ def percent_time(str_time):
 
 def epoch_seconds(str_time):
     return int(time.mktime(time.strptime(str_time, date_format)))
+
+
+def is_within_box(plon, plat, dlon, dlat):
+    plat = float(plat)
+    plon = float(plon)
+    dlat = float(dlat)
+    dlon = float(dlon)
+    pin_lat = plat > 40.7 and plat < 40.88
+    pin_lon = plon < -73.911 and plon > -74.014
+    din_lat = dlat > 40.7 and dlat < 40.88
+    din_lon = dlon < -73.911 and dlon > -74.014
+    return pin_lat and pin_lon and din_lat and din_lon
 
 
 def clean_file(fn_raw, fn_cleaned):
@@ -60,13 +73,7 @@ def clean_file(fn_raw, fn_cleaned):
                         if not row[0] in medals:
                             taxi_count += 1
                             medals.add(row[0])
-                        p_lat_zero = int(float(row[10])) == 0
-                        p_lon_zero = int(float(row[11])) == 0
-                        d_lat_zero = int(float(row[12])) == 0
-                        d_lon_zero = int(float(row[13])) == 0
-                        p_zero = p_lat_zero and p_lon_zero
-                        d_zero = d_lat_zero and d_lon_zero
-                        if not (p_zero and d_zero):
+                        if is_within_box(row[10], row[11], row[12], row[13]):
                             writer.writerow(row)
                     except ValueError:
                         pass
@@ -238,7 +245,7 @@ def create_demands_file(kmeans, fn_raw, fn_demands, fl):
             reader = csv.DictReader(fin)
             writer = csv.writer(fout, delimiter=' ')
             writer.writerow(fn_demands_fields)
-            writer.writerow([fl])
+            writer.writerow([fl - 1])
             pbar = ProgressBar(
                 widgets=["Creating Demands File: ", Bar(),
                          Percentage(), "|", ETA()],
