@@ -304,7 +304,7 @@ namespace mod
                     {
                         break;
                     }
-                    else if (st >= demand_vec[i] and end <= demand_vec[i])
+                    else if (st <= demand_vec[i] and end >= demand_vec[i])
                     {
                         csum.push_back(lp + demands[demand_vec[i]]);
                         lp += demands[demand_vec[i]];
