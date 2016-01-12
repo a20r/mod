@@ -130,6 +130,11 @@ namespace mod
 
             DemandLookup(string fn_stations, string fn_probs, string fn_times)
             {
+                init(fn_stations, fn_probs, fn_times);
+            }
+
+            void init(string fn_stations, string fn_probs, string fn_times)
+            {
                 load_probs(fn_probs);
                 load_stations(fn_stations);
                 load_times(fn_times);
