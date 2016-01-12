@@ -41,7 +41,7 @@ namespace mod
                 double a = pow(sin(dlat / 2.0), 2) + cos(lat1) * cos(lat2)
                     * pow(sin(dlon / 2.0), 2);
                 double c = 2 * asin(sqrt(a));
-                dist_km = 6367 * c;
+                double dist_km = 6367 * c;
                 return dist_km;
             }
     };
@@ -49,11 +49,11 @@ namespace mod
     class Time
     {
         public:
-            int secs, day;
+            int day, secs;
 
             Time() {};
             ~Time() {};
-            Time(int secs, int day) : secs(secs), day(day)
+            Time(int day, int secs) : day(day), secs(secs)
             {
             };
 
@@ -197,7 +197,7 @@ namespace mod
 
             void load_times(string fn_times)
             {
-                ifstream data(fn_stations);
+                ifstream data(fn_times);
                 string line;
                 getline(data, line);
 

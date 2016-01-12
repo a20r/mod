@@ -17,7 +17,7 @@ void test_query(mod::DemandLookup& dl) {
 void test_sample(mod::DemandLookup& dl) {
     int num = 10;
     mod::Demand dems[num];
-    mod::Time st(0, 2), end(0, 2);
+    mod::Time st(2, 0), end(3, 10);
     dl.sample(num, st, end, dems);
 
     cout << "==================== Sample Test ====================" << endl;
@@ -31,7 +31,8 @@ void test_sample(mod::DemandLookup& dl) {
 int main() {
     srand(time(NULL));
     mod::DemandLookup dl("../data/trip_data_5_stations_short.csv",
-            "../data/trip_data_5_probs_short.csv");
+            "../data/trip_data_5_probs_short.csv",
+            "../data/trip_data_5_times_short.csv");
     test_query(dl);
     test_sample(dl);
 }

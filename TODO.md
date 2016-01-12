@@ -32,6 +32,12 @@ from the distribution above.
 
 - [ ] A-star to search this graph in Python
 
+- [ ] Make a graph of Manhattan from 40th to 80th and 1st to Ave of the
+Americas
+
+- [ ] All pairs paths within the graph region and an estimate of the travel
+time
+
 ## Next
 A visualization, given all the requests, positions of the
 vehicles, pickups and dropoffs through out a day, visualize them on
