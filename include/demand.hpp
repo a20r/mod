@@ -28,9 +28,21 @@ namespace mod
 
             double distance(GeoLocation& gl)
             {
-                double dlat2 = pow(gl.lat - lat, 2);
-                double dlon2 = pow(gl.lon - lon, 2);
-                return sqrt(dlat2 + dlon2);
+                double lat1 = lat;
+                double lon1 = lon;
+                double lat2 = gl.lat;
+                double lon2 = gl.lon;
+                lon1 = lon1 * (M_PI / 180.0);
+                lat1 = lat1 * (M_PI / 180.0);
+                lon2 = lon2 * (M_PI / 180.0);
+                lat2 = lat2 * (M_PI / 180.0);
+                double dlon = lon2 - lon1;
+                double dlat = lat2 - lat1;
+                double a = pow(sin(dlat / 2.0), 2) + cos(lat1) * cos(lat2)
+                    * pow(sin(dlon / 2.0), 2);
+                double c = 2 * asin(sqrt(a));
+                dist_km = 6367 * c;
+                return dist_km;
             }
     };
 
@@ -110,16 +122,17 @@ namespace mod
             vector<Demand> demand_vec;
             vector<double> cum_sum;
             vector<GeoLocation> stations;
-            default_random_engine generator;
+            vector<vector<double>> times;
 
         public:
             DemandLookup() {};
             ~DemandLookup() {};
 
-            DemandLookup(string fn_stations, string fn_probs)
+            DemandLookup(string fn_stations, string fn_probs, string fn_times)
             {
                 load_probs(fn_probs);
                 load_stations(fn_stations);
+                load_times(fn_times);
             }
 
             void load_probs(string fn_probs)
@@ -182,6 +195,32 @@ namespace mod
                 }
             }
 
+            void load_times(string fn_times)
+            {
+                ifstream data(fn_stations);
+                string line;
+                getline(data, line);
+
+                while(getline(data, line))
+                {
+                    times.push_back(vector<double>());
+                    stringstream lineStream(line);
+                    string cell;
+                    while(std::getline(lineStream, cell, ' '))
+                    {
+                        times.back().push_back(stof(cell));
+                    }
+                }
+            }
+
+            double get_travel_time_estimate(double lat, double lon, int station)
+            {
+                GeoLocation gl(lat, lon);
+                int closest_station = get_station(gl);
+                double dist = get_station(closest_station).distance(gl);
+                return dist + times[closest_station][station];
+            }
+
             int get_station(GeoLocation gl)
             {
                 double min_dist;
@@ -210,7 +249,6 @@ namespace mod
             {
                 return stations[id];
             }
-
 
             double query_demand(Demand dem)
             {
