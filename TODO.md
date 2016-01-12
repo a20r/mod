@@ -8,7 +8,7 @@ the # taxis.
 two files, one with positions and the other one with travel times,
 like distances.txt and stationLUT.txt
 
-- [ ] In C++, function that given a position p = (lat,lon) and a station K
+- [x] In C++, function that given a position p = (lat,lon) and a station K
 outputs the approximate travel time p->K given by: V *
 dist(p,closest_station) + travel_time(closest station, p), where
 closest_station is queried from KD-tree.
