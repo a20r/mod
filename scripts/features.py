@@ -226,7 +226,7 @@ def create_probs_file(fn_raw, fn_probs, fn_freqs, kmeans, fl):
 
 
 def create_times_file(kmeans, fn_times):
-    times = maps.travel_times(kmeans.cluster_centers_)
+    times = maps.travel_times_gmaps(kmeans.cluster_centers_)
     pbar = ProgressBar(
         widgets=["Creating Times File: ", Bar(), Percentage(), "|", ETA()],
         maxval=kmeans.cluster_centers_.shape[0]).start()

@@ -25,6 +25,13 @@ from the distribution above.
 
 - [x] Determine the number of taxis and save to file or something like that
 
+- [ ] Query travel times and trajectories between all of the stations
+
+- [ ] Grid of a small part of Manhattan below central part between 100 and
+1000 corners. We need a graph with travel times between the corners.
+
+- [ ] A-star to search this graph in Python
+
 ## Next
 A visualization, given all the requests, positions of the
 vehicles, pickups and dropoffs through out a day, visualize them on
