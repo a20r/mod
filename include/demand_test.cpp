@@ -16,7 +16,7 @@ void test_query(mod::DemandLookup& dl) {
 
 void test_sample(mod::DemandLookup& dl) {
     const int num = 10;
-    mod::Demand dems[num];
+    vector<mod::Demand> dems;
     mod::Time st(2, 0), end(10, 10);
     dl.sample(num, st, end, dems);
 
