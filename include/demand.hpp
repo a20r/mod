@@ -13,6 +13,8 @@
 
 using namespace std;
 
+#define INTERVAL_SIZE (60 * 15);
+
 namespace mod
 {
 
@@ -59,7 +61,7 @@ namespace mod
 
             int get_interval() const
             {
-                return secs / (15 * 60);
+                return secs / INTERVAL_SIZE;
             }
     };
 

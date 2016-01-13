@@ -4,6 +4,10 @@ import geopy as geo
 from geopy.distance import distance
 import numpy as np
 
+"""
+This code has graciously been provided by the most honourable Aleksejs Sazonovs
+"""
+
 
 def make_weighted(G):
     """
