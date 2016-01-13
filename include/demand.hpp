@@ -13,10 +13,10 @@
 
 using namespace std;
 
-#define MOD_INTERVAL_SIZE (60 * 15);
-
 namespace mod
 {
+
+    const int interval_size = 60 * 15;
 
     class GeoLocation
     {
@@ -61,7 +61,7 @@ namespace mod
 
             int get_interval() const
             {
-                return secs / MOD_INTERVAL_SIZE;
+                return secs / interval_size;
             }
     };
 
@@ -307,7 +307,7 @@ namespace mod
                 double lp = 0;
                 for (size_t i = 0; i < demand_vec.size(); i++)
                 {
-                    if (end > demand_vec[i])
+                    if (end <= demand_vec[i])
                     {
                         break;
                     }
