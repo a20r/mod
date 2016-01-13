@@ -1,0 +1,3 @@
+
+class FakeKMeans(object):
+    pass

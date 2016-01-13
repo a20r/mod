@@ -6,6 +6,8 @@ import numpy as np
 import argparse
 import sklearn.cluster as cluster
 import maps
+import osm
+import osm2nx
 from collections import OrderedDict, defaultdict
 from progressbar import ProgressBar, ETA, Percentage, Bar
 
@@ -39,6 +41,13 @@ def percent_time(str_time):
 
 def epoch_seconds(str_time):
     return int(time.mktime(time.strptime(str_time, date_format)))
+
+
+def osm_graph(left, bottom, right, top):
+    osm_data = osm.download_osm(left, bottom, right, top)
+    G = osm.read_osm(osm_data)
+    G, max_distance = osm2nx.make_weighted(G)
+    return osm2nx.simplify_by_degree(G, max_distance)
 
 
 def is_within_box(plon, plat, dlon, dlat):
@@ -272,8 +281,20 @@ def create_demands_file(kmeans, fn_raw, fn_demands, fl):
             pbar.finish()
 
 
-def create_feature_files(fn_raw, fn_stations, fn_probs, fn_times,
-                         fn_demands, fn_freqs, **kwargs):
+def create_data_files_kmeans(fn_raw, fn_stations, fn_probs, fn_times,
+                             fn_demands, fn_freqs, **kwargs):
+    fn_cleaned = fn_raw.split(".")[0] + "_cleaned.csv"
+    taxi_count = clean_file(fn_raw, fn_cleaned)
+    kmeans, fl = create_stations_file(fn_cleaned, fn_stations, **kwargs)
+    create_probs_file(fn_cleaned, fn_probs, fn_freqs, kmeans, fl)
+    create_times_file(kmeans, fn_times)
+    create_demands_file(kmeans, fn_cleaned, fn_demands, fl)
+    print "Taxi Count:", taxi_count
+    print "Done :D"
+
+
+def create_data_files(fn_raw, fn_stations, fn_probs, fn_times,
+                      fn_demands, fn_freqs, **kwargs):
     fn_cleaned = fn_raw.split(".")[0] + "_cleaned.csv"
     taxi_count = clean_file(fn_raw, fn_cleaned)
     kmeans, fl = create_stations_file(fn_cleaned, fn_stations, **kwargs)
@@ -319,6 +340,6 @@ if __name__ == "__main__":
         help="Output CSV file for frequency of requests for different time\
         intervals over multiple days")
     args = parser.parse_args()
-    create_feature_files(args.fn_raw, args.fn_stations, args.fn_probs,
-                         args.fn_times, args.fn_demands, args.fn_freqs,
-                         n_clusters=args.n_stations)
+    create_data_files(args.fn_raw, args.fn_stations, args.fn_probs,
+                      args.fn_times, args.fn_demands, args.fn_freqs,
+                      n_clusters=args.n_stations)

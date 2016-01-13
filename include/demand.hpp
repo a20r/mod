@@ -283,7 +283,7 @@ namespace mod
                 return query_demand(tau, day, p_st, d_st);
             }
 
-            void sample(int num, vector<double>& csum, Demand dems[])
+            void sample(int num, vector<double>& csum, vector<Demand> dems)
             {
                 for (int i = 0; i < num; i++)
                 {
