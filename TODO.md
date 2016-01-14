@@ -25,18 +25,21 @@ from the distribution above.
 
 - [x] Determine the number of taxis and save to file or something like that
 
-- [ ] Query travel times and trajectories between all of the stations
+- [x] Query travel times and trajectories between all of the stations
 
-- [ ] Grid of a small part of Manhattan below central part between 100 and
+- [x] Grid of a small part of Manhattan below central part between 100 and
 1000 corners. We need a graph with travel times between the corners.
 
-- [ ] A-star to search this graph in Python
+- [x] A-star to search this graph in Python
 
-- [ ] Make a graph of Manhattan from 40th to 80th and 1st to Ave of the
+- [x] Make a graph of Manhattan from 40th to 80th and 1st to Ave of the
 Americas
 
-- [ ] All pairs paths within the graph region and an estimate of the travel
-time
+- [x] Compute all pairs travel times and save to file
+
+- [ ] Compute all pairs paths and save to file
+
+- [ ] Verify that the sampling works properly
 
 ## Next
 A visualization, given all the requests, positions of the
