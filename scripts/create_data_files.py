@@ -199,7 +199,7 @@ def extract_frequencies(fn_raw, stations, fl):
     return num_pd, num_ti, num_tau, num_tau_occ, counter
 
 
-def create_stations_file(fn_raw, fn_stations, stations, **kwargs):
+def create_stations_file(fn_raw, fn_stations, stations):
     fn_javier = fn_stations.split(".")[0] + "_LUT.csv"
     pbar = ProgressBar(
         widgets=["Creating Stations File: ", Bar(), Percentage(), "|", ETA()],
@@ -262,7 +262,7 @@ def create_times_file(stations, times, fn_times):
         writer = csv.writer(fout, delimiter=" ")
         writer.writerow([stations.shape[0]])
         for i, row in enumerate(times):
-            writer.writerow(row[0])
+            writer.writerow(row)
             pbar.update(i + 1)
         pbar.finish()
 
@@ -308,7 +308,7 @@ def create_data_files_kmeans(fn_raw, fn_stations, fn_probs, fn_times,
     kmeans, fl = find_stations(fn_cleaned, **kwargs)
     stations = kmeans.cluster_centers_
     times = maps.travel_times(stations)
-    create_stations_file(fn_cleaned, fn_stations, stations, **kwargs)
+    create_stations_file(fn_cleaned, fn_stations, stations)
     create_probs_file(fn_cleaned, fn_probs, fn_freqs, stations, fl)
     create_times_file(stations, times, fn_times)
     create_demands_file(stations, fn_cleaned, fn_demands, fl)
@@ -317,14 +317,14 @@ def create_data_files_kmeans(fn_raw, fn_stations, fn_probs, fn_times,
 
 
 def create_data_files(fn_raw, fn_graph, fn_stations, fn_probs, fn_times,
-                      fn_demands, fn_freqs, **kwargs):
+                      fn_demands, fn_freqs):
     fn_cleaned = fn_raw.split(".")[0] + "_cleaned.csv"
     taxi_count = clean_file(fn_raw, fn_cleaned)
     print "Loading graph from file..."
     G, stations, st_lookup, times = load_graph(fn_graph)
     print "Determining file length..."
     fl = file_length(fn_cleaned)
-    create_stations_file(fn_cleaned, fn_stations, stations, **kwargs)
+    create_stations_file(fn_cleaned, fn_stations, stations)
     create_probs_file(fn_cleaned, fn_probs, fn_freqs, stations, fl)
     create_times_file(stations, times, fn_times)
     create_demands_file(stations, fn_cleaned, fn_demands, fl)
@@ -373,4 +373,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     create_data_files(args.fn_raw, args.fn_graph, args.fn_stations,
                       args.fn_probs, args.fn_times, args.fn_demands,
-                      args.fn_freqs, n_clusters=args.n_stations)
+                      args.fn_freqs)
