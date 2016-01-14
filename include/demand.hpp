@@ -148,21 +148,25 @@ namespace mod
             vector<double> cum_sum;
             vector<GeoLocation> stations;
             vector<vector<double>> times;
+            unordered_map<int, unordered_map<int, vector<int>>> paths;
 
         public:
             DemandLookup() {};
             ~DemandLookup() {};
 
-            DemandLookup(string fn_stations, string fn_probs, string fn_times)
+            DemandLookup(string fn_stations, string fn_probs, string fn_times,
+                    string fn_paths)
             {
-                init(fn_stations, fn_probs, fn_times);
+                init(fn_stations, fn_probs, fn_times, fn_paths);
             }
 
-            void init(string fn_stations, string fn_probs, string fn_times)
+            void init(string fn_stations, string fn_probs, string fn_times,
+                    string fn_paths)
             {
                 load_probs(fn_probs);
                 load_stations(fn_stations);
                 load_times(fn_times);
+                load_paths(fn_paths);
             }
 
             void load_probs(string fn_probs)
@@ -240,6 +244,50 @@ namespace mod
                     {
                         times.back().push_back(stof(cell));
                     }
+                }
+            }
+
+            void load_paths(string fn_paths)
+            {
+                ifstream data(fn_paths);
+                string line;
+
+                while(getline(data, line))
+                {
+                    stringstream lineStream(line);
+                    string cell;
+                    std::getline(lineStream, cell, ' ');
+                    int start = stoi(cell);
+                    std::getline(lineStream, cell, ' ');
+                    int end = stoi(cell);
+                    if (paths.count(start) == 0)
+                    {
+                        paths[start] = unordered_map<int, vector<int>>();
+                    }
+                    paths[start][end] = vector<int>();
+                    while(std::getline(lineStream, cell, ' '))
+                    {
+                        paths[start][end].push_back(stoi(cell));
+                    }
+                }
+            }
+
+            bool get_path(int start, int end, vector<int>& path,
+                    vector<double>& inter_times)
+            {
+                // returns true if there is a path, false if there isn't
+                if (paths.count(start) > 0 and paths[start].count(end))
+                {
+                    path = paths[start][end];
+                    for (size_t i = 0; i < path.size() - 1; i++)
+                    {
+                        inter_times.push_back(times[path[i]][path[i + 1]]);
+                    }
+                    return true;
+                }
+                else
+                {
+                    return false;
                 }
             }
 
