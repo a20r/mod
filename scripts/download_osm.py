@@ -58,7 +58,7 @@ def create_paths_file(G, st_lookup, paths, fn_paths):
                     id_path.append(st_lookup[n])
                 start = st_lookup[i]
                 end = st_lookup[j]
-                writer.writerow([start, end] + path)
+                writer.writerow([start, end] + id_path)
                 pbar.update(counter + 1)
                 counter += 1
         pbar.finish()
