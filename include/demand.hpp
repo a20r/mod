@@ -272,8 +272,7 @@ namespace mod
                 }
             }
 
-            bool get_path(int start, int end, vector<int>& path,
-                    vector<double>& inter_times)
+            bool get_path(int start, int end, vector<int>& path, double& total_time)
             {
                 // returns true if there is a path, false if there isn't
                 if (paths.count(start) > 0 and paths[start].count(end))
@@ -281,7 +280,7 @@ namespace mod
                     path = paths[start][end];
                     for (size_t i = 0; i < path.size() - 1; i++)
                     {
-                        inter_times.push_back(times[path[i]][path[i + 1]]);
+                        total_time += times[path[i]][path[i + 1]];
                     }
                     return true;
                 }

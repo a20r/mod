@@ -41,11 +41,12 @@ void test_path_lookup(mod::DemandLookup& dl)
 {
     cout << "==================== Path Lookup Test ====================" << endl;
     vector<int> path;
-    vector<double> times;
-    bool got_path = dl.get_path(0, 10, path, times);
+    double total_time;
+    bool got_path = dl.get_path(0, 10, path, total_time);
 
     if (got_path)
     {
+        cout << "Total Time:" << total_time << endl;
         cout << "Path: " << endl;
         for (size_t i = 0; i < path.size(); i++)
         {
