@@ -317,17 +317,18 @@ def create_data_files_kmeans(fn_raw, fn_stations, fn_probs, fn_times,
 
 
 def create_data_files(fn_raw, fn_graph, fn_stations, fn_probs, fn_times,
-                      fn_demands, fn_freqs):
+                      fn_demands, fn_freqs, fn_paths):
     fn_cleaned = fn_raw.split(".")[0] + "_cleaned.csv"
     taxi_count = clean_file(fn_raw, fn_cleaned)
     print "Loading graph from file..."
-    G, stations, st_lookup, times = load_graph(fn_graph)
+    G, stations, st_lookup, times, paths = load_graph(fn_graph)
     print "Determining file length..."
     fl = file_length(fn_cleaned)
     create_stations_file(fn_cleaned, fn_stations, stations)
     create_probs_file(fn_cleaned, fn_probs, fn_freqs, stations, fl)
     create_times_file(stations, times, fn_times)
     create_demands_file(stations, fn_cleaned, fn_demands, fl)
+    create_paths_file(G, st_lookup, paths, fn_paths)
     print "Taxi Count:", taxi_count
     print "Done :D"
 

@@ -5,6 +5,9 @@ import numpy as np
 import osm
 import osm2nx
 import pickle
+import io
+import csv
+from progressbar import ProgressBar, ETA, Percentage, Bar
 
 
 nyc_rect = (-73.985076, 40.753528, -73.952211, 40.772996)
@@ -15,6 +18,12 @@ def all_pairs_times(G):
     print "Computing all pairs travel times..."
     dists = nx.floyd_warshall_numpy(G)
     return np.asarray(dists / nyc_speed)
+
+
+def all_pairs_paths(G):
+    print "Computing all pairs paths..."
+    paths = nx.all_pairs_dijkstra_path(G)
+    return paths
 
 
 def osm_graph(left, bottom, right, top):
@@ -34,14 +43,38 @@ def osm_graph(left, bottom, right, top):
     return G, stations, st_lookup
 
 
-def write_graph(fn_graph):
+def create_paths_file(G, st_lookup, paths, fn_paths):
+    counter = 0
+    pbar = ProgressBar(
+        widgets=["Creating Paths File: ", Bar(), Percentage(), "|", ETA()],
+        maxval=pow(len(G.nodes()), 2)).start()
+    with io.open(fn_paths, "wb") as fout:
+        writer = csv.writer(fout, delimiter=" ")
+        for i in G.nodes():
+            for j in G.nodes():
+                path = paths[i][j]
+                id_path = list()
+                for n in path:
+                    id_path.append(st_lookup[n])
+                start = st_lookup[i]
+                end = st_lookup[j]
+                writer.writerow([start, end] + path)
+                pbar.update(counter + 1)
+                counter += 1
+        pbar.finish()
+
+
+def write_graph(fn_graph, fn_paths):
     G, stations, st_lookup = osm_graph(*nyc_rect)
     dists = all_pairs_times(G)
+    paths = all_pairs_paths(G)
     G_tuple = (G, stations, st_lookup, dists)
     print "Writing graph data to file..."
     pstr = pickle.dumps(G_tuple)
     with open(fn_graph, "wb") as fout:
         fout.write(pstr)
+    print "Writing paths to a file..."
+    create_paths_file(G, st_lookup, paths, fn_paths)
 
 
 if __name__ == "__main__":
@@ -51,5 +84,9 @@ if __name__ == "__main__":
         "--fn_graph", dest="fn_graph", type=str,
         default="data/manhattan_graph.pickle",
         help="Output file for the pickled graph data to be written")
+    parser.add_argument(
+        "--fn_paths", dest="fn_paths", type=str,
+        default="data/trip_data_5_paths_short.csv",
+        help="Output CSV file for the all pairs paths for the stations")
     args = parser.parse_args()
-    write_graph(args.fn_graph)
+    write_graph(args.fn_graph, args.fn_paths)

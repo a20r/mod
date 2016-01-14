@@ -96,15 +96,33 @@ namespace mod
     };
 
     inline bool operator<= (Time const& lhs, Demand const& rhs) {
-        return lhs.day <= rhs.day and lhs.get_interval() <= rhs.tau;
-    };
-
-    inline bool operator> (Time const& lhs, Demand const& rhs) {
-        return lhs.day >= rhs.day and lhs.get_interval() > rhs.tau;
+        if (lhs.day < rhs.day)
+        {
+            return true;
+        }
+        else if (lhs.day == rhs.day and lhs.get_interval() <= rhs.tau)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     };
 
     inline bool operator>= (Time const& lhs, Demand const& rhs) {
-        return lhs.day >= rhs.day and lhs.get_interval() >= rhs.tau;
+        if (lhs.day > rhs.day)
+        {
+            return true;
+        }
+        else if (lhs.day == rhs.day and lhs.get_interval() >= rhs.tau)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     };
 
     inline ostream& operator<< (ostream& os, const Demand& demand) {
@@ -114,6 +132,11 @@ namespace mod
         os << demand.pickup << ", ";
         os << demand.dropoff;
         os << ")";
+        return os;
+    };
+
+    inline ostream& operator<< (ostream& os, const Time& t) {
+        os << "Time(" << t.day << ", " << t.secs << ")";
         return os;
     };
 
@@ -300,8 +323,9 @@ namespace mod
                 }
             }
 
-            void sample(int num, Time st, Time end, vector<Demand>& dems)
+            bool sample(int num, Time st, Time end, vector<Demand>& dems)
             {
+                // This returns true if something was actually sampled
                 // This only works if the probability file is sorted by time
                 vector<double> csum;
                 double lp = 0;
@@ -311,13 +335,21 @@ namespace mod
                     {
                         break;
                     }
-                    else if (st <= demand_vec[i] and end >= demand_vec[i])
+                    else if (st <= demand_vec[i])
                     {
                         csum.push_back(lp + demands[demand_vec[i]]);
                         lp += demands[demand_vec[i]];
                     }
                 }
-                return sample(num, csum, dems);
+                if (csum.size() > 0)
+                {
+                    sample(num, csum, dems);
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
     };
 };

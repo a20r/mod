@@ -17,15 +17,22 @@ void test_query(mod::DemandLookup& dl) {
 void test_sample(mod::DemandLookup& dl) {
     const int num = 10;
     vector<mod::Demand> dems;
-    mod::Time st(2, 0), end(2, 1000);
-    dl.sample(num, st, end, dems);
+    mod::Time st(2, 899), end(2, 1000);
+    bool could_sample = dl.sample(num, st, end, dems);
 
     cout << "==================== Sample Test ====================" << endl;
-    cout << "Sampling " << num << " Demands" << endl;
-    for (int i = 0; i < num; i++) {
-        cout << "\t" << dems[i] << endl;
+    if (could_sample)
+    {
+        cout << "Sampling " << num << " Demands" << endl;
+        for (int i = 0; i < num; i++) {
+            cout << "\t" << dems[i] << endl;
+        }
+        cout << endl;
     }
-    cout << endl;
+    else
+    {
+        cout << "Unable to sample due to lack of data" << endl;
+    }
 }
 
 int main() {
