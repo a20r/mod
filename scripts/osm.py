@@ -41,7 +41,7 @@ def read_osm(filename_or_stream, only_roads=True):
     """
 
     osm = OSM(filename_or_stream)
-    G = nx.Graph()
+    G = nx.DiGraph()
 
     for w in osm.ways.itervalues():
         if only_roads and 'highway' not in w.tags:

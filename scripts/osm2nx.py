@@ -15,7 +15,7 @@ def make_weighted(G):
     inversely proportional to the distance between points.
     :return: weighted network in NetworkX format, maximum distance between two nodes
     """
-    G = next(nx.connected_component_subgraphs(G))
+    G = max(nx.strongly_connected_component_subgraphs(G), key=len)
     # For each edge, put (geographical distance * -1) as its weight. Calculate the largest distance beteen nodes
     max_distance = 0
     for u, v, d in G.edges(data=True):
@@ -37,6 +37,7 @@ def simplify_by_degree(G, max_distance):
     :param max_distance: max distance between two nodes in the network. Asked as a parameter to avoid repetitive iteration
     :return: Simplified network in NetworkX format
     """
+    print len(G.nodes())
     G_simple = G
     for n in G_simple.nodes():
         if G_simple.degree(n) == 2:
