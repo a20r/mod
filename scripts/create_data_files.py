@@ -31,6 +31,8 @@ fn_freqs_fields = ["time_interval", "expected_requests"]
 date_format = "%Y-%m-%d %H:%M:%S"
 date_format_tz = "%Y-%m-%d %H:%M:%S %Z"
 
+nyc_rect = (-73.993498, 40.752273, -73.957058, 40.766382)
+
 
 def percent_time(str_time):
     """
@@ -77,10 +79,10 @@ def is_within_box(plon, plat, dlon, dlat):
     plon = float(plon)
     dlat = float(dlat)
     dlon = float(dlon)
-    pin_lat = plat > 40.7 and plat < 40.88
-    pin_lon = plon < -73.911 and plon > -74.014
-    din_lat = dlat > 40.7 and dlat < 40.88
-    din_lon = dlon < -73.911 and dlon > -74.014
+    pin_lat = plat > nyc_rect[1] and plat < nyc_rect[3]
+    pin_lon = plon < nyc_rect[2] and plon > nyc_rect[0]
+    din_lat = dlat > nyc_rect[1] and dlat < nyc_rect[3]
+    din_lon = dlon < nyc_rect[2] and dlon > nyc_rect[0]
     return pin_lat and pin_lon and din_lat and din_lon
 
 
@@ -317,18 +319,17 @@ def create_data_files_kmeans(fn_raw, fn_stations, fn_probs, fn_times,
 
 
 def create_data_files(fn_raw, fn_graph, fn_stations, fn_probs, fn_times,
-                      fn_demands, fn_freqs, fn_paths):
+                      fn_demands, fn_freqs):
     fn_cleaned = fn_raw.split(".")[0] + "_cleaned.csv"
     taxi_count = clean_file(fn_raw, fn_cleaned)
     print "Loading graph from file..."
-    G, stations, st_lookup, times, paths = load_graph(fn_graph)
+    G, stations, st_lookup, times = load_graph(fn_graph)
     print "Determining file length..."
     fl = file_length(fn_cleaned)
     create_stations_file(fn_cleaned, fn_stations, stations)
     create_probs_file(fn_cleaned, fn_probs, fn_freqs, stations, fl)
     create_times_file(stations, times, fn_times)
     create_demands_file(stations, fn_cleaned, fn_demands, fl)
-    create_paths_file(G, st_lookup, paths, fn_paths)
     print "Taxi Count:", taxi_count
     print "Done :D"
 

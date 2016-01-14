@@ -9,8 +9,7 @@ import io
 import csv
 from progressbar import ProgressBar, ETA, Percentage, Bar
 
-
-nyc_rect = (-73.985076, 40.753528, -73.952211, 40.772996)
+nyc_rect = (-73.993498, 40.752273, -73.957058, 40.766382)
 nyc_speed = (25 * 1.61) / (60 * 60)  # km/sec
 
 
@@ -33,6 +32,7 @@ def osm_graph(left, bottom, right, top):
     G = osm.read_osm(osm_data)
     print "Making it weighted..."
     G, max_distance = osm2nx.make_weighted(G)
+    print "Number of nodes:", len(G.nodes())
     stations = np.zeros((len(G.nodes()), 2))
     st_lookup = dict()
     print "Determining stations..."
