@@ -169,6 +169,13 @@ namespace mod
                 load_paths(fn_paths);
             }
 
+            void init(string fn_stations, string fn_probs, string fn_times)
+            {
+                load_probs(fn_probs);
+                load_stations(fn_stations);
+                load_times(fn_times);
+            }
+
             void load_probs(string fn_probs)
             {
                 int tau, day, pickup, dropoff;
