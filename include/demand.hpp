@@ -306,7 +306,7 @@ namespace mod
                 return query_demand(tau, day, p_st, d_st);
             }
 
-            void sample(int num, vector<double>& csum, vector<Demand>& dems)
+            void sample(int num, vector<double>& csum, int offset, vector<Demand>& dems)
             {
                 for (int i = 0; i < num; i++)
                 {
@@ -316,7 +316,7 @@ namespace mod
                     {
                         if (r < csum[j])
                         {
-                            dems.push_back(demand_vec[j]);
+                            dems.push_back(demand_vec[j + offset]);
                             break;
                         }
                     }
@@ -329,6 +329,7 @@ namespace mod
                 // This only works if the probability file is sorted by time
                 vector<double> csum;
                 double lp = 0;
+                int offset = -1;
                 for (size_t i = 0; i < demand_vec.size(); i++)
                 {
                     if (end <= demand_vec[i])
@@ -337,13 +338,17 @@ namespace mod
                     }
                     else if (st <= demand_vec[i])
                     {
+                        if (offset < 0)
+                        {
+                            offset = i;
+                        }
                         csum.push_back(lp + demands[demand_vec[i]]);
                         lp += demands[demand_vec[i]];
                     }
                 }
                 if (csum.size() > 0)
                 {
-                    sample(num, csum, dems);
+                    sample(num, csum, offset, dems);
                     return true;
                 }
                 else
