@@ -283,15 +283,15 @@ namespace mod
                     vector<double>& inter_times)
             {
                 // returns true if there is a path, false if there isn't
-                double time_cumulated = 0;
+                double time_edge = 0;
                 if (paths.count(start) > 0 and paths[start].count(end))
                 {
                     path = paths[start][end];
-                    inter_times.push_back(time_cumulated);
+                    inter_times.push_back(time_edge);
                     for (size_t i = 0; i < path.size() - 1; i++)
                     {
-                        time_cumulated += times[path[i]][path[i + 1]];
-                        inter_times.push_back(time_cumulated);
+                        time_edge = times[path[i]][path[i + 1]];
+                        inter_times.push_back(time_edge);
                     }
                     return true;
                 }
