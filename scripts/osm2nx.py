@@ -37,17 +37,13 @@ def simplify_by_degree(G, max_distance):
     :param max_distance: max distance between two nodes in the network. Asked as a parameter to avoid repetitive iteration
     :return: Simplified network in NetworkX format
     """
-    print len(G.nodes())
     G_simple = G
     for n in G_simple.nodes():
-        if G_simple.degree(n) == 2:
-
-            # Find the weight for the new edge
-            weight_uv_1 = G[n][G.neighbors(n)[0]]['weight']
-            weight_uv_2 = G[n][G.neighbors(n)[1]]['weight']
-            weight_new = weight_uv_1 + weight_uv_2
-
-            G_simple.add_edge(G.neighbors(n)[0],G.neighbors(n)[1], weight=weight_new)
+        if G_simple.in_degree(n) == 1 and G_simple.out_degree(n) == 1:
+            weight_in_n = G[G.predecessors(n)[0]][n]['weight']
+            weight_out_n = G[n][G.successors(n)[0]]['weight']
+            weight_new = weight_in_n + weight_out_n
+            G_simple.add_edge(G.predecessors(n)[0], G.successors(n)[0], weight=weight_new)
             G_simple.remove_node(n)
 
     return G_simple

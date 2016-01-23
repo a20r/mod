@@ -7,9 +7,6 @@ import argparse
 import sklearn.cluster as cluster
 import pickle
 import maps
-import osm
-import osm2nx
-import networkx as nx
 from geopy.distance import distance
 from collections import OrderedDict, defaultdict
 from progressbar import ProgressBar, ETA, Percentage, Bar
@@ -287,7 +284,6 @@ def create_demands_file(stations, fn_raw, fn_demands, fl):
                 row = clean_dict(row)
                 p_l = [row["pickup_longitude"], row["pickup_latitude"]]
                 d_l = [row["dropoff_longitude"], row["dropoff_latitude"]]
-                locs = np.array([p_l, d_l])
                 sts = np.array([closest_station(p_l, stations),
                                 closest_station(d_l, stations)])
                 nrow[0] = epoch_seconds(row["pickup_datetime"])
@@ -345,7 +341,7 @@ if __name__ == "__main__":
         help="Number of stations discovered using MiniBatchKMeans.")
     parser.add_argument(
         "--fn_raw", dest="fn_raw", type=str,
-        default="data/trip_data_5_short.csv",
+        default="data/data_short.csv",
         help="CSV file containing the raw NY taxi data.")
     parser.add_argument(
         "--fn_graph", dest="fn_graph", type=str,
@@ -353,23 +349,23 @@ if __name__ == "__main__":
         help="Input pickle file for OSM graph data")
     parser.add_argument(
         "--fn_stations", dest="fn_stations", type=str,
-        default="data/trip_data_5_stations_short.csv",
+        default="data/stationsLUT.csv",
         help="Output CSV file for listing the stations.")
     parser.add_argument(
         "--fn_probs", dest="fn_probs", type=str,
-        default="data/trip_data_5_probs_short.csv",
+        default="data/probs.csv",
         help="Output CSV file for listing the demand probabilities.")
     parser.add_argument(
         "--fn_times", dest="fn_times", type=str,
-        default="data/trip_data_5_times_short.csv",
+        default="data/distances.csv",
         help="Output CSV file for listing the travel times between stations")
     parser.add_argument(
         "--fn_demands", dest="fn_demands", type=str,
-        default="data/trip_data_5_demands_short.csv",
+        default="data/demands.csv",
         help="Output CSV file for time series demands data")
     parser.add_argument(
         "--fn_freqs", dest="fn_freqs", type=str,
-        default="data/trip_data_5_freqs_short.csv",
+        default="data/freqs.csv",
         help="Output CSV file for frequency of requests for different time\
         intervals over multiple days")
     args = parser.parse_args()

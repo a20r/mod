@@ -16,7 +16,7 @@ nyc_speed = (25 * 1.61) / (60 * 60)  # km/sec
 def all_pairs_times(G):
     print "Computing all pairs travel times..."
     dists = nx.floyd_warshall_numpy(G)
-    return np.asarray(dists / nyc_speed)
+    return np.asarray(dists)
 
 
 def all_pairs_paths(G):
@@ -32,6 +32,7 @@ def osm_graph(left, bottom, right, top):
     G = osm.read_osm(osm_data)
     print "Making it weighted..."
     G, max_distance = osm2nx.make_weighted(G)
+    G = osm2nx.simplify_by_degree(G, max_distance)
     print "Number of nodes:", len(G.nodes())
     stations = np.zeros((len(G.nodes()), 2))
     st_lookup = dict()
@@ -86,7 +87,7 @@ if __name__ == "__main__":
         help="Output file for the pickled graph data to be written")
     parser.add_argument(
         "--fn_paths", dest="fn_paths", type=str,
-        default="data/trip_data_5_paths_short.csv",
+        default="data/paths.csv",
         help="Output CSV file for the all pairs paths for the stations")
     args = parser.parse_args()
     write_graph(args.fn_graph, args.fn_paths)
