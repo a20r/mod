@@ -16,13 +16,31 @@ from urllib2 import urlopen
 
 
 osm_url = "http://api.openstreetmap.org/api/0.6/map?bbox={},{},{},{}"
+# osm_url = "http://api.openstreetmap.fr/xapi/0.6/map?*[bbox={},{},{},{}]"
+
+nyc_poly = [[-74.00851878077059, 40.75288995157469],
+            [-74.01737732563862, 40.70363450274093],
+            [-74.01243283598565, 40.69988947196632],
+            [-73.99782710914521, 40.70743343850899],
+            [-73.97742716598874, 40.71130380771929],
+            [-73.97252636835454, 40.7284549818698],
+            [-73.97378303735381, 40.73527282167493],
+            [-73.97213846058494, 40.74251495015199],
+            [-73.942645483123, 40.77548850560436],
+            [-73.9454835793063, 40.78118853872636],
+            [-73.94018677228019,40.78503171212724],
+            [-73.93001170688356, 40.79925356887689],
+            [-73.96094552328789, 40.81318684964225]]
+
 
 
 def download_osm(left, bottom, right, top):
     """
     Return a filehandle to the downloaded data.
     """
-    fp = urlopen(osm_url.format(left, bottom, right, top))
+    param_url = osm_url.format(left, bottom, right, top)
+    print param_url
+    fp = urlopen(param_url)
     return fp
 
 

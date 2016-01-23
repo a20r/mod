@@ -7,6 +7,8 @@ import argparse
 import sklearn.cluster as cluster
 import pickle
 import maps
+import planar
+import scipy.spatial as spatial
 from geopy.distance import distance
 from collections import OrderedDict, defaultdict
 from progressbar import ProgressBar, ETA, Percentage, Bar
@@ -29,6 +31,20 @@ date_format = "%Y-%m-%d %H:%M:%S"
 date_format_tz = "%Y-%m-%d %H:%M:%S %Z"
 
 nyc_rect = (-73.993498, 40.752273, -73.957058, 40.766382)
+nyc_poly = [[-74.00851878077059, 40.75288995157469],
+            [-74.01737732563862, 40.70363450274093],
+            [-74.01243283598565, 40.69988947196632],
+            [-73.99782710914521, 40.70743343850899],
+            [-73.97742716598874, 40.71130380771929],
+            [-73.97252636835454, 40.7284549818698],
+            [-73.97378303735381, 40.73527282167493],
+            [-73.97213846058494, 40.74251495015199],
+            [-73.942645483123, 40.77548850560436],
+            [-73.9454835793063, 40.78118853872636],
+            [-73.94018677228019,40.78503171212724],
+            [-73.93001170688356, 40.79925356887689],
+            [-73.96094552328789, 40.81318684964225]]
+
 
 
 def percent_time(str_time):
@@ -86,6 +102,7 @@ def is_within_box(plon, plat, dlon, dlat):
 def clean_file(fn_raw, fn_cleaned):
     medals = set()
     taxi_count = 0
+    poly = planar.Polygon.from_points(nyc_poly)
     with io.open(fn_raw, "rb") as fin:
         with io.open(fn_cleaned, "wb") as fout:
             reader = csv.reader(fin)
@@ -100,10 +117,15 @@ def clean_file(fn_raw, fn_cleaned):
                     writer.writerow(row)
                 else:
                     try:
+                        c_p = poly.contains_point(planar.Vec2(
+                            float(row[10]), float(row[11])))
+                        c_d = poly.contains_point(planar.Vec2(
+                            float(row[12]), float(row[13])))
                         if not row[0] in medals:
                             taxi_count += 1
                             medals.add(row[0])
-                        if is_within_box(row[10], row[11], row[12], row[13]):
+                        # if is_within_box(row[10], row[11], row[12], row[13]):
+                        if c_p and c_d:
                             writer.writerow(row)
                     except ValueError:
                         pass
@@ -157,7 +179,7 @@ def find_stations(fn_in, **kwargs):
         return kmeans, fl
 
 
-def extract_frequencies(fn_raw, stations, fl):
+def extract_frequencies(fn_raw, stations, kd, fl):
     num_pd = OrderedDict()
     num_ti = OrderedDict()
     num_tau = defaultdict(int)
@@ -176,8 +198,7 @@ def extract_frequencies(fn_raw, stations, fl):
                 p_time, p_day = percent_time(row["pickup_datetime"])
                 p_l = [row["pickup_longitude"], row["pickup_latitude"]]
                 d_l = [row["dropoff_longitude"], row["dropoff_latitude"]]
-                sts = np.array([closest_station(p_l, stations),
-                                closest_station(d_l, stations)])
+                _, sts = kd.query(np.array([p_l, d_l]))
                 tau = int(4 * 24 * p_time)
                 ti = (tau, p_day)
                 if not ti in num_pd.keys():
@@ -224,9 +245,9 @@ def create_stations_file(fn_raw, fn_stations, stations):
             pbar.finish()
 
 
-def create_probs_file(fn_raw, fn_probs, fn_freqs, stations, fl):
+def create_probs_file(fn_raw, fn_probs, fn_freqs, stations, kd, fl):
     num_pd, num_ti, num_tau, num_tau_occ, counter = extract_frequencies(
-        fn_raw, stations, fl)
+        fn_raw, stations, kd, fl)
     pbar = ProgressBar(
         widgets=["Creating Probabilities File: ", Bar(), Percentage(), "|",
                  ETA()],
@@ -266,7 +287,7 @@ def create_times_file(stations, times, fn_times):
         pbar.finish()
 
 
-def create_demands_file(stations, fn_raw, fn_demands, fl):
+def create_demands_file(stations, fn_raw, fn_demands, kd, fl):
     with io.open(fn_raw, "rb") as fin:
         with io.open(fn_demands, "wb") as fout:
             reader = csv.DictReader(fin)
@@ -284,8 +305,7 @@ def create_demands_file(stations, fn_raw, fn_demands, fl):
                 row = clean_dict(row)
                 p_l = [row["pickup_longitude"], row["pickup_latitude"]]
                 d_l = [row["dropoff_longitude"], row["dropoff_latitude"]]
-                sts = np.array([closest_station(p_l, stations),
-                                closest_station(d_l, stations)])
+                _, sts = kd.query(np.array([p_l, d_l]))
                 nrow[0] = epoch_seconds(row["pickup_datetime"])
                 nrow[1] = sts[0]
                 nrow[2] = epoch_seconds(row["dropoff_datetime"])
@@ -320,12 +340,13 @@ def create_data_files(fn_raw, fn_graph, fn_stations, fn_probs, fn_times,
     taxi_count = clean_file(fn_raw, fn_cleaned)
     print "Loading graph from file..."
     G, stations, st_lookup, times = load_graph(fn_graph)
+    kd = spatial.KDTree(stations)
     print "Determining file length..."
     fl = file_length(fn_cleaned)
     create_stations_file(fn_cleaned, fn_stations, stations)
-    create_probs_file(fn_cleaned, fn_probs, fn_freqs, stations, fl)
+    create_probs_file(fn_cleaned, fn_probs, fn_freqs, stations, kd, fl)
     create_times_file(stations, times, fn_times)
-    create_demands_file(stations, fn_cleaned, fn_demands, fl)
+    create_demands_file(stations, fn_cleaned, fn_demands, kd, fl)
     print "Taxi Count:", taxi_count
     print "Done :D"
 
