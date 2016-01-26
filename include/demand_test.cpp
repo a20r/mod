@@ -17,9 +17,9 @@ void test_query(mod::DemandLookup& dl)
 
 void test_sample(mod::DemandLookup& dl)
 {
-    const int num = 20;
+    const int num = 400;
     vector<mod::Demand> dems;
-    mod::Time st(4, 0), end(4, 73140);
+    mod::Time st(4, 810), end(4, 1710);
     bool could_sample = dl.sample(num, st, end, dems);
 
     cout << "==================== Sample Test ====================" << endl;
@@ -64,7 +64,7 @@ void test_request_freqs(mod::DemandLookup& dl)
 {
     cout << "==================== Request Frequency Test ====================";
     cout << endl;
-    mod::Time st(4, 0), end(4, 73140);
+    mod::Time st(4, 810), end(4, 1710);
     int num = dl.compute_number_of_samples(st, end);
     cout << "\tExpeced number of samples: " << num << endl;
 }
