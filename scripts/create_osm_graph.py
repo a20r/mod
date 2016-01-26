@@ -1,4 +1,5 @@
 
+import common
 import argparse
 import planar
 import networkx as nx
@@ -9,9 +10,6 @@ import pickle
 import io
 import csv
 from progressbar import ProgressBar, ETA, Percentage, Bar
-
-
-nyc_speed = (25 * 1.61) / (60 * 60)  # km/sec
 
 
 def all_pairs_times(G):
@@ -74,7 +72,6 @@ def write_graph(fn_graph, fn_paths):
     print "BBox:", rect
     G, stations, st_lookup = osm_graph(*rect)
     paths = all_pairs_paths(G)
-    print "Writing paths to a file..."
     create_paths_file(G, st_lookup, paths, fn_paths)
     dists = all_pairs_times(G)
     G_tuple = (G, stations, st_lookup, dists)

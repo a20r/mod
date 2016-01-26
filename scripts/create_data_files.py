@@ -15,9 +15,6 @@ from collections import OrderedDict, defaultdict
 from progressbar import ProgressBar, ETA, Percentage, Bar
 
 
-feature_names = ["p_time", "p_day", "passenger_count",
-                 "p_station", "d_station"]
-
 fn_stations_fields = ["id", "latitude", "longitude"]
 
 fn_probs_fields = ["tau", "day", "pickup", "dropoff", "probability"]
@@ -28,8 +25,6 @@ fn_demands_fields = ["pickup_datetime", "pickup_station", "dropoff_datetime",
 
 fn_freqs_fields = ["time_interval", "expected_requests"]
 
-date_format = "%Y-%m-%d %H:%M:%S"
-date_format_tz = "%Y-%m-%d %H:%M:%S %Z"
 
 
 def percent_time(str_time):
@@ -37,13 +32,13 @@ def percent_time(str_time):
     Given a string representation of a date, this returns the percent of the
     day that the time is (i.e. 0.5 would be 12 noon)
     """
-    t = time.strptime(str_time, date_format)
+    t = time.strptime(str_time, common.date_format)
     secs = t.tm_hour * 60 * 60 + t.tm_min * 60 + t.tm_sec
     return secs / (24 * 60 * 60.0), t.tm_wday
 
 
 def epoch_seconds(str_time):
-    return int(time.mktime(time.strptime(str_time, date_format)))
+    return int(time.mktime(time.strptime(str_time, common.date_format)))
 
 
 def load_graph(fn_graph):

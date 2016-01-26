@@ -31,6 +31,7 @@ def simplify_by_degree(G, max_distance):
             G_simple.add_edge(G.predecessors(n)[0], G.successors(n)[0],
                               weight=weight_new)
             G_simple.remove_node(n)
-        if G_simple.out_degree(n) == 0 or G_simple.in_degree(0):
+        elif G_simple.has_node(n) and (G_simple.out_degree(n) == 0\
+                                       or G_simple.in_degree(n) == 0):
             G_simple.remove_node(n)
     return G_simple
