@@ -1,5 +1,6 @@
 
 import io
+import common
 import time
 import csv
 import numpy as np
@@ -29,12 +30,6 @@ fn_freqs_fields = ["time_interval", "expected_requests"]
 
 date_format = "%Y-%m-%d %H:%M:%S"
 date_format_tz = "%Y-%m-%d %H:%M:%S %Z"
-
-nyc_rect = (-73.993498, 40.752273, -73.957058, 40.766382)
-nyc_poly = [[-74.01002602762065, 40.7471779437443],
-            [-73.97293146890081, 40.7354687066417],
-            [-73.96044289997499, 40.75888523822258],
-            [-73.99337080557781, 40.77202074228057]]
 
 
 def percent_time(str_time):
@@ -78,6 +73,7 @@ def file_length(fn_in):
 
 
 def is_within_box(plon, plat, dlon, dlat):
+    nyc_rect = common.nyc_rect
     plat = float(plat)
     plon = float(plon)
     dlat = float(dlat)
@@ -92,7 +88,7 @@ def is_within_box(plon, plat, dlon, dlat):
 def clean_file(fn_raw, fn_cleaned):
     medals = set()
     taxi_count = 0
-    poly = planar.Polygon.from_points(nyc_poly)
+    poly = planar.Polygon.from_points(common.nyc_poly)
     with io.open(fn_raw, "rb") as fin:
         with io.open(fn_cleaned, "wb") as fout:
             reader = csv.reader(fin)
@@ -209,7 +205,7 @@ def extract_frequencies(fn_raw, stations, kd, fl):
     return num_pd, num_ti, num_tau, num_tau_occ, counter
 
 
-def create_stations_file(fn_raw, fn_stations, stations):
+def create_stations_file(fn_stations, stations):
     fn_javier = fn_stations.split(".")[0] + "_LUT.csv"
     pbar = ProgressBar(
         widgets=["Creating Stations File: ", Bar(), Percentage(), "|", ETA()],
@@ -316,7 +312,7 @@ def create_data_files_kmeans(fn_raw, fn_stations, fn_probs, fn_times,
     kmeans, fl = find_stations(fn_cleaned, **kwargs)
     stations = kmeans.cluster_centers_
     times = maps.travel_times(stations)
-    create_stations_file(fn_cleaned, fn_stations, stations)
+    create_stations_file(fn_stations, stations)
     create_probs_file(fn_cleaned, fn_probs, fn_freqs, stations, fl)
     create_times_file(stations, times, fn_times)
     create_demands_file(stations, fn_cleaned, fn_demands, fl)
@@ -333,7 +329,7 @@ def create_data_files(fn_raw, fn_graph, fn_stations, fn_probs, fn_times,
     kd = spatial.KDTree(stations)
     print "Determining file length..."
     fl = file_length(fn_cleaned)
-    create_stations_file(fn_cleaned, fn_stations, stations)
+    create_stations_file(fn_stations, stations)
     create_probs_file(fn_cleaned, fn_probs, fn_freqs, stations, kd, fl)
     create_times_file(stations, times, fn_times)
     create_demands_file(stations, fn_cleaned, fn_demands, kd, fl)

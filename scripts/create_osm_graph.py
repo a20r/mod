@@ -10,18 +10,12 @@ import io
 import csv
 from progressbar import ProgressBar, ETA, Percentage, Bar
 
-nyc_rect = (-73.993498, 40.752273, -73.957058, 40.766382)
-nyc_poly = [[-74.01002602762065, 40.7471779437443],
-            [-73.97293146890081, 40.7354687066417],
-            [-73.96044289997499, 40.75888523822258],
-            [-73.99337080557781, 40.77202074228057]]
-
 
 nyc_speed = (25 * 1.61) / (60 * 60)  # km/sec
 
 
 def all_pairs_times(G):
-    print "Computing all pairs travel times..."
+    print "Computing all pairs travel distances..."
     dists = nx.floyd_warshall_numpy(G)
     return np.asarray(dists)
 
@@ -33,8 +27,6 @@ def all_pairs_paths(G):
 
 
 def osm_graph(left, bottom, right, top):
-    # print "Downloading OSM graph..."
-    # osm_data = osm.download_osm(left, bottom, right, top)
     print "Making it a graph..."
     G = osm.read_osm("data/map.osm")
     print "Making it weighted..."
@@ -76,7 +68,7 @@ def create_paths_file(G, st_lookup, paths, fn_paths):
 
 
 def write_graph(fn_graph, fn_paths):
-    poly = planar.Polygon.from_points(nyc_poly)
+    poly = planar.Polygon.from_points(common.nyc_poly)
     r = poly.bounding_box
     rect = (r.min_point.x, r.min_point.y, r.max_point.x, r.max_point.y)
     print "BBox:", rect
