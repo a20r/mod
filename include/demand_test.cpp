@@ -39,7 +39,8 @@ void test_sample(mod::DemandLookup& dl)
 
 void test_path_lookup(mod::DemandLookup& dl)
 {
-    cout << "==================== Path Lookup Test ====================" << endl;
+    cout << "==================== Path Lookup Test ====================";
+    cout << endl;
     vector<int> path;
     vector<double> times;
     bool got_path = dl.get_path(0, 10, path, times);
@@ -61,10 +62,11 @@ void test_path_lookup(mod::DemandLookup& dl)
 
 int main() {
     srand(time(NULL));
-    mod::DemandLookup dl("../data/trip_data_5_stations_short.csv",
-            "../data/trip_data_5_probs_short.csv",
-            "../data/trip_data_5_times_short.csv",
-            "../data/trip_data_5_paths_short.csv");
+    mod::DemandLookup dl("../data/stationsLUT.csv",
+            "../data/probs.csv",
+            "../data/distances.csv",
+            "../data/paths.csv",
+            "../data/freqs.csv");
     test_query(dl);
     test_sample(dl);
     test_path_lookup(dl);

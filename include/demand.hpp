@@ -149,15 +149,26 @@ namespace mod
             vector<GeoLocation> stations;
             vector<vector<double>> times;
             unordered_map<int, unordered_map<int, vector<int>>> paths;
+            unordered_map<int, int> freqs;
 
         public:
             DemandLookup() {};
             ~DemandLookup() {};
 
             DemandLookup(string fn_stations, string fn_probs, string fn_times,
-                    string fn_paths)
+                    string fn_paths, string fn_freqs)
             {
-                init(fn_stations, fn_probs, fn_times, fn_paths);
+                init(fn_stations, fn_probs, fn_times, fn_paths, fn_freqs);
+            }
+
+            void init(string fn_stations, string fn_probs, string fn_times,
+                    string fn_paths, string fn_freqs)
+            {
+                load_probs(fn_probs);
+                load_stations(fn_stations);
+                load_times(fn_times);
+                load_paths(fn_paths);
+                load_freqs(fn_freqs);
             }
 
             void init(string fn_stations, string fn_probs, string fn_times,
@@ -279,6 +290,32 @@ namespace mod
                 }
             }
 
+            void load_freqs(string fn_freqs)
+            {
+                int interval;
+                float expected_reqs;
+                ifstream data(fn_freqs);
+                string line;
+                getline(data, line);
+
+                while(getline(data, line))
+                {
+                    stringstream lineStream(line);
+                    string cell;
+                    int counter = 0;
+                    while(std::getline(lineStream, cell, ','))
+                    {
+                        switch (counter++)
+                        {
+                            case 0: interval = stoi(cell);
+                            case 1: expected_reqs = (int) stof(cell);
+                            default: break;
+                        }
+                    }
+                    freqs[interval] = expected_reqs;
+                }
+            }
+
             bool get_path(int start, int end, vector<int>& path,
                     vector<double>& inter_times)
             {
@@ -388,6 +425,11 @@ namespace mod
                 vector<double> csum;
                 double lp = 0;
                 int offset = -1;
+                int expected_reqs = compute_number_of_samples(st, end);
+                if (num > expected_reqs)
+                {
+                    num = expected_reqs;
+                }
                 for (size_t i = 0; i < demand_vec.size(); i++)
                 {
                     if (end <= demand_vec[i])
@@ -413,6 +455,18 @@ namespace mod
                 {
                     return false;
                 }
+            }
+
+            int compute_number_of_samples(Time st, Time end)
+            {
+                int s_int = st.get_interval();
+                int e_int = end.get_interval();
+                int expected_reqs = 0;
+                for (int i = s_int; i <= e_int; i++)
+                {
+                    expected_reqs += freqs[i];
+                }
+                return expected_reqs;
             }
     };
 };
