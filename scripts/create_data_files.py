@@ -48,17 +48,6 @@ def load_graph(fn_graph):
         return G_tuple
 
 
-def closest_station(p, stations):
-    dist = None
-    m_station = None
-    for i, st in enumerate(stations):
-        p_dist = distance(p, st).kilometers
-        if dist is None or p_dist < dist:
-            dist = p_dist
-            m_station = i
-    return m_station
-
-
 def file_length(fn_in):
     with open(fn_in, "rb") as fin:
         reader = csv.reader(fin)
@@ -67,22 +56,8 @@ def file_length(fn_in):
         return fl
 
 
-def is_within_box(plon, plat, dlon, dlat):
-    nyc_rect = common.nyc_rect
-    plat = float(plat)
-    plon = float(plon)
-    dlat = float(dlat)
-    dlon = float(dlon)
-    pin_lat = plat > nyc_rect[1] and plat < nyc_rect[3]
-    pin_lon = plon < nyc_rect[2] and plon > nyc_rect[0]
-    din_lat = dlat > nyc_rect[1] and dlat < nyc_rect[3]
-    din_lon = dlon < nyc_rect[2] and dlon > nyc_rect[0]
-    return pin_lat and pin_lon and din_lat and din_lon
-
-
 def clean_file(fn_raw, fn_cleaned):
     medals = set()
-    taxi_count = 0
     poly = planar.Polygon.from_points(common.nyc_poly)
     with io.open(fn_raw, "rb") as fin:
         with io.open(fn_cleaned, "wb") as fout:
@@ -102,28 +77,14 @@ def clean_file(fn_raw, fn_cleaned):
                             float(row[10]), float(row[11])))
                         c_d = poly.contains_point(planar.Vec2(
                             float(row[12]), float(row[13])))
-                        if not row[0] in medals:
-                            taxi_count += 1
-                            medals.add(row[0])
-                        # if is_within_box(row[10], row[11], row[12], row[13]):
                         if c_p and c_d:
                             writer.writerow(row)
+                            medals.add(row[0])
                     except ValueError:
                         pass
                     pbar.update(i + 1)
             pbar.finish()
-    return taxi_count
-
-
-def clean_dict(val_dict):
-    clean = dict()
-    for key in val_dict.keys():
-        k = key.strip()
-        try:
-            clean[k] = float(val_dict[key])
-        except:
-            clean[k] = val_dict[key]
-    return clean
+    return len(medals)
 
 
 def find_stations(fn_in, **kwargs):
@@ -175,7 +136,7 @@ def extract_frequencies(fn_raw, stations, kd, fl):
             if i == 0:
                 continue
             try:
-                row = clean_dict(row)
+                row = common.clean_dict(row)
                 p_time, p_day = percent_time(row["pickup_datetime"])
                 p_l = [row["pickup_longitude"], row["pickup_latitude"]]
                 d_l = [row["dropoff_longitude"], row["dropoff_latitude"]]
@@ -283,7 +244,7 @@ def create_demands_file(stations, fn_raw, fn_demands, kd, fl):
                 if i == 0:
                     continue
                 nrow = [None] * len(fn_demands_fields)
-                row = clean_dict(row)
+                row = common.clean_dict(row)
                 p_l = [row["pickup_longitude"], row["pickup_latitude"]]
                 d_l = [row["dropoff_longitude"], row["dropoff_latitude"]]
                 _, sts = kd.query(np.array([p_l, d_l]))

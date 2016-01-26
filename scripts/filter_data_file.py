@@ -1,22 +1,33 @@
 
 import common
+import time
 import argparse
-from progressbar import ProgressBar, ETA, Percentage, Bar
+import csv
+import io
 
 
-def filter_data_for_day(fn_huge, fn_filtered, wd, max_wds=1):
-    pbar = ProgressBar(
-        widgets=["Filtering File: ", Bar(), Percentage(), "|", ETA()],
-        maxval=fl + 1).start()
-    with io.open(fn_huge, "rb") as f_in:
+def filter_data_for_day(fn_huge, fn_filtered, wd, max_wds):
+    print "Filtering file based on weekday..."
+    current_day = None
+    day_count = 0
+    with io.open(fn_huge, "rb") as fin:
         with io.open(fn_filtered, "wb") as fout:
             reader = csv.DictReader(fin)
-            writer = csv.writer(fout)
+            writer = csv.DictWriter(fout, fieldnames=common.fn_raw_fields)
+            writer.writeheader()
             for i, row in enumerate(reader):
                 if i == 0:
+                    continue
+                row = common.clean_dict(row)
+                str_time = row["pickup_datetime"]
+                t = time.strptime(str_time, common.date_format)
+                if t.tm_wday == wd:
+                    if current_day != t.tm_yday:
+                        current_day = t.tm_yday
+                        day_count += 1
+                        if day_count > max_wds:
+                            return
                     writer.writerow(row)
-                else:
-                    pass
 
 
 if __name__ == "__main__":
@@ -34,5 +45,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--weekday", dest="weekday", type=int, default=4,
         help="Day of the week to gather data.")
+    parser.add_argument(
+        "--n_days", dest="n_days", type=int, default=1,
+        help="Day of the week to gather data.")
     args = parser.parse_args()
-    filter_data_for_day(args.fn_raw, args.fn_filtered, args.weekday)
+    filter_data_for_day(args.fn_raw, args.fn_filtered, args.weekday,
+                        args.n_days)
