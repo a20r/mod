@@ -19,7 +19,7 @@ void test_sample(mod::DemandLookup& dl)
 {
     const int num = 20;
     vector<mod::Demand> dems;
-    mod::Time st(5, 0), end(5, 73140);
+    mod::Time st(4, 0), end(4, 73140);
     bool could_sample = dl.sample(num, st, end, dems);
 
     cout << "==================== Sample Test ====================" << endl;
@@ -60,6 +60,16 @@ void test_path_lookup(mod::DemandLookup& dl)
     }
 }
 
+void test_request_freqs(mod::DemandLookup& dl)
+{
+    cout << "==================== Request Frequency Test ====================";
+    cout << endl;
+    mod::Time st(4, 0), end(4, 73140);
+    int num = dl.compute_number_of_samples(st, end);
+    cout << "\tExpeced number of samples: " << num << endl;
+}
+
+
 int main() {
     srand(time(NULL));
     mod::DemandLookup dl("../data/stationsLUT.csv",
@@ -70,4 +80,5 @@ int main() {
     test_query(dl);
     test_sample(dl);
     test_path_lookup(dl);
+    test_request_freqs(dl);
 }
