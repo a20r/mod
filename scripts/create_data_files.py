@@ -15,8 +15,6 @@ from collections import OrderedDict, defaultdict
 from progressbar import ProgressBar, ETA, Percentage, Bar
 
 
-fn_stations_fields = ["id", "latitude", "longitude"]
-
 fn_probs_fields = ["tau", "day", "pickup", "dropoff", "probability"]
 
 fn_demands_fields = ["pickup_datetime", "pickup_station", "dropoff_datetime",
@@ -171,12 +169,12 @@ def create_stations_file(fn_stations, stations):
             javier_writer = csv.writer(javier, delimiter=" ")
             javier_writer.writerow([len(stations)])
             writer = csv.writer(fout)
-            writer.writerow(fn_stations_fields)
+            writer.writerow(common.fn_stations_fields)
             for i, center in enumerate(stations):
                 row = list()
                 row.append(i)
-                row.append(center[0])
                 row.append(center[1])
+                row.append(center[0])
                 writer.writerow(row)
                 jrow = list()
                 jrow.append(center[0])
