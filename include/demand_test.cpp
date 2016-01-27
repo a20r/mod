@@ -72,7 +72,8 @@ void test_request_freqs(mod::DemandLookup& dl)
 
 int main() {
     srand(time(NULL));
-    mod::DemandLookup dl("../data/stationsLUT.csv",
+    mod::DemandLookup dl(
+            "../data/stationsLUT.csv",
             "../data/probs.csv",
             "../data/distances.csv",
             "../data/paths.csv",

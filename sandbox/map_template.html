@@ -61,6 +61,12 @@ function initMap() {
     mapTypeId: google.maps.MapTypeId.SATELLITE
   });
 
+    var marker = new google.maps.Marker({
+        position: $pickup,
+        map: map,
+        title: 'Pickup Location'
+    });
+
   heatmap = new google.maps.visualization.HeatmapLayer({
     data: getPoints(),
     map: map
@@ -96,7 +102,7 @@ function changeRadius() {
 }
 
 function changeOpacity() {
-  heatmap.set('opacity', heatmap.get('opacity') ? null : 1);
+  heatmap.set('opacity', heatmap.get('opacity') ? null : 0.8);
 }
 
 function getPoints() {

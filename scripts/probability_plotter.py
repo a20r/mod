@@ -22,6 +22,8 @@ MAP_ACTUAL = "sandbox/map.html"
 coord_template = Template(
     "{location: new google.maps.LatLng($lat, $lon), weight: $prob}")
 
+latlon_template = Template("new google.maps.LatLng($lat, $lon)")
+
 
 def meanify(dofl):
     for k in dofl.keys():
@@ -73,6 +75,9 @@ def plot_probs_bar_graph(fn_probs, interval_min, interval_max, weekday, pickup,
     sorty = sorted(zip(probs[DS], probs[PR]), key=lambda v: -v[1])
     order, ps = zip(*sorty)
     sns.barplot(x=PR, y=DS, data=probs, order=order, estimator=median, ci=0)
+    plt.title("Top {} Most Likely Drop-off Stations from Pick-up Station {}"\
+              .format(n_keep, pickup))
+    plt.xlabel("Likelihood")
 
 
 def normalize(probs):
@@ -99,7 +104,11 @@ def plot_heatmap(fn_probs, fn_stations, interval_min, interval_max,
             coord = coord_template.substitute(
                 lat=lat, lon=lon, prob=100 * prob)
             coords.append(coord)
-        map_html = template.substitute(coords=",".join(c for c in coords))
+        p_lat = sts[pickup][1]
+        p_lon = sts[pickup][0]
+        pickup_gmaps = latlon_template.substitute(lat=lat, lon=lon)
+        map_html = template.substitute(coords=",".join(c for c in coords),
+                                       pickup=pickup_gmaps)
         with open(MAP_ACTUAL, "wb") as fout:
             fout.write(map_html)
 
@@ -122,10 +131,10 @@ if __name__ == "__main__":
         "--weekday", dest="weekday", type=int, default=4,
         help="Day of the week for pickup probabilities.")
     parser.add_argument(
-        "--pickup", dest="pickup", type=int, default=2,
+        "--pickup", dest="pickup", type=int, default=82,
         help="Pickup station used for the probability plot.")
     parser.add_argument(
-        "--n_keep", dest="n_keep", type=int, default=40,
+        "--n_keep", dest="n_keep", type=int, default=50,
         help="Top k stations to plot")
     parser.add_argument(
         "--fn_stations", dest="fn_stations", type=str,
@@ -133,6 +142,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     plot_heatmap(args.fn_probs, args.fn_stations, args.interval_min,
                  args.interval_max, args.weekday, args.pickup)
-    # plot_probs_bar_graph(args.fn_probs, args.interval_min, args.interval_max,
-    #                      args.weekday, args.pickup, args.n_keep)
-    # plt.show()
+    plot_probs_bar_graph(args.fn_probs, args.interval_min, args.interval_max,
+                         args.weekday, args.pickup, args.n_keep)
+    plt.show()
