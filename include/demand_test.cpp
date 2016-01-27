@@ -8,8 +8,8 @@ using namespace std;
 void test_query(mod::DemandLookup& dl)
 {
     mod::GeoLocation p_st(-73.991788392187516, -73.991788392187516);
-    mod::GeoLocation d_st(-73.78195999999997,-73.78195999999997);
-    double prob = dl.query_demand(0, 2, p_st, d_st);
+    mod::GeoLocation d_st(-73.78195999999997, -73.78195999999997);
+    double prob = dl.query_demand(0, 4, p_st, d_st);
 
     cout << "==================== Query Test ====================" << endl;
     cout << "Probability -> " << prob << endl << endl;
@@ -17,9 +17,9 @@ void test_query(mod::DemandLookup& dl)
 
 void test_sample(mod::DemandLookup& dl)
 {
-    const int num = 400;
+    const int num = 50;
     vector<mod::Demand> dems;
-    mod::Time st(4, 810), end(4, 1710);
+    mod::Time st(4, 1050), end(4, 1950);
     bool could_sample = dl.sample(num, st, end, dems);
 
     cout << "==================== Sample Test ====================" << endl;
@@ -64,9 +64,9 @@ void test_request_freqs(mod::DemandLookup& dl)
 {
     cout << "==================== Request Frequency Test ====================";
     cout << endl;
-    mod::Time st(4, 810), end(4, 1710);
+    mod::Time st(4, 1050), end(4, 1950);
     int num = dl.compute_number_of_samples(st, end);
-    cout << "\tExpeced number of samples: " << num << endl;
+    cout << "Expeced number of samples: \n\t" << num << endl;
 }
 
 
