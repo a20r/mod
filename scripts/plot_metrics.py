@@ -1,7 +1,7 @@
 
 import io
 import common
-import os.path
+import os, os.path
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas
@@ -9,14 +9,14 @@ import re
 import seaborn as sns
 from collections import defaultdict
 from datetime import datetime
-
-__all__ = ["sns"]
+from progressbar import ProgressBar, ETA, Percentage, Bar
 
 
 TIME_STEP = 30
 GRAPHS_PREFIX = "graphs"
 DATA_FILE_TEMPLATE = "data-{}-{}.txt"
 REG = r"[-+]?\d*\.\d+|\d+"
+START_DATE = "2013-05-03 19:00:00"
 
 
 class PassengerData(object):
@@ -47,77 +47,99 @@ class PerformanceData(object):
         self.total_ignored = attrs[5]
 
 
+def process_vehicles(fin, data):
+    fin.readline()
+    n_reqs = int(re.findall(r"\d+", fin.readline())[0])
+    data["n_reqs"].append(n_reqs)
+    while True:
+        line = fin.readline()
+        if "Vehicles" in line:
+            break
+    ppv = list()
+    line = fin.readline()
+    while len(line) > 1:
+        passes = re.findall(r"\d+", line.split("%")[1])
+        ppv.append(len(passes))
+        line = fin.readline()
+    data["mean_passengers"].append(np.mean(ppv))
+    data["med_passengers"].append(np.median(ppv))
+    data["std_passengers"].append(np.std(ppv))
+
+
+def move_to_passengers(fin, data):
+    while True:
+        line = fin.readline()
+        if "Passengers" in line:
+            n_pass = int(re.findall(r"\d+", line)[0])
+            data["total_passengers"].append(n_pass)
+            break
+
+
+def process_passengers(fin, data):
+    line = re.findall(REG, fin.readline())
+    if len(line) > 0:
+        waiting_time = list()
+        delay = list()
+        while len(line) > 0:
+            pd = PassengerData(line)
+            waiting_time.append(pd.time_pickup - pd.time_req)
+            if pd.time_dropoff > 0:
+                dly = pd.time_dropoff - pd.time_req - pd.travel_time_optim
+                delay.append(dly)
+            line = re.findall(REG, fin.readline())
+        data["mean_waiting_time"].append(np.mean(waiting_time))
+        data["med_waiting_time"].append(np.median(waiting_time))
+        data["std_waiting_time"].append(np.std(waiting_time))
+        data["mean_delay"].append(np.mean(delay))
+        data["med_delay"].append(np.median(delay))
+        data["std_delay"].append(np.std(delay))
+    else:
+        data["mean_waiting_time"].append(0)
+        data["med_waiting_time"].append(0)
+        data["std_waiting_time"].append(0)
+        data["mean_delay"].append(0)
+        data["med_delay"].append(0)
+        data["std_delay"].append(0)
+
+
+def process_performance(fin, data):
+    fin.readline()
+    line = re.findall(REG, fin.readline())
+    pd = PerformanceData(line)
+    # data["time"].append(t)
+    data["n_pickups"].append(pd.n_pickups)
+    data["n_dropoffs"].append(pd.n_dropoffs)
+    data["n_ignored"].append(pd.n_ignored)
+
+
+def convert_to_dataframe(data):
+    start = datetime.strptime(START_DATE, common.date_format)
+    periods = 24 * 60 * 2 - 1
+    freq = "30S"
+    inds = pandas.date_range(start=start, periods=periods, freq=freq)
+    for k in data.keys():
+        data[k] = np.array(data[k])
+    return pandas.DataFrame(data, index=inds)
+
+
 def extract_metrics(folder):
     g_folder = folder + GRAPHS_PREFIX + "/"
     data = defaultdict(list)
-    t = 0
-    while True:
+    fl = len(os.listdir(g_folder))
+    pbar = ProgressBar(
+        widgets=["Extracting Metrics: ", Bar(), Percentage(), "|", ETA()],
+        maxval=fl).start()
+    for i in xrange(fl):
+        t = i * TIME_STEP
         filename = g_folder + DATA_FILE_TEMPLATE.format(GRAPHS_PREFIX, t)
-        print filename
-        if not os.path.isfile(filename):
-            inds = pandas.date_range(
-                start=datetime.strptime(
-                    "2013-05-03 19:00:00", common.date_format),
-                periods=24 * 60 * 2 - 1, freq="30S")
-            for k in data.keys():
-                data[k] = np.array(data[k])
-            return pandas.DataFrame(data, index=inds)
         with io.open(filename) as fin:
-            fin.readline()
-            n_reqs = int(re.findall(r"\d+", fin.readline())[0])
-            data["n_reqs"].append(n_reqs)
-            while True:
-                line = fin.readline()
-                if "Vehicles" in line:
-                    break
-            ppv = list()
-            line = fin.readline()
-            while len(line) > 1:
-                passes = re.findall(r"\d+", line.split("%")[1])
-                ppv.append(len(passes))
-                line = fin.readline()
-            data["mean_passengers"].append(np.mean(ppv))
-            data["med_passengers"].append(np.median(ppv))
-            data["std_passengers"].append(np.std(ppv))
-            while True:
-                line = fin.readline()
-                if "Passengers" in line:
-                    n_pass = int(re.findall(r"\d+", line)[0])
-                    data["total_passengers"].append(n_pass)
-                    break
-            line = re.findall(REG, fin.readline())
-            if len(line) > 0:
-                waiting_time = list()
-                delay = list()
-                while len(line) > 0:
-                    pd = PassengerData(line)
-                    waiting_time.append(pd.time_pickup - pd.time_req)
-                    if pd.time_dropoff > 0:
-                        delay.append(pd.time_dropoff - pd.time_req
-                                     - pd.travel_time_optim)
-                    line = re.findall(REG, fin.readline())
-                data["mean_waiting_time"].append(np.mean(waiting_time))
-                data["med_waiting_time"].append(np.median(waiting_time))
-                data["std_waiting_time"].append(np.std(waiting_time))
-                data["mean_delay"].append(np.mean(delay))
-                data["med_delay"].append(np.median(delay))
-                data["std_delay"].append(np.std(delay))
-            else:
-                data["mean_waiting_time"].append(0)
-                data["med_waiting_time"].append(0)
-                data["std_waiting_time"].append(0)
-                data["mean_delay"].append(0)
-                data["med_delay"].append(0)
-                data["std_delay"].append(0)
-
-            fin.readline()
-            line = re.findall(REG, fin.readline())
-            pd = PerformanceData(line)
-            # data["time"].append(t)
-            data["n_pickups"].append(pd.n_pickups)
-            data["n_dropoffs"].append(pd.n_dropoffs)
-            data["n_ignored"].append(pd.n_ignored)
-        t += TIME_STEP
+            process_vehicles(fin, data)
+            move_to_passengers(fin, data)
+            process_passengers(fin, data)
+            process_performance(fin, data)
+        pbar.update(i)
+    pbar.finish()
+    return convert_to_dataframe(data)
 
 
 def plot_total_passengers(data):
