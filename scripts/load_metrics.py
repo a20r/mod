@@ -7,7 +7,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas
 import re
-import seaborn as sns
 from collections import defaultdict
 from datetime import datetime
 from progressbar import ProgressBar, ETA, Percentage, Bar
@@ -17,7 +16,7 @@ MAX_SECONDS = 60240
 TIME_STEP = 30
 GRAPHS_PREFIX = "graphs"
 DATA_FILE_TEMPLATE = "data-{}-{}.txt"
-REG = r"[-+]?\d*\.\d+|\d+"
+REG = r"-?\d*\.\d+|-?\d+"
 START_DATE = "2013-05-03 19:00:00"
 
 
@@ -49,7 +48,7 @@ class PerformanceData(object):
         self.total_ignored = attrs[5]
 
 
-def process_vehicles(fin, data):
+def process_vehicles(fin, data, n_vecs, cap):
     fin.readline()
     n_reqs = int(re.findall(r"\d+", fin.readline())[0])
     data["n_reqs"].append(n_reqs)
@@ -66,6 +65,8 @@ def process_vehicles(fin, data):
     data["mean_passengers"].append(np.mean(ppv))
     data["med_passengers"].append(np.median(ppv))
     data["std_passengers"].append(np.std(ppv))
+    data["n_vehicles"].append(n_vecs)
+    data["capacity"].append(cap)
 
 
 def move_to_passengers(fin, data):
@@ -78,17 +79,21 @@ def move_to_passengers(fin, data):
 
 
 def process_passengers(fin, data):
-    line = re.findall(REG, fin.readline())
+    l = fin.readline()
+    line = re.findall(REG, l)
     if len(line) > 0:
         waiting_time = list()
         delay = list()
+        debug = 0
         while len(line) > 0:
             pd = PassengerData(line)
             waiting_time.append(pd.time_pickup - pd.time_req)
             if pd.time_dropoff > 0:
                 dly = pd.time_dropoff - pd.time_req - pd.travel_time_optim
                 delay.append(dly)
-            line = re.findall(REG, fin.readline())
+            l = fin.readline()
+            line = re.findall(REG, l)
+            # line = re.findall(REG, fin.readline())
         data["mean_waiting_time"].append(np.mean(waiting_time))
         data["med_waiting_time"].append(np.median(waiting_time))
         data["std_waiting_time"].append(np.std(waiting_time))
@@ -120,10 +125,12 @@ def convert_to_dataframe(data):
     inds = pandas.date_range(start=start, periods=periods, freq=freq)
     for k in data.keys():
         data[k] = np.array(data[k])
+    data["capacity"] = np.array(data["capacity"], dtype=int)
+    data["n_vehicles"] = np.array(data["n_vehicles"], dtype=int)
     return pandas.DataFrame(data, index=inds)
 
 
-def extract_metrics(folder):
+def extract_metrics(folder, n_vecs, cap):
     g_folder = folder + GRAPHS_PREFIX + "/"
     data = defaultdict(list)
     fl = MAX_SECONDS / 30
@@ -134,7 +141,7 @@ def extract_metrics(folder):
         t = i * TIME_STEP
         filename = g_folder + DATA_FILE_TEMPLATE.format(GRAPHS_PREFIX, t)
         with io.open(filename) as fin:
-            process_vehicles(fin, data)
+            process_vehicles(fin, data, n_vecs, cap)
             move_to_passengers(fin, data)
             process_passengers(fin, data)
             process_performance(fin, data)
@@ -159,38 +166,19 @@ def load_parameters(param_file):
 
 def extract_dataframe(folder):
     dirs = os.listdir(folder)
-    df_dict = dict()
+    dfs = list()
     for dr in dirs:
         subdir = folder + dr + "/"
         params = load_parameters(subdir + "parameters.txt")
         n_vehicles = params["NUMBER_VEHICLES"]
         cap = params["maxPassengersVehicle"]
-        df = extract_metrics(subdir)
-        df_dict[(cap, n_vehicles)] = df
-    return pandas.concat(df_dict)
-
-
-def plot_ignored_vs_cap(data):
-    pass
-
-
-def plot_passengers(data):
-    plt.figure()
-    n_pass = data["mean_passengers"]
-    std_pass = data["std_passengers"]
-    ma = pandas.rolling_mean(n_pass, 60)
-    plt.plot(data.index, n_pass, "b", alpha=0.2, label="Raw")
-    plt.plot(data.index, ma, "r", label="Moving Average")
-    plt.fill_between(data.index, n_pass - std_pass,
-                     n_pass + std_pass, color="r", alpha=0.3)
-    plt.xlabel("Time")
-    plt.ylabel("Number of Passengers Per Car")
-    plt.legend()
+        df = extract_metrics(subdir, n_vehicles, cap)
+        dfs.append(df)
+    return pandas.concat(dfs)
 
 
 if __name__ == "__main__":
-    sns.set_context("poster")
     print "Extracting Metrics DataFrame..."
     df = extract_dataframe("data/sim-data/")
     print "Writing DataFrame to File..."
-    df.to_csv("data/dataframe.csv")
+    df.to_csv("data/metrics.csv")
