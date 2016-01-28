@@ -72,7 +72,7 @@ def move_to_passengers(fin, data):
         if "Passengers" in line:
             n_pass = int(re.findall(r"\d+", line)[0])
             data["total_passengers"].append(n_pass)
-            break
+            return
 
 
 def process_passengers(fin, data):
@@ -106,7 +106,6 @@ def process_performance(fin, data):
     fin.readline()
     line = re.findall(REG, fin.readline())
     pd = PerformanceData(line)
-    # data["time"].append(t)
     data["n_pickups"].append(pd.n_pickups)
     data["n_dropoffs"].append(pd.n_dropoffs)
     data["n_ignored"].append(pd.n_ignored)
@@ -126,9 +125,9 @@ def extract_metrics(folder):
     g_folder = folder + GRAPHS_PREFIX + "/"
     data = defaultdict(list)
     fl = len(os.listdir(g_folder))
-    pbar = ProgressBar(
-        widgets=["Extracting Metrics: ", Bar(), Percentage(), "|", ETA()],
-        maxval=fl).start()
+    preface = "Extracting Metrics (" + g_folder + "): "
+    widgets = [preface, Bar(), Percentage(), "|", ETA()]
+    pbar = ProgressBar(widgets=widgets, maxval=fl).start()
     for i in xrange(fl):
         t = i * TIME_STEP
         filename = g_folder + DATA_FILE_TEMPLATE.format(GRAPHS_PREFIX, t)
@@ -142,24 +141,27 @@ def extract_metrics(folder):
     return convert_to_dataframe(data)
 
 
-def plot_total_passengers(data):
-    plt.figure()
-    n_pass = pandas.Series(
-        np.array(data["total_passengers"]),
-        index=pandas.date_range(
-            start=datetime.strptime("2013-05-03 19:00:00", common.date_format),
-            periods=24 * 60 * 2 - 1,
-            freq="30S"))
-    ma = pandas.rolling_mean(n_pass, 60)
-    mstd = pandas.rolling_std(n_pass, 60)
-    plt.plot(n_pass.index, n_pass, "b", alpha=0.2,
-             label="Raw")
-    plt.plot(ma.index, ma, "r", label="Moving Average")
-    plt.fill_between(mstd.index, ma - mstd, ma + mstd, color="r", alpha=0.3,
-                     label="Standard Deviation")
-    plt.xlabel("Time")
-    plt.ylabel("Number of Ignored Requests")
-    plt.legend()
+def load_parameters(param_file):
+    params = dict()
+    with io.open(param_file, "rb") as fin:
+        for line in fin:
+            vs = line.split(":")
+            key = vs[0]
+            values = re.findall(REG, vs[1])
+            if len(values) > 0:
+                params[key] = float(values[0])
+            else:
+                params[key] = vs[1].strip()
+        return params
+
+
+def load_dataframe(folder):
+    dirs = os.listdir(folder)
+    for dr in dirs:
+        subdir = folder + dr + "/"
+        params = load_parameters(subdir + "parameters.txt")
+        print params
+        extract_metrics(subdir)
 
 
 def plot_passengers(data):
@@ -176,30 +178,7 @@ def plot_passengers(data):
     plt.legend()
 
 
-def plot_number_ignored(data):
-    plt.figure()
-    n_ignored = pandas.Series(
-        np.array(data["n_ignored"]),
-        index=pandas.date_range(
-            start=datetime.strptime("2013-05-03 19:00:00", common.date_format),
-            periods=24 * 60 * 2 - 1,
-            freq="30S"))
-    ma = pandas.rolling_mean(n_ignored, 60)
-    mstd = pandas.rolling_std(n_ignored, 60)
-    plt.plot(n_ignored.index, n_ignored, "b", alpha=0.2,
-             label="Raw")
-    plt.plot(ma.index, ma, "r", label="Moving Average")
-    plt.fill_between(mstd.index, ma - mstd, ma + mstd, color="r", alpha=0.3,
-                     label="Standard Deviation")
-    plt.xlabel("Time")
-    plt.ylabel("Number of Ignored Requests")
-    plt.legend()
-
-
 if __name__ == "__main__":
     sns.set_context("poster")
-    data = extract_metrics("data/sim-data/")
-    # plot_number_ignored(data)
-    # plot_total_passengers(data)
-    plot_passengers(data)
+    load_dataframe("data/sim-data/")
     plt.show()
