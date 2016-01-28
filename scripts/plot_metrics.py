@@ -118,7 +118,8 @@ def convert_to_dataframe(data):
     inds = pandas.date_range(start=start, periods=periods, freq=freq)
     for k in data.keys():
         data[k] = np.array(data[k])
-    return pandas.DataFrame(data, index=inds)
+    # return pandas.DataFrame(data, index=inds)
+    return pandas.DataFrame(data)
 
 
 def extract_metrics(folder):
@@ -159,8 +160,8 @@ def load_dataframe(folder):
     dirs = os.listdir(folder)
     for dr in dirs:
         subdir = folder + dr + "/"
+        print len(os.listdir(subdir + GRAPHS_PREFIX))
         params = load_parameters(subdir + "parameters.txt")
-        print params
         extract_metrics(subdir)
 
 
