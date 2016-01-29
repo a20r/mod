@@ -12,7 +12,6 @@ from datetime import datetime
 from progressbar import ProgressBar, ETA, Percentage, Bar
 
 
-MAX_SECONDS = 60240
 TIME_STEP = 30
 GRAPHS_PREFIX = "graphs"
 DATA_FILE_TEMPLATE = "data-{}-{}.txt"
@@ -48,7 +47,7 @@ class PerformanceData(object):
         self.total_ignored = attrs[5]
 
 
-def process_vehicles(fin, data, n_vecs, cap):
+def process_vehicles(fin, data, n_vecs, cap, rebalancing):
     fin.readline()
     n_reqs = int(re.findall(r"\d+", fin.readline())[0])
     data["n_reqs"].append(n_reqs)
@@ -59,7 +58,7 @@ def process_vehicles(fin, data, n_vecs, cap):
     ppv = list()
     line = fin.readline()
     while len(line) > 1:
-        passes = re.findall(r"\d+", line.split("%")[1])
+        passes = re.findall(r"-?\d+", line.split("%")[1])
         ppv.append(len(passes))
         line = fin.readline()
     data["mean_passengers"].append(np.mean(ppv))
@@ -67,6 +66,7 @@ def process_vehicles(fin, data, n_vecs, cap):
     data["std_passengers"].append(np.std(ppv))
     data["n_vehicles"].append(n_vecs)
     data["capacity"].append(cap)
+    data["rebalancing"].append(rebalancing)
 
 
 def move_to_passengers(fin, data):
@@ -93,7 +93,6 @@ def process_passengers(fin, data):
                 delay.append(dly)
             l = fin.readline()
             line = re.findall(REG, l)
-            # line = re.findall(REG, fin.readline())
         data["mean_waiting_time"].append(np.mean(waiting_time))
         data["med_waiting_time"].append(np.median(waiting_time))
         data["std_waiting_time"].append(np.std(waiting_time))
@@ -120,20 +119,21 @@ def process_performance(fin, data):
 
 def convert_to_dataframe(data):
     start = datetime.strptime(START_DATE, common.date_format)
-    periods = MAX_SECONDS / 30
+    periods = common.MAX_SECONDS / 30
     freq = "30S"
     inds = pandas.date_range(start=start, periods=periods, freq=freq)
     for k in data.keys():
         data[k] = np.array(data[k])
     data["capacity"] = np.array(data["capacity"], dtype=int)
     data["n_vehicles"] = np.array(data["n_vehicles"], dtype=int)
-    return pandas.DataFrame(data, index=inds)
+    data["time"] = inds
+    return pandas.DataFrame(data)
 
 
-def extract_metrics(folder, n_vecs, cap):
+def extract_metrics(folder, n_vecs, cap, rebalancing):
     g_folder = folder + GRAPHS_PREFIX + "/"
     data = defaultdict(list)
-    fl = MAX_SECONDS / 30
+    fl = common.MAX_SECONDS / 30
     preface = "Extracting Metrics (" + g_folder + "): "
     widgets = [preface, Bar(), Percentage(), "| ", ETA()]
     pbar = ProgressBar(widgets=widgets, maxval=fl).start()
@@ -141,7 +141,7 @@ def extract_metrics(folder, n_vecs, cap):
         t = i * TIME_STEP
         filename = g_folder + DATA_FILE_TEMPLATE.format(GRAPHS_PREFIX, t)
         with io.open(filename) as fin:
-            process_vehicles(fin, data, n_vecs, cap)
+            process_vehicles(fin, data, n_vecs, cap, rebalancing)
             move_to_passengers(fin, data)
             process_passengers(fin, data)
             process_performance(fin, data)
@@ -172,7 +172,8 @@ def extract_dataframe(folder):
         params = load_parameters(subdir + "parameters.txt")
         n_vehicles = params["NUMBER_VEHICLES"]
         cap = params["maxPassengersVehicle"]
-        df = extract_metrics(subdir, n_vehicles, cap)
+        rebalancing = params["USE_REBALANCING"]
+        df = extract_metrics(subdir, n_vehicles, cap, rebalancing)
         dfs.append(df)
     return pandas.concat(dfs)
 
