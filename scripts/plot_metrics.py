@@ -60,11 +60,12 @@ def create_latex_table(df):
     return table_header + inner_lines + table_footer
 
 
-def subtable(df, n_vecs, cap, rebalancing=0):
+def subtable(df, n_vecs, cap, rebalancing=0, is_long=0):
     bcap = (df["capacity"] == cap)
     bvecs = (df["n_vehicles"] == n_vecs)
     brb = (df["rebalancing"] == rebalancing)
-    return df[bcap & bvecs & brb]
+    isl = (df["is_long"] == is_long)
+    return df[bcap & bvecs & brb & isl]
 
 
 def plot_percent_pickups_vs_vehicles(df):
@@ -100,14 +101,14 @@ def plot_pickups_vs_time(df):
 
 def plot_occupancy(df):
     plt.figure()
-    st = subtable(df, 500, 4)
-    start = datetime.strptime(st["time"].loc[2008], common.date_format)
-    end = datetime.strptime(st["time"].loc[4015], common.date_format)
+    st = subtable(df, 500, 4, 0, 1)
+    start = datetime.strptime(st["time"].loc[6024], common.date_format)
+    end = datetime.strptime(st["time"].loc[8902], common.date_format)
     st.index = pandas.date_range(start, end, freq="30S")
-    ma = pandas.rolling_mean(st["mean_passengers"], 50)
-    mstd = pandas.rolling_mean(st["std_passengers"], 50)
-    plt.plot(ma.index, ma, "r")
-    plt.fill_between(ma.index, ma - mstd, ma + mstd, color="r", alpha=0.2)
+    ys = st["mean_passengers"]
+    plt.plot(st.index, ys, "r")
+    stds = st["std_passengers"]
+    plt.fill_between(st.index, ys - stds, ys + stds, color="r", alpha=0.2)
     plt.xlabel("Time")
     plt.ylabel("Average Occupancy Per Vehicle")
     plt.ylim([0, 4])
@@ -117,9 +118,8 @@ def plot_occupancy(df):
 if __name__ == "__main__":
     sns.set_context("poster", font_scale=2.2)
     df = pandas.read_csv("data/metrics.csv")
-    table = create_latex_table(df)
-    print table
-    # plot_occupancy(df)
+    # table = create_latex_table(df)
+    plot_occupancy(df)
     # plot_percent_pickups_vs_vehicles(df)
     # plot_pickups_vs_time(df)
     plt.show()

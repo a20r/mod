@@ -47,7 +47,7 @@ class PerformanceData(object):
         self.total_ignored = attrs[5]
 
 
-def process_vehicles(fin, data, n_vecs, cap, rebalancing):
+def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long):
     fin.readline()
     n_reqs = int(re.findall(r"\d+", fin.readline())[0])
     data["n_reqs"].append(n_reqs)
@@ -67,6 +67,7 @@ def process_vehicles(fin, data, n_vecs, cap, rebalancing):
     data["n_vehicles"].append(n_vecs)
     data["capacity"].append(cap)
     data["rebalancing"].append(rebalancing)
+    data["is_long"].append(is_long)
 
 
 def move_to_passengers(fin, data):
@@ -117,10 +118,15 @@ def process_performance(fin, data):
     data["n_ignored"].append(pd.n_ignored)
 
 
-def convert_to_dataframe(data):
-    start = datetime.strptime(START_DATE, common.date_format)
-    periods = common.MAX_SECONDS / 30
+def convert_to_dataframe(data, is_long=0):
     freq = "30S"
+    if is_long == 0:
+        start = datetime.strptime(START_DATE, common.date_format)
+        periods = common.MAX_SECONDS / 30
+    else:
+        start = datetime.strptime("2013-05-03 19:00:00", common.date_format)
+        periods = len(data["is_long"])
+        print periods
     inds = pandas.date_range(start=start, periods=periods, freq=freq)
     for k in data.keys():
         data[k] = np.array(data[k])
@@ -130,10 +136,13 @@ def convert_to_dataframe(data):
     return pandas.DataFrame(data)
 
 
-def extract_metrics(folder, n_vecs, cap, rebalancing):
+def extract_metrics(folder, n_vecs, cap, rebalancing, is_long):
     g_folder = folder + GRAPHS_PREFIX + "/"
     data = defaultdict(list)
-    fl = common.MAX_SECONDS / 30
+    if is_long == 0:
+        fl = common.MAX_SECONDS / 30
+    else:
+        fl = len(os.listdir(g_folder))
     preface = "Extracting Metrics (" + g_folder + "): "
     widgets = [preface, Bar(), Percentage(), "| ", ETA()]
     pbar = ProgressBar(widgets=widgets, maxval=fl).start()
@@ -141,13 +150,13 @@ def extract_metrics(folder, n_vecs, cap, rebalancing):
         t = i * TIME_STEP
         filename = g_folder + DATA_FILE_TEMPLATE.format(GRAPHS_PREFIX, t)
         with io.open(filename) as fin:
-            process_vehicles(fin, data, n_vecs, cap, rebalancing)
+            process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long)
             move_to_passengers(fin, data)
             process_passengers(fin, data)
             process_performance(fin, data)
         pbar.update(i)
     pbar.finish()
-    return convert_to_dataframe(data)
+    return convert_to_dataframe(data, is_long)
 
 
 def load_parameters(param_file):
@@ -173,7 +182,8 @@ def extract_dataframe(folder):
         n_vehicles = params["NUMBER_VEHICLES"]
         cap = params["maxPassengersVehicle"]
         rebalancing = params["USE_REBALANCING"]
-        df = extract_metrics(subdir, n_vehicles, cap, rebalancing)
+        is_long = params.get("is_long", 0)
+        df = extract_metrics(subdir, n_vehicles, cap, rebalancing, is_long)
         dfs.append(df)
     return pandas.concat(dfs)
 
