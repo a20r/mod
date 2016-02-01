@@ -30,7 +30,8 @@ table_footer = """
 
 instances = [(500, 1, 0), (500, 2, 0), (500, 3, 0), (500, 4, 0),
              (125, 4, 0), (250, 4, 0), (375, 4, 0), (625, 4, 0),
-             (750, 4, 0), (1000, 4, 0), (500, 4, 1)]
+             (750, 4, 0), (1000, 4, 0), (250, 4, 1), (375, 4, 1),
+             (500, 4 ,1), (625, 4, 1), (750, 4, 1)]
 
 
 n_vecs = [125, 250, 375, 500, 625, 750, 1000]
@@ -90,11 +91,7 @@ def plot_pickups_vs_time(df):
     start = datetime.strptime(st["time"].loc[2008], common.date_format)
     end = datetime.strptime(st["time"].loc[4015], common.date_format)
     st.index = pandas.date_range(start, end, freq="30S")
-    # ma = pandas.rolling_mean(st["n_pickups"], 50)
-    # mstd = pandas.rolling_std(st["n_pickups"], 50)
-    # plt.plot(ma.index, ma, "r")
     plt.plot(st.index, st["n_pickups"], "r", alpha=1)
-    # plt.fill_between(ma.index, ma - mstd, ma + mstd, color="r", alpha=0.4)
     plt.xlabel("Time")
     plt.ylabel("Number of Pickups per 30s Segment")
 
@@ -118,8 +115,10 @@ def plot_occupancy(df):
 if __name__ == "__main__":
     sns.set_context("poster", font_scale=2.2)
     df = pandas.read_csv("data/metrics.csv")
-    # table = create_latex_table(df)
-    plot_occupancy(df)
+    table = create_latex_table(df)
+    print table
+    # plot_occupancy(df)
     # plot_percent_pickups_vs_vehicles(df)
     # plot_pickups_vs_time(df)
-    plt.show()
+    # plt.fill_between(ma.index, ma - mstd, ma + mstd, color="r", alpha=0.4)
+    # plt.show()

@@ -126,13 +126,12 @@ def convert_to_dataframe(data, is_long=0):
     else:
         start = datetime.strptime("2013-05-03 19:00:00", common.date_format)
         periods = len(data["is_long"])
-        print periods
     inds = pandas.date_range(start=start, periods=periods, freq=freq)
     for k in data.keys():
         data[k] = np.array(data[k])
     data["capacity"] = np.array(data["capacity"], dtype=int)
     data["n_vehicles"] = np.array(data["n_vehicles"], dtype=int)
-    data["time"] = inds
+    # data["time"] = inds
     return pandas.DataFrame(data)
 
 
@@ -147,14 +146,17 @@ def extract_metrics(folder, n_vecs, cap, rebalancing, is_long):
     widgets = [preface, Bar(), Percentage(), "| ", ETA()]
     pbar = ProgressBar(widgets=widgets, maxval=fl).start()
     for i in xrange(fl):
-        t = i * TIME_STEP
-        filename = g_folder + DATA_FILE_TEMPLATE.format(GRAPHS_PREFIX, t)
-        with io.open(filename) as fin:
-            process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long)
-            move_to_passengers(fin, data)
-            process_passengers(fin, data)
-            process_performance(fin, data)
-        pbar.update(i)
+        try:
+            t = i * TIME_STEP
+            filename = g_folder + DATA_FILE_TEMPLATE.format(GRAPHS_PREFIX, t)
+            with io.open(filename) as fin:
+                process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long)
+                move_to_passengers(fin, data)
+                process_passengers(fin, data)
+                process_performance(fin, data)
+            pbar.update(i)
+        except IOError:
+            pass
     pbar.finish()
     return convert_to_dataframe(data, is_long)
 
