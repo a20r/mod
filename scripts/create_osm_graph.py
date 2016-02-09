@@ -24,9 +24,9 @@ def all_pairs_paths(G):
     return paths
 
 
-def osm_graph(left, bottom, right, top):
+def osm_graph(osm_map):
     print "Making it a graph..."
-    G = osm.read_osm("data/map.osm")
+    G = osm.read_osm(osm_map)
     print "Making it weighted..."
     G, max_distance = osm2nx.make_weighted(G)
     G = osm2nx.simplify_by_degree(G, max_distance)
@@ -65,12 +65,12 @@ def create_paths_file(G, st_lookup, paths, fn_paths):
         pbar.finish()
 
 
-def write_graph(fn_graph, fn_paths):
+def write_graph(fn_graph, fn_paths, fn_osm_graph):
     poly = planar.Polygon.from_points(common.nyc_poly)
     r = poly.bounding_box
     rect = (r.min_point.x, r.min_point.y, r.max_point.x, r.max_point.y)
     print "BBox:", rect
-    G, stations, st_lookup = osm_graph(*rect)
+    G, stations, st_lookup = osm_graph(fn_osm_graph)
     paths = all_pairs_paths(G)
     create_paths_file(G, st_lookup, paths, fn_paths)
     dists = all_pairs_times(G)
@@ -85,6 +85,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Downloads and creates a graph from Manhattan OSM data")
     parser.add_argument(
+        "--fn_osm_map", dest="fn_osm_map", type=str,
+        default="data/map.osm",
+        help="OSM map file")
+    parser.add_argument(
         "--fn_graph", dest="fn_graph", type=str,
         default="data/manhattan_graph.pickle",
         help="Output file for the pickled graph data to be written")
@@ -93,4 +97,4 @@ if __name__ == "__main__":
         default="data/paths.csv",
         help="Output CSV file for the all pairs paths for the stations")
     args = parser.parse_args()
-    write_graph(args.fn_graph, args.fn_paths)
+    write_graph(args.fn_graph, args.fn_paths, args.fn_osm_map)
