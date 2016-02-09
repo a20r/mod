@@ -3,7 +3,7 @@ Machine learning and data analysis for **m**obility **o**n **d**emand
 
 ## Feature Extraction
 ### Using Open Street Maps
-1. Update the polygonal area in the `nyc_poly` variable in `common.py`
+1. Update the polygonal area in the `nyc_poly` variable in `scripts/common.py`
 2. Run `python scripts/create_query.py` to print the query for the OSM
 data
 3. Download the OSM data from `http://overpass-api.de/query_form.html`
