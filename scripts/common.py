@@ -1,13 +1,31 @@
 
+import re
+
+
+def load_kml_poly():
+    with open("data/nyc.kml") as fin:
+        data = fin.read()
+        cs = re.findall(r"<coordinates>[\s\S]*?<\/coordinates>", data)[0]\
+            .split("<coordinates>")[1]\
+            .split(",0 ")[:-2]
+        poly = list()
+        for gs in cs:
+            coords = map(float, gs.strip().split(","))
+            poly.append(coords)
+        return poly
+
+
 MAX_SECONDS = 60240
 
 date_format = "%Y-%m-%d %H:%M:%S"
 
-nyc_poly = [[-74.01824376474143, 40.73320343981938],
-            [-73.97199182307409, 40.73326660593117],
-            [-73.96899528222204, 40.74472418510373],
-            [-73.94812921425887, 40.77053734232472],
-            [-73.99885640649616, 40.77082617894838]]
+# nyc_poly = [[-74.01824376474143, 40.73320343981938],
+#             [-73.97199182307409, 40.73326660593117],
+#             [-73.96899528222204, 40.74472418510373],
+#             [-73.94812921425887, 40.77053734232472],
+#             [-73.99885640649616, 40.77082617894838]]
+
+nyc_poly = load_kml_poly()
 
 fl_huge = 15285050
 
