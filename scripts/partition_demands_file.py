@@ -7,14 +7,17 @@ import io
 from collections import defaultdict
 
 
-def filter_data_for_day(fn_huge, fn_filtered, wds, max_wds):
+df_template = "data/demands_{}_{}_{}.csv"
+
+
+def partition_by_day(fn_huge, fn_filtered):
     print "Filtering file based on weekday..."
     current_day = None
     day_count = defaultdict(int)
     with io.open(fn_huge, "rb") as fin:
         with io.open(fn_filtered, "wb") as fout:
             reader = csv.DictReader(fin)
-            writer = csv.DictWriter(fout, fieldnames=common.fn_raw_fields)
+            writer = csv.DictWriter(fout, fieldnames=common.fn_demands_fields)
             writer.writeheader()
             for i, row in enumerate(reader):
                 if i == 0:
@@ -38,19 +41,12 @@ if __name__ == "__main__":
         description="Filters the CSV file to accumulate all the data for a\
         given day of the week")
     parser.add_argument(
-        "--fn_raw", dest="fn_raw", type=str,
-        default="data/trip_data_5.csv",
-        help="CSV file containing the raw NY taxi data.")
+        "--fn_demands", dest="fn_demands", type=str,
+        default="data/demands.csv",
+        help="CSV file containing the demands.")
     parser.add_argument(
         "--fn_filtered", dest="fn_filtered", type=str,
         default="data/data_short.csv",
         help="CSV file containing filtered data for a given day.")
-    parser.add_argument(
-        "--weekday", dest="weekday", type=list, default=[0, 1, 2, 3, 4, 5, 6],
-        help="Day of the week to gather data.")
-    parser.add_argument(
-        "--n_days", dest="n_days", type=int, default=3,
-        help="Day of the week to gather data.")
     args = parser.parse_args()
-    filter_data_for_day(args.fn_raw, args.fn_filtered, args.weekday,
-                        args.n_days)
+    partition_by_day(args.fn_raw, args.fn_filtered, args.weekday, args.n_days)

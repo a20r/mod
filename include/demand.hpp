@@ -326,7 +326,7 @@ namespace mod
             {
                 // returns true if there is a path, false if there isn't
                 double time_edge = 0;
-                if (paths.count(start) > 0 and paths[start].count(end))
+                if (paths.count(start) > 0 and paths[start].count(end) > 0)
                 {
                     path = paths[start][end];
                     inter_times.push_back(time_edge);

@@ -5,12 +5,9 @@ import time
 import csv
 import numpy as np
 import argparse
-import sklearn.cluster as cluster
 import pickle
-import maps
 import planar
 import scipy.spatial as spatial
-from geopy.distance import distance
 from collections import OrderedDict, defaultdict
 from progressbar import ProgressBar, ETA, Percentage, Bar
 
@@ -23,6 +20,7 @@ fn_demands_fields = ["pickup_datetime", "pickup_station", "dropoff_datetime",
 
 fn_freqs_fields = ["time_interval", "expected_requests"]
 
+day_dem_template = "data/demands_{}_{}_{}.csv"
 
 
 def percent_time(str_time):
@@ -83,40 +81,6 @@ def clean_file(fn_raw, fn_cleaned):
                     pbar.update(i + 1)
             pbar.finish()
     return len(medals)
-
-
-def find_stations(fn_in, **kwargs):
-    """
-    Uses k-means clustering to determine the taxi stations using the drop-off
-    and pick-up locations
-    """
-    with io.open(fn_in, "rb") as fin:
-        reader = csv.reader(fin)
-        fl = sum(1 for _ in reader) - 1
-        fin.seek(0)
-        kmeans = cluster.MiniBatchKMeans(**kwargs)
-        points = np.zeros((2 * fl, 2))
-        pbar = ProgressBar(
-            widgets=["Loading Locations: ", Bar(), Percentage(), "|", ETA()],
-            maxval=fl + 1).start()
-        for i, row in enumerate(reader):
-            if i == 0:
-                continue
-            try:
-                pts = np.zeros((2, 2))
-                pts[0][0] = float(row[10])
-                pts[0][1] = float(row[11])
-                pts[1][0] = float(row[12])
-                pts[1][1] = float(row[13])
-                points[i - 1] = pts[0]
-                points[i - 1 + fl] = pts[1]
-            except:
-                pass
-            pbar.update(i + 1)
-        pbar.finish()
-        print "Finding Stations (This may take a while)..."
-        kmeans.fit(points)
-        return kmeans, fl
 
 
 def extract_frequencies(fn_raw, stations, kd, fl):
@@ -228,65 +192,65 @@ def create_times_file(stations, times, fn_times):
 
 
 def create_demands_file(stations, fn_raw, fn_demands, kd, fl):
+    pbar = ProgressBar(
+        widgets=["Creating Demands File: ", Bar(),
+                 Percentage(), "|", ETA()],
+        maxval=fl + 1).start()
+    cur_date = (0, 0, 0)
+    fout = None
+    writer = None
+    counter = 0
+    rows = list()
     with io.open(fn_raw, "rb") as fin:
-        with io.open(fn_demands, "wb") as fout:
-            reader = csv.DictReader(fin)
-            writer = csv.writer(fout, delimiter=' ')
-            writer.writerow(fn_demands_fields)
-            writer.writerow([fl - 1])
-            pbar = ProgressBar(
-                widgets=["Creating Demands File: ", Bar(),
-                         Percentage(), "|", ETA()],
-                maxval=fl + 1).start()
-            for i, row in enumerate(reader):
-                if i == 0:
-                    continue
-                nrow = [None] * len(fn_demands_fields)
-                row = common.clean_dict(row)
-                p_l = [row["pickup_longitude"], row["pickup_latitude"]]
-                d_l = [row["dropoff_longitude"], row["dropoff_latitude"]]
-                _, sts = kd.query(np.array([p_l, d_l]))
-                nrow[0] = epoch_seconds(row["pickup_datetime"])
-                nrow[1] = sts[0]
-                nrow[2] = epoch_seconds(row["dropoff_datetime"])
-                nrow[3] = row["dropoff_longitude"]
-                nrow[4] = row["dropoff_latitude"]
-                nrow[5] = sts[1]
-                nrow[6] = row["pickup_longitude"]
-                nrow[7] = row["pickup_latitude"]
-                writer.writerow(nrow)
-                pbar.update(i)
-            pbar.finish()
+        reader = csv.DictReader(fin)
+        for i, row in enumerate(reader):
+            if i == 0:
+                continue
+            nrow = [None] * len(fn_demands_fields)
+            row = common.clean_dict(row)
+            str_time = row["pickup_datetime"]
+            t = time.strptime(str_time, common.date_format)
+            cdate = (t.tm_wday + 1, t.tm_yday // 7, t.tm_year)
+            if cdate != cur_date:
+                cur_date = cdate
+                fname = day_dem_template.format(*cur_date)
+                fout = io.open(fname, "wb")
+                writer = csv.writer(fout, delimiter=" ")
+                writer.writerow(fn_demands_fields)
+                writer.writerow([counter])
+                writer.writerows(rows)
+                rows = list()
+                fout.close()
+                counter = 0
+            p_l = [row["pickup_longitude"], row["pickup_latitude"]]
+            d_l = [row["dropoff_longitude"], row["dropoff_latitude"]]
+            _, sts = kd.query(np.array([p_l, d_l]))
+            nrow[0] = epoch_seconds(row["pickup_datetime"])
+            nrow[1] = sts[0]
+            nrow[2] = epoch_seconds(row["dropoff_datetime"])
+            nrow[3] = row["dropoff_longitude"]
+            nrow[4] = row["dropoff_latitude"]
+            nrow[5] = sts[1]
+            nrow[6] = row["pickup_longitude"]
+            nrow[7] = row["pickup_latitude"]
+            rows.append(nrow)
+            counter += 1
+            pbar.update(i)
+        pbar.finish()
 
 
-def create_data_files_kmeans(fn_raw, fn_stations, fn_probs, fn_times,
-                             fn_demands, fn_freqs, **kwargs):
-    fn_cleaned = fn_raw.split(".")[0] + "_cleaned.csv"
-    taxi_count = clean_file(fn_raw, fn_cleaned)
-    kmeans, fl = find_stations(fn_cleaned, **kwargs)
-    stations = kmeans.cluster_centers_
-    times = maps.travel_times(stations)
-    create_stations_file(fn_stations, stations)
-    create_probs_file(fn_cleaned, fn_probs, fn_freqs, stations, fl)
-    create_times_file(stations, times, fn_times)
-    create_demands_file(stations, fn_cleaned, fn_demands, fl)
-    print "Taxi Count:", taxi_count
-    print "Done :D"
-
-
-def create_data_files(fn_raw, fn_graph, fn_stations, fn_probs, fn_times,
+def create_data_files(fn_raw, fn_graph, fn_stations, fn_probs,
                       fn_demands, fn_freqs):
     fn_cleaned = fn_raw.split(".")[0] + "_cleaned.csv"
     taxi_count = clean_file(fn_raw, fn_cleaned)
     print "Loading graph from file..."
-    G, stations, st_lookup, times = load_graph(fn_graph)
+    G, stations = load_graph(fn_graph)
     kd = spatial.KDTree(stations)
     print "Determining file length..."
     fl = file_length(fn_cleaned)
     create_stations_file(fn_stations, stations)
-    create_probs_file(fn_cleaned, fn_probs, fn_freqs, stations, kd, fl)
-    create_times_file(stations, times, fn_times)
     create_demands_file(stations, fn_cleaned, fn_demands, kd, fl)
+    create_probs_file(fn_cleaned, fn_probs, fn_freqs, stations, kd, fl)
     print "Taxi Count:", taxi_count
     print "Done :D"
 
@@ -298,9 +262,6 @@ if __name__ == "__main__":
         a file containing the probability of a given origin, destination,\
         for a given time interval.")
     parser.add_argument(
-        "--n_stations", dest="n_stations", type=int, default=101,
-        help="Number of stations discovered using MiniBatchKMeans.")
-    parser.add_argument(
         "--fn_raw", dest="fn_raw", type=str,
         default="data/data_short.csv",
         help="CSV file containing the raw NY taxi data.")
@@ -310,16 +271,12 @@ if __name__ == "__main__":
         help="Input pickle file for OSM graph data")
     parser.add_argument(
         "--fn_stations", dest="fn_stations", type=str,
-        default="data/stationsLUT.csv",
+        default="data/stations.csv",
         help="Output CSV file for listing the stations.")
     parser.add_argument(
         "--fn_probs", dest="fn_probs", type=str,
         default="data/probs.csv",
         help="Output CSV file for listing the demand probabilities.")
-    parser.add_argument(
-        "--fn_times", dest="fn_times", type=str,
-        default="data/distances.csv",
-        help="Output CSV file for listing the travel times between stations")
     parser.add_argument(
         "--fn_demands", dest="fn_demands", type=str,
         default="data/demands.csv",
@@ -331,5 +288,4 @@ if __name__ == "__main__":
         intervals over multiple days")
     args = parser.parse_args()
     create_data_files(args.fn_raw, args.fn_graph, args.fn_stations,
-                      args.fn_probs, args.fn_times, args.fn_demands,
-                      args.fn_freqs)
+                      args.fn_probs, args.fn_demands, args.fn_freqs)

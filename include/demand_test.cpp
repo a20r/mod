@@ -76,7 +76,7 @@ int main() {
             "../data/stationsLUT.csv",
             "../data/probs.csv",
             "../data/distances.csv",
-            "../data/paths.csv",
+            "../data/paths_short.csv",
             "../data/freqs.csv");
     test_query(dl);
     test_sample(dl);

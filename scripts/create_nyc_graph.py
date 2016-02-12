@@ -17,16 +17,14 @@ def load_graph(nyc_dir):
     sts = np.loadtxt(nyc_dir + "points.csv", delimiter=",")
     edges = np.loadtxt(nyc_dir + "edges.csv", delimiter=",")
     times = np.loadtxt(nyc_dir + "week.csv", delimiter=",")
-    st_lookup = dict()
     G = nx.DiGraph()
     for i in xrange(sts.shape[0]):
-        st_lookup[i] = i
         G.add_node(i, lat=sts[i][1], lon=sts[i][2])
     for i in xrange(edges.shape[0]):
         t = np.mean(times[i][1:])
         std = np.std(times[i][1:])
         G.add_edge(edges[i][1] - 1, edges[i][2] - 1, weight=t, std=std)
-    return G, np.fliplr(sts[:, 1:]), st_lookup
+    return G, np.fliplr(sts[:, 1:])
 
 
 def path_length(G, path):
@@ -40,37 +38,38 @@ def path_length(G, path):
     return length
 
 
-def create_paths_file(G, st_lookup, fn_paths):
+def create_paths_file(G, fn_paths, fn_times):
     counter = 0
     pbar = ProgressBar(
         widgets=["Creating Paths File: ", Bar(), Percentage(), "|", ETA()],
         maxval=pow(len(G.nodes()), 2)).start()
-    # dists = np.zeros((len(G.nodes()), len(G.nodes())))
     with io.open(fn_paths, "wb") as fout:
-        writer = csv.writer(fout, delimiter=" ")
-        for i in G.nodes():
-            paths = nx.single_source_dijkstra_path(G, i, weight="weight")
-            rows = list()
-            for j in paths.keys():
-                id_path = paths[j]
-                start = st_lookup[i]
-                end = st_lookup[j]
-                rows.append([start, end] + id_path)
-                pbar.update(counter + 1)
-                counter += 1
-            writer.writerows(rows)
-        pbar.finish()
-    # return dists
+        with io.open(fn_times, "wb") as ftimes:
+            writer = csv.writer(fout, delimiter=" ")
+            times_writer = csv.writer(ftimes, delimiter=" ")
+            times_writer.writerow([len(G.nodes())])
+            for i in G.nodes():
+                tts, paths = nx.single_source_dijkstra(G, i)
+                rows = list()
+                time_row = [-1] * len(G.nodes())
+                for j in paths.keys():
+                    time_row[int(j)] = "%.1f" % tts[int(j)]
+                    rows.append([i, j] + map(int, paths[j]))
+                    pbar.update(counter + 1)
+                    counter += 1
+                writer.writerows(rows)
+                times_writer.writerow(time_row)
+            pbar.finish()
 
 
-def write_graph(fn_graph, fn_paths, nyc_dir):
+def write_graph(fn_graph, fn_paths, fn_times, nyc_dir):
     poly = planar.Polygon.from_points(common.nyc_poly)
     r = poly.bounding_box
     rect = (r.min_point.x, r.min_point.y, r.max_point.x, r.max_point.y)
     print "BBox:", rect
-    G, stations, st_lookup = load_graph(nyc_dir)
-    dists = create_paths_file(G, st_lookup, fn_paths)
-    G_tuple = (G, stations, st_lookup, dists)
+    G, stations = load_graph(nyc_dir)
+    create_paths_file(G, fn_paths, fn_times)
+    G_tuple = (G, stations)
     print "Writing graph data to file..."
     pstr = pickle.dumps(G_tuple)
     with open(fn_graph, "wb") as fout:
@@ -92,5 +91,9 @@ if __name__ == "__main__":
         "--fn_paths", dest="fn_paths", type=str,
         default="data/paths.csv",
         help="Output CSV file for the all pairs paths for the stations")
+    parser.add_argument(
+        "--fn_times", dest="fn_times", type=str,
+        default="data/times.csv",
+        help="Output CSV file for listing the travel times between stations")
     args = parser.parse_args()
-    write_graph(args.fn_graph, args.fn_paths, args.nyc_dir)
+    write_graph(args.fn_graph, args.fn_paths, args.fn_times, args.nyc_dir)
