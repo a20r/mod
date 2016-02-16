@@ -185,11 +185,14 @@ namespace mod
                 load_paths(fn_paths);
             }
 
-            void init(string fn_stations, string fn_probs, string fn_times)
+            void init(string fn_stations, string fn_times, string fn_paths)
             {
-                load_probs(fn_probs);
+                cout << "Loading stations..." << endl;
                 load_stations(fn_stations);
+                cout << "Loading distances..." << endl;
                 load_times(fn_times);
+                cout << "Loading paths..." << endl;
+                load_paths(fn_paths);
             }
 
             void load_probs(string fn_probs)
