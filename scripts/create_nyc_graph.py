@@ -24,7 +24,15 @@ def load_graph(nyc_dir):
         t = np.mean(times[i][1:])
         std = np.std(times[i][1:])
         G.add_edge(edges[i][1] - 1, edges[i][2] - 1, weight=t, std=std)
-    return G, np.fliplr(sts[:, 1:])
+    poly = planar.Polygon.from_points(common.nyc_poly)
+    for i in G.nodes():
+        data = G.node[i]
+        contains = poly.contains_point(planar.Vec2(data["lat"], data["lon"]))
+        if not contains:
+            G.remove_node(i)
+    print "Finding the largest connected component subgraph"
+    G_final = max(nx.strongly_connected_component_subgraphs(G), key=len)
+    return G_final, np.fliplr(sts[:, 1:])
 
 
 def path_length(G, path):
@@ -53,8 +61,8 @@ def create_paths_file(G, fn_paths, fn_times):
                 rows = list()
                 time_row = [-1] * len(G.nodes())
                 for j in paths.keys():
-                    time_row[int(j)] = "%.1f" % tts[int(j)]
-                    rows.append([i, j] + map(int, paths[j]))
+                    time_row[int(j)] = tts[int(j)]
+                    rows.append([int(i), int(j)] + map(int, paths[int(j)]))
                     pbar.update(counter + 1)
                     counter += 1
                 writer.writerows(rows)

@@ -12,19 +12,19 @@
       #map {
         height: 100%;
       }
-#floating-panel {
-  position: absolute;
-  top: 10px;
-  left: 25%;
-  z-index: 5;
-  background-color: #fff;
-  padding: 5px;
-  border: 1px solid #999;
-  text-align: center;
-  font-family: 'Roboto','sans-serif';
-  line-height: 30px;
-  padding-left: 10px;
-}
+        #floating-panel {
+        position: absolute;
+        top: 10px;
+        left: 25%;
+        z-index: 5;
+        background-color: #fff;
+        padding: 5px;
+        border: 1px solid #999;
+        text-align: center;
+        font-family: 'Roboto','sans-serif';
+        line-height: 30px;
+        padding-left: 10px;
+        }
 
       #floating-panel {
         background-color: #fff;
@@ -56,20 +56,15 @@ var map, heatmap;
 
 function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
-    zoom: 13,
-    center: {lat: 40.751888, lng: -73.986902},
+    zoom: 12,
+    center: {lat: 40.768531158812905, lng: -74.02363753466794},
     mapTypeId: google.maps.MapTypeId.SATELLITE
   });
 
-    var marker = new google.maps.Marker({
-        position: $pickup,
-        map: map,
-        title: 'Pickup Location'
-    });
-
   heatmap = new google.maps.visualization.HeatmapLayer({
     data: getPoints(),
-    map: map
+    map: map,
+    radius: 18
   });
 }
 
@@ -98,7 +93,7 @@ function changeGradient() {
 }
 
 function changeRadius() {
-  heatmap.set('radius', heatmap.get('radius') ? null : 20);
+  heatmap.set('radius', heatmap.get('radius') ? null : 18);
 }
 
 function changeOpacity() {
