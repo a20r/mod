@@ -445,7 +445,8 @@ namespace mod
                     {
                         break;
                     }
-                    else if (st <= demand_vec[i])
+
+                    if (st <= demand_vec[i])
                     {
                         if (offset < 0)
                         {
