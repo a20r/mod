@@ -46,3 +46,6 @@ A visualization, given all the requests, positions of the
 vehicles, pickups and dropoffs through out a day, visualize them on
 top of a map.
 
+# Folder name decoder
+- v-[number of vehicles]-c-[capacity]-w-[waiting time]-p-[number of samples]-[day]-[week]-[year]-[date at which folder is created]
+- They are in another folder that has the name until day and then organized
