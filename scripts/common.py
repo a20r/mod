@@ -3,16 +3,19 @@ import re
 
 
 def load_kml_poly():
-    with open("data/nyc.kml") as fin:
-        data = fin.read()
-        cs = re.findall(r"<coordinates>[\s\S]*?<\/coordinates>", data)[0]\
-            .split("<coordinates>")[1]\
-            .split(",0 ")[:-2]
-        poly = list()
-        for gs in cs:
-            coords = map(float, gs.strip().split(","))
-            poly.append(coords)
-        return poly
+    try:
+        with open("data/nyc.kml") as fin:
+            data = fin.read()
+            cs = re.findall(r"<coordinates>[\s\S]*?<\/coordinates>", data)[0]\
+                .split("<coordinates>")[1]\
+                .split(",0 ")[:-2]
+            poly = list()
+            for gs in cs:
+                coords = map(float, gs.strip().split(","))
+                poly.append(coords)
+            return poly
+    except:
+        return []
 
 
 MAX_SECONDS = 60240

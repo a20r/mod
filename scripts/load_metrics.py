@@ -4,19 +4,22 @@ import common
 import os
 import os.path
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas
 import re
 from collections import defaultdict
 from datetime import datetime
 from progressbar import ProgressBar, ETA, Percentage, Bar
+from multiprocessing import Pool
 
 
+SHOW_IND_PROGRESS = False
 TIME_STEP = 30
 GRAPHS_PREFIX = "graphs"
 DATA_FILE_TEMPLATE = "data-{}-{}.txt"
 REG = r"-?\d*\.\d+|-?\d+"
+folder = "/home/wallar/nfs/data/data-sim/v1000-c10-w120-p0/"
 START_DATE = "2013-05-03 19:00:00"
+FOLDER_REG = "v*-c*-w*-p*-*-*-*-*"
 
 
 class PassengerData(object):
@@ -45,6 +48,24 @@ class PerformanceData(object):
         self.total_dropoffs = attrs[3]
         self.n_ignored = attrs[4]
         self.total_ignored = attrs[5]
+
+
+class FolderInfo(object):
+    def __init__(self, folder_name):
+        nums = map(int, re.findall("\d+", folder_name))
+        self.n_vehicles = nums[0]
+        self.max_capacity = nums[1]
+        self.max_waiting_time = nums[2]
+        self.predictions = nums[3]
+        self.weekday = nums[4]
+        self.week = nums[5]
+        self.year = nums[6]
+        self.timestamp = nums[7]
+
+    def get_start_date(self):
+        strt = "{}-{}-{}".format(self.weekday - 1, self.week, self.year)
+        dt = datetime.strptime(strt, "%w-%U-%Y")
+        return dt
 
 
 def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long):
@@ -85,7 +106,6 @@ def process_passengers(fin, data):
     if len(line) > 0:
         waiting_time = list()
         delay = list()
-        debug = 0
         while len(line) > 0:
             pd = PassengerData(line)
             waiting_time.append(pd.time_pickup - pd.time_req)
@@ -118,33 +138,35 @@ def process_performance(fin, data):
     data["n_ignored"].append(pd.n_ignored)
 
 
-def convert_to_dataframe(data, is_long=0):
+def convert_to_dataframe(data, folder_info, is_long=0):
     freq = "30S"
+    start = datetime.strptime(folder_info.get_start_date(),
+                              common.date_format)
     if is_long == 0:
-        start = datetime.strptime(START_DATE, common.date_format)
-        periods = common.MAX_SECONDS / 30
+        periods = common.MAX_SECONDS / TIME_STEP
     else:
-        start = datetime.strptime("2013-05-03 19:00:00", common.date_format)
         periods = len(data["is_long"])
     inds = pandas.date_range(start=start, periods=periods, freq=freq)
     for k in data.keys():
         data[k] = np.array(data[k])
     data["capacity"] = np.array(data["capacity"], dtype=int)
     data["n_vehicles"] = np.array(data["n_vehicles"], dtype=int)
-    # data["time"] = inds
+    data["time"] = inds
     return pandas.DataFrame(data)
 
 
 def extract_metrics(folder, n_vecs, cap, rebalancing, is_long):
+    folder_info = FolderInfo(folder)
     g_folder = folder + GRAPHS_PREFIX + "/"
     data = defaultdict(list)
     if is_long == 0:
-        fl = common.MAX_SECONDS / 30
+        fl = common.MAX_SECONDS / TIME_STEP
     else:
         fl = len(os.listdir(g_folder))
-    preface = "Extracting Metrics (" + g_folder + "): "
-    widgets = [preface, Bar(), Percentage(), "| ", ETA()]
-    pbar = ProgressBar(widgets=widgets, maxval=fl).start()
+    if SHOW_IND_PROGRESS:
+        preface = "Extracting Metrics (" + g_folder + "): "
+        widgets = [preface, Bar(), Percentage(), "| ", ETA()]
+        pbar = ProgressBar(widgets=widgets, maxval=fl).start()
     for i in xrange(fl):
         try:
             t = i * TIME_STEP
@@ -154,11 +176,13 @@ def extract_metrics(folder, n_vecs, cap, rebalancing, is_long):
                 move_to_passengers(fin, data)
                 process_passengers(fin, data)
                 process_performance(fin, data)
-            pbar.update(i)
+            if SHOW_IND_PROGRESS:
+                pbar.update(i)
         except IOError:
             pass
-    pbar.finish()
-    return convert_to_dataframe(data, is_long)
+    if SHOW_IND_PROGRESS:
+        pbar.finish()
+    return convert_to_dataframe(data, folder_info, is_long)
 
 
 def load_parameters(param_file):
@@ -173,6 +197,17 @@ def load_parameters(param_file):
             else:
                 params[key] = vs[1].strip()
         return params
+
+
+def extract_dataframe_worker(folders):
+    subdir = folders[0] + folders[1] + "/"
+    params = load_parameters(subdir + "parameters.txt")
+    n_vehicles = params["NUMBER_VEHICLES"]
+    cap = params["maxPassengersVehicle"]
+    rebalancing = params["USE_REBALANCING"]
+    is_long = params.get("is_long", 0)
+    df = extract_metrics(subdir, n_vehicles, cap, rebalancing, is_long)
+    return df
 
 
 def extract_dataframe(folder):
@@ -191,7 +226,19 @@ def extract_dataframe(folder):
 
 
 if __name__ == "__main__":
-    print "Extracting Metrics DataFrame..."
-    df = extract_dataframe("data/sim-data/")
-    print "Writing DataFrame to File..."
-    df.to_csv("data/metrics.csv")
+    try:
+        print "Extracting Metrics DataFrame..."
+        folder = "/home/wallar/nfs/data/data-sim/v1000-c10-w120-p0/"
+        dirs = os.listdir(folder)
+        folder_l = [folder] * len(dirs)
+        folders = zip(folder_l, dirs)
+        folder_info = FolderInfo(dirs[0])
+        print folder_info.get_start_date()
+        pool = Pool(8)
+        # dfs = pool.map(extract_dataframe_worker, folders)
+        # print "Writing DataFrame to File..."
+        # df = pandas.concat(dfs)
+        # df.to_csv("data/metrics.csv")
+    except KeyboardInterrupt:
+        pool.terminate()
+        pool.join()

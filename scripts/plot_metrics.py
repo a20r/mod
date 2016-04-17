@@ -4,34 +4,14 @@ import numpy as np
 import seaborn as sns
 import pandas
 import matplotlib.pyplot as plt
-from datetime import datetime
-
-pm = " \\pm "
-
-table_header = """
-\\begin{table*}[t]
-\\centering
-\\begin{tabular}{  |c|c|c|c|c|c|c|c| }
-\\hline
-& Fleet size & Capacity $\\nu$ & Pick-ups/h & Ignored/h & Waiting time [s] & Delay [s] & Occupancy \\\\
-\\hline
-\\hline
-"""
-
-line_tp = "{} & {} & {} & {:.2f} $\\pm$ {:.2f} & {:.2f} $\\pm$ {:.2f} & {:.2f} $\\pm$ {:.2f} & {:.2f} $\\pm$ {:.2f} & {:.2f} $\\pm$ {:.2f} \\\\"
-
-table_footer = """
-\hline
-\\end{tabular}
-\\caption{Experimental results with varying number of vehicles and capacity for the middle area of Manhattan and XX mean requests per hour.}
-\\label{tab:1}
-\\end{table*}
-"""
+import matplotlib
+from datetime import datetime, timedelta
+from table_common import *
 
 instances = [(500, 1, 0), (500, 2, 0), (500, 3, 0), (500, 4, 0),
              (125, 4, 0), (250, 4, 0), (375, 4, 0), (625, 4, 0),
              (750, 4, 0), (1000, 4, 0), (250, 4, 1), (375, 4, 1),
-             (500, 4 ,1), (625, 4, 1), (750, 4, 1)]
+             (500, 4, 1), (625, 4, 1), (750, 4, 1)]
 
 
 n_vecs = [125, 250, 375, 500, 625, 750, 1000]
@@ -69,6 +49,16 @@ def subtable(df, n_vecs, cap, rebalancing=0, is_long=0):
     return df[bcap & bvecs & brb & isl]
 
 
+def plot_date(dates, values, *args, **kwargs):
+    datetimes = list()
+    start = datetime.strptime(dates.iloc[0], common.date_format)
+    end = datetime.strptime(dates.iloc[-1], common.date_format)
+    print start
+    dts = matplotlib.dates.drange(start, end, timedelta(seconds=30))
+    print len(dts)
+    plt.plot_date(dts, values, *args, **kwargs)
+
+
 def plot_percent_pickups_vs_vehicles(df):
     plt.figure()
     ys = list()
@@ -80,20 +70,18 @@ def plot_percent_pickups_vs_vehicles(df):
             ys.append(100 * picked / (picked + ignored))
         except ZeroDivisionError:
             ys.append(0)
-    sns.barplot(x=n_vecs, y=ys)
+    sns.barplot(x=np.array(n_vecs), y=np.array(ys))
     plt.xlabel("Number of Vehicles")
     plt.ylabel("Picked Requests [%]")
 
 
 def plot_pickups_vs_time(df):
-    plt.figure()
-    st = subtable(df, 500, 4)
-    start = datetime.strptime(st["time"].loc[2008], common.date_format)
-    end = datetime.strptime(st["time"].loc[4015], common.date_format)
-    st.index = pandas.date_range(start, end, freq="30S")
-    plt.plot(st.index, st["n_pickups"], "r", alpha=1)
+    fig = plt.figure()
+    st = subtable(df, 1000, 10, rebalancing=1)
+    plot_date(st["time"], st["n_pickups"], "r", alpha=1)
     plt.xlabel("Time")
     plt.ylabel("Number of Pickups per 30s Segment")
+    fig.autofmt_xdate()
 
 
 def plot_occupancy(df):
@@ -115,10 +103,10 @@ def plot_occupancy(df):
 if __name__ == "__main__":
     sns.set_context("poster", font_scale=2.2)
     df = pandas.read_csv("data/metrics.csv")
-    table = create_latex_table(df)
-    print table
+    # table = create_latex_table(df)
+    # print table
     # plot_occupancy(df)
     # plot_percent_pickups_vs_vehicles(df)
-    # plot_pickups_vs_time(df)
+    plot_pickups_vs_time(df)
     # plt.fill_between(ma.index, ma - mstd, ma + mstd, color="r", alpha=0.4)
-    # plt.show()
+    plt.show()
