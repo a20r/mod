@@ -5,8 +5,8 @@ import seaborn as sns
 import pandas
 import matplotlib.pyplot as plt
 import matplotlib
-from datetime import datetime, timedelta
-from table_common import *
+from datetime import datetime
+from table_common import table_header, line_tp, table_footer
 
 instances = [(500, 1, 0), (500, 2, 0), (500, 3, 0), (500, 4, 0),
              (125, 4, 0), (250, 4, 0), (375, 4, 0), (625, 4, 0),
@@ -50,12 +50,11 @@ def subtable(df, n_vecs, cap, rebalancing=0, is_long=0):
 
 
 def plot_date(dates, values, *args, **kwargs):
-    datetimes = list()
-    start = datetime.strptime(dates.iloc[0], common.date_format)
-    end = datetime.strptime(dates.iloc[-1], common.date_format)
-    print start
-    dts = matplotlib.dates.drange(start, end, timedelta(seconds=30))
-    print len(dts)
+    dts = list()
+    for i in xrange(len(dates)):
+        dt = datetime.strptime(dates.iloc[i], common.date_format)
+        dts.append(dt)
+    dts = matplotlib.dates.date2num(dts)
     plt.plot_date(dts, values, *args, **kwargs)
 
 
@@ -77,8 +76,8 @@ def plot_percent_pickups_vs_vehicles(df):
 
 def plot_pickups_vs_time(df):
     fig = plt.figure()
-    st = subtable(df, 1000, 10, rebalancing=1)
-    plot_date(st["time"], st["n_pickups"], "r", alpha=1)
+    st = subtable(df, 1000, 10, 1, 1)
+    plot_date(st["time"], st["n_pickups"], "ro", alpha=1)
     plt.xlabel("Time")
     plt.ylabel("Number of Pickups per 30s Segment")
     fig.autofmt_xdate()
@@ -102,7 +101,8 @@ def plot_occupancy(df):
 
 if __name__ == "__main__":
     sns.set_context("poster", font_scale=2.2)
-    df = pandas.read_csv("data/metrics.csv")
+    m_file = "/home/wallar/nfs/data/data-sim/v1000-c10-w120-p0/metrics.csv"
+    df = pandas.read_csv(m_file)
     # table = create_latex_table(df)
     # print table
     # plot_occupancy(df)

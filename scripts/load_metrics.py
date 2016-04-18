@@ -1,4 +1,7 @@
+#! /usr/bin/python
 
+import warnings
+import sys
 import io
 import common
 import os
@@ -66,6 +69,11 @@ class FolderInfo(object):
         strt = "{}-{}-{}".format(self.weekday - 1, self.week, self.year)
         dt = datetime.strptime(strt, "%w-%U-%Y")
         return dt
+
+
+def get_subdirs(a_dir):
+        return [name for name in os.listdir(a_dir)
+                if os.path.isdir(os.path.join(a_dir, name))]
 
 
 def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long):
@@ -140,8 +148,7 @@ def process_performance(fin, data):
 
 def convert_to_dataframe(data, folder_info, is_long=0):
     freq = "30S"
-    start = datetime.strptime(folder_info.get_start_date(),
-                              common.date_format)
+    start = folder_info.get_start_date()
     if is_long == 0:
         periods = common.MAX_SECONDS / TIME_STEP
     else:
@@ -156,7 +163,7 @@ def convert_to_dataframe(data, folder_info, is_long=0):
 
 
 def extract_metrics(folder, n_vecs, cap, rebalancing, is_long):
-    folder_info = FolderInfo(folder)
+    folder_info = FolderInfo(folder.split("/")[-2])
     g_folder = folder + GRAPHS_PREFIX + "/"
     data = defaultdict(list)
     if is_long == 0:
@@ -200,21 +207,21 @@ def load_parameters(param_file):
 
 
 def extract_dataframe_worker(folders):
-    subdir = folders[0] + folders[1] + "/"
+    subdir = folders[0] + "/" + folders[1] + "/"
     params = load_parameters(subdir + "parameters.txt")
     n_vehicles = params["NUMBER_VEHICLES"]
     cap = params["maxPassengersVehicle"]
     rebalancing = params["USE_REBALANCING"]
-    is_long = params.get("is_long", 0)
-    df = extract_metrics(subdir, n_vehicles, cap, rebalancing, is_long)
+    # is_long = params.get("is_long", 0)
+    df = extract_metrics(subdir, n_vehicles, cap, rebalancing, 1)
     return df
 
 
 def extract_dataframe(folder):
-    dirs = os.listdir(folder)
+    dirs = get_subdirs(folder)
     dfs = list()
     for dr in dirs:
-        subdir = folder + dr + "/"
+        subdir = folder + "/" + dr + "/"
         params = load_parameters(subdir + "parameters.txt")
         n_vehicles = params["NUMBER_VEHICLES"]
         cap = params["maxPassengersVehicle"]
@@ -225,20 +232,42 @@ def extract_dataframe(folder):
     return pandas.concat(dfs)
 
 
-if __name__ == "__main__":
-    try:
-        print "Extracting Metrics DataFrame..."
-        folder = "/home/wallar/nfs/data/data-sim/v1000-c10-w120-p0/"
-        dirs = os.listdir(folder)
-        folder_l = [folder] * len(dirs)
-        folders = zip(folder_l, dirs)
-        folder_info = FolderInfo(dirs[0])
-        print folder_info.get_start_date()
+def get_ready_folders(folder):
+    ret_dirs = list()
+    dirs = get_subdirs(folder)
+    for dr in dirs:
+        if len(dr.split("-")) == 4:
+            ret_dirs.append(dr)
+    return ret_dirs
+
+
+def extract_all_dataframes(folder):
+    data_dirs = get_ready_folders(folder)
+    preface = "Extracting Metrics: "
+    widgets = [preface, Bar(), Percentage(), "| ", ETA()]
+    pbar = ProgressBar(widgets=widgets, maxval=len(data_dirs)).start()
+    counter = 1
+    for data_folder in data_dirs:
         pool = Pool(8)
-        # dfs = pool.map(extract_dataframe_worker, folders)
-        # print "Writing DataFrame to File..."
-        # df = pandas.concat(dfs)
-        # df.to_csv("data/metrics.csv")
-    except KeyboardInterrupt:
-        pool.terminate()
-        pool.join()
+        dirs = get_subdirs(folder + data_folder)
+        folder_l = [folder + data_folder] * len(dirs)
+        folders = zip(folder_l, dirs)
+        dfs = list()
+        for wdf in pool.imap_unordered(extract_dataframe_worker, folders):
+            dfs.append(wdf)
+        df = pandas.concat(dfs)
+        df.to_csv(folder + data_folder + "/metrics.csv")
+        pbar.update(counter)
+        counter += 1
+        pool.close()
+    pbar.finish()
+
+
+if __name__ == "__main__":
+    warnings.filterwarnings("ignore")
+    main_folder = "/home/wallar/nfs/data/data-sim/"
+    folder = sys.argv[1]
+    if len(folder.split("-")) == 4:
+        df = extract_dataframe(main_folder + folder)
+        df.to_csv(main_folder + folder + "/metrics.csv")
+    # extract_all_dataframes(main_folder)
