@@ -56,20 +56,46 @@ class PerformanceData(object):
 class FolderInfo(object):
     def __init__(self, folder_name):
         nums = map(int, re.findall("\d+", folder_name))
+        self.nums = nums
         self.n_vehicles = nums[0]
         self.max_capacity = nums[1]
         self.max_waiting_time = nums[2]
         self.predictions = nums[3]
-        self.weekday = nums[4]
-        self.week = nums[5]
-        self.year = nums[6]
-        self.timestamp = nums[7]
+        self.contains_date = False
+        if len(nums) > 4:
+            self.weekday = nums[4]
+            self.week = nums[5]
+            self.year = nums[6]
+            self.timestamp = nums[7]
+            self.contains_date = True
 
     def get_start_date(self):
-        strt = "{}-{}-{}".format(self.weekday - 1, self.week, self.year)
-        dt = datetime.strptime(strt, "%w-%U-%Y")
-        return dt
+        if self.contains_date:
+            strt = "{}-{}-{}".format(self.weekday - 1, self.week, self.year)
+            dt = datetime.strptime(strt, "%w-%U-%Y")
+            return dt
+        else:
+            raise ValueError("Folder does not contain date")
 
+    def to_dict(self):
+        data = dict()
+        data["n_vehicles"] = self.n_vehicles
+        data["capacity"] = self.max_capacity
+        data["waiting_time"] = self.max_waiting_time
+        data["predictions"] = self.predictions
+        return data
+
+    def to_json(self):
+        t = "[n_vehicles: {}, capacity: {}, waiting_time: {}, predictions: {}]"
+        return t.format(*self.nums)
+
+
+    def __str__(self):
+        t = "(n_vehicles: {}, capacity: {}, waiting_time: {}, predictions: {})"
+        return t.format(*self.nums)
+
+    def __repr__(self):
+        return "FolderInfo({})".format(", ".join(str(n) for n in self.nums))
 
 def get_subdirs(a_dir):
         return [name for name in os.listdir(a_dir)
@@ -226,8 +252,7 @@ def extract_dataframe(folder):
         n_vehicles = params["NUMBER_VEHICLES"]
         cap = params["maxPassengersVehicle"]
         rebalancing = params["USE_REBALANCING"]
-        is_long = params.get("is_long", 0)
-        df = extract_metrics(subdir, n_vehicles, cap, rebalancing, is_long)
+        df = extract_metrics(subdir, n_vehicles, cap, rebalancing, 1)
         dfs.append(df)
     return pandas.concat(dfs)
 
@@ -270,4 +295,3 @@ if __name__ == "__main__":
     if len(folder.split("-")) == 4:
         df = extract_dataframe(main_folder + folder)
         df.to_csv(main_folder + folder + "/metrics.csv")
-    # extract_all_dataframes(main_folder)

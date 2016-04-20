@@ -1,4 +1,5 @@
 
+import sys
 import common
 import numpy as np
 import seaborn as sns
@@ -6,6 +7,7 @@ import pandas
 import matplotlib.pyplot as plt
 import matplotlib
 from datetime import datetime
+from load_metrics import FolderInfo
 from table_common import table_header, line_tp, table_footer
 
 instances = [(500, 1, 0), (500, 2, 0), (500, 3, 0), (500, 4, 0),
@@ -46,6 +48,7 @@ def subtable(df, n_vecs, cap, rebalancing=0, is_long=0):
     bvecs = (df["n_vehicles"] == n_vecs)
     brb = (df["rebalancing"] == rebalancing)
     isl = (df["is_long"] == is_long)
+    # dt = ((df["time"] > start) & (df["time"] < end))
     return df[bcap & bvecs & brb & isl]
 
 
@@ -74,25 +77,19 @@ def plot_percent_pickups_vs_vehicles(df):
     plt.ylabel("Picked Requests [%]")
 
 
-def plot_pickups_vs_time(df):
+def plot_pickups_vs_time(df, folder_info):
     fig = plt.figure()
-    st = subtable(df, 1000, 10, 1, 1)
+    st = subtable(df, folder_info.n_vehicles, folder_info.max_capacity, 1, 1)
     plot_date(st["time"], st["n_pickups"], "ro", alpha=1)
     plt.xlabel("Time")
     plt.ylabel("Number of Pickups per 30s Segment")
     fig.autofmt_xdate()
 
 
-def plot_occupancy(df):
+def plot_occupancy(df, folder_info):
     plt.figure()
-    st = subtable(df, 500, 4, 0, 1)
-    start = datetime.strptime(st["time"].loc[6024], common.date_format)
-    end = datetime.strptime(st["time"].loc[8902], common.date_format)
-    st.index = pandas.date_range(start, end, freq="30S")
-    ys = st["mean_passengers"]
-    plt.plot(st.index, ys, "r")
-    stds = st["std_passengers"]
-    plt.fill_between(st.index, ys - stds, ys + stds, color="r", alpha=0.2)
+    st = subtable(df, folder_info.n_vehicles, folder_info.max_capacity, 1, 1)
+    plot_date(st["time"], st["mean_passengers"])
     plt.xlabel("Time")
     plt.ylabel("Average Occupancy Per Vehicle")
     plt.ylim([0, 4])
@@ -101,12 +98,14 @@ def plot_occupancy(df):
 
 if __name__ == "__main__":
     sns.set_context("poster", font_scale=2.2)
-    m_file = "/home/wallar/nfs/data/data-sim/v1000-c10-w120-p0/metrics.csv"
+    # m_file = "/home/wallar/nfs/data/data-sim/v1000-c10-w120-p0/metrics.csv"
+    m_file = sys.argv[1]
+    folder_info = FolderInfo(m_file)
     df = pandas.read_csv(m_file)
     # table = create_latex_table(df)
     # print table
-    # plot_occupancy(df)
+    plot_occupancy(df, folder_info)
     # plot_percent_pickups_vs_vehicles(df)
-    plot_pickups_vs_time(df)
+    # plot_pickups_vs_time(df, folder_info)
     # plt.fill_between(ma.index, ma - mstd, ma + mstd, color="r", alpha=0.4)
     plt.show()
