@@ -38,7 +38,7 @@ class PassengerData(object):
         self.time_req = attrs[11]
         self.time_pickup = attrs[12]
         self.time_dropoff = attrs[13]
-        self.travel_time_optim = attrs[14]
+        self.travel_time_optim = int(attrs[14])
         self.vehicle_pickup = attrs[15]
 
 
@@ -142,8 +142,8 @@ def process_passengers(fin, data):
         delay = list()
         while len(line) > 0:
             pd = PassengerData(line)
-            waiting_time.append(pd.time_pickup - pd.time_req)
             if pd.time_dropoff > 0:
+                waiting_time.append(pd.time_pickup - pd.time_req)
                 dly = pd.time_dropoff - pd.time_req - pd.travel_time_optim
                 delay.append(dly)
             l = fin.readline()

@@ -6,9 +6,11 @@ href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"/>
 src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"/>
 <script
 src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script src="/jquery.stickytableheaders.min.js"></script>
 <script>
     $(function() {
-            $("table").addClass("table table-hover");
-    })()
+            $("table").addClass("table table-hover").stickyTableHeaders();
+            $(window).trigger('resize.stickyTableHeaders');
+    })
 </script>
 <title>Mobility on Demand Table</title>

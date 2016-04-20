@@ -18,6 +18,9 @@ def get_metrics(n_vehicles, cap, waiting_time, predictions):
     df["serviced_percentage"] = df["n_pickups"].sum() \
         / (df["n_pickups"].sum() + df["n_ignored"].sum())
     df.drop("Unnamed: 0", axis=1, inplace=True)
+    df.drop("capacity", axis=1, inplace=True)
+    df.drop("is_long", axis=1, inplace=True)
+    df.drop("n_vehicles", axis=1, inplace=True)
     return df
 
 
