@@ -273,6 +273,12 @@ namespace mod
                 }
             }
 
+            void reload_paths(string fn_paths)
+            {
+                paths.clear();
+                load_paths(fn_paths);
+            }
+
             void load_paths(string fn_paths)
             {
                 ifstream data(fn_paths);
