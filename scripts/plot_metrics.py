@@ -1,13 +1,13 @@
 
-import sys
 import common
 import numpy as np
-import seaborn as sns
-import pandas
-import matplotlib.pyplot as plt
 import matplotlib
+matplotlib.use("Agg")
+from matplotlib.dates import DateFormatter
+import matplotlib.pyplot as plt
+import seaborn as sns
+import tabler
 from datetime import datetime
-from load_metrics import FolderInfo
 from table_common import table_header, line_tp, table_footer
 
 instances = [(500, 1, 0), (500, 2, 0), (500, 3, 0), (500, 4, 0),
@@ -18,11 +18,17 @@ instances = [(500, 1, 0), (500, 2, 0), (500, 3, 0), (500, 4, 0),
 
 n_vecs = [125, 250, 375, 500, 625, 750, 1000]
 
+waiting_times = [120, 300, 420]
+vehicles = [1000, 2000, 3000]
+fields = ["mean_waiting_time", "mean_passengers", "mean_delay", "n_pickups"]
+caps = [1, 2, 4, 10]
+clrs = ["ro", "go", "bo", "co"]
+
 
 def create_latex_table(df):
     lines = list()
     for i, (n_vecs, cap, rb) in enumerate(instances):
-        st = subtable(df, n_vecs, cap, rb)
+        st = df
         n_hrs = common.MAX_SECONDS / (60 * 60.0)
         pickups = np.sum(st["n_pickups"]) / n_hrs
         ignored = np.sum(st["n_ignored"]) / n_hrs
@@ -43,16 +49,9 @@ def create_latex_table(df):
     return table_header + inner_lines + table_footer
 
 
-def subtable(df, n_vecs, cap, rebalancing=0, is_long=0):
-    bcap = (df["capacity"] == cap)
-    bvecs = (df["n_vehicles"] == n_vecs)
-    brb = (df["rebalancing"] == rebalancing)
-    isl = (df["is_long"] == is_long)
-    # dt = ((df["time"] > start) & (df["time"] < end))
-    return df[bcap & bvecs & brb & isl]
-
-
-def plot_date(dates, values, *args, **kwargs):
+def plot_ts(df, field, *args, **kwargs):
+    dates = df["time"]
+    values = df[field]
     dts = list()
     for i in xrange(len(dates)):
         dt = datetime.strptime(dates.iloc[i], common.date_format)
@@ -61,51 +60,26 @@ def plot_date(dates, values, *args, **kwargs):
     plt.plot_date(dts, values, *args, **kwargs)
 
 
-def plot_percent_pickups_vs_vehicles(df):
-    plt.figure()
-    ys = list()
-    for n_vec in n_vecs:
-        st = subtable(df, n_vec, 4)
-        try:
-            picked = float(np.sum(st["n_pickups"]))
-            ignored = float(np.sum(st["n_ignored"]))
-            ys.append(100 * picked / (picked + ignored))
-        except ZeroDivisionError:
-            ys.append(0)
-    sns.barplot(x=np.array(n_vecs), y=np.array(ys))
-    plt.xlabel("Number of Vehicles")
-    plt.ylabel("Picked Requests [%]")
-
-
-def plot_pickups_vs_time(df, folder_info):
-    fig = plt.figure()
-    st = subtable(df, folder_info.n_vehicles, folder_info.max_capacity, 1, 1)
-    plot_date(st["time"], st["n_pickups"], "ro", alpha=1)
-    plt.xlabel("Time")
-    plt.ylabel("Number of Pickups per 30s Segment")
-    fig.autofmt_xdate()
-
-
-def plot_occupancy(df, folder_info):
-    plt.figure()
-    st = subtable(df, folder_info.n_vehicles, folder_info.max_capacity, 1, 1)
-    plot_date(st["time"], st["mean_passengers"])
-    plt.xlabel("Time")
-    plt.ylabel("Average Occupancy Per Vehicle")
-    plt.ylim([0, 4])
-    plt.yticks(range(5))
+def make_plots():
+    fmt = DateFormatter("%m/%d")
+    for field in fields:
+        for v in vehicles:
+            for wt in waiting_times:
+                fig, ax = plt.subplots()
+                for cap, clr in zip(caps, clrs):
+                    df = tabler.get_metrics(v, cap, wt, 0)
+                    plot_ts(df, field, clr, alpha=0.8,
+                            label="Cap: {}".format(cap))
+                ax.xaxis.set_major_formatter(fmt)
+                lgd = plt.legend(loc="center left", fancybox=True,
+                                 shadow=True, bbox_to_anchor=(1, 0.5))
+                plt.ylabel(field)
+                fig.autofmt_xdate()
+                plt.savefig("figs/{}-{}-{}.pdf".format(field, v, wt),
+                            bbox_extra_artists=(lgd,), bbox_inches='tight')
 
 
 if __name__ == "__main__":
+    plt.ioff()
     sns.set_context("poster", font_scale=2.2)
-    # m_file = "/home/wallar/nfs/data/data-sim/v1000-c10-w120-p0/metrics.csv"
-    m_file = sys.argv[1]
-    folder_info = FolderInfo(m_file)
-    df = pandas.read_csv(m_file)
-    # table = create_latex_table(df)
-    # print table
-    plot_occupancy(df, folder_info)
-    # plot_percent_pickups_vs_vehicles(df)
-    # plot_pickups_vs_time(df, folder_info)
-    # plt.fill_between(ma.index, ma - mstd, ma + mstd, color="r", alpha=0.4)
-    plt.show()
+    make_plots()
