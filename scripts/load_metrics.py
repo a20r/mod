@@ -111,14 +111,23 @@ def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long):
         if "Vehicles" in line:
             break
     ppv = list()
+    km_travelled = list()
     line = fin.readline()
+    active_taxis = 0.0
     while len(line) > 1:
         passes = re.findall(r"-?\d+", line.split("%")[1])
         ppv.append(len(passes))
+        km = float(line.split("%")[5])
+        km_travelled.append(km)
+        active_taxis += 1 if len(passes) > 0 else 0
         line = fin.readline()
     data["mean_passengers"].append(np.mean(ppv))
     data["med_passengers"].append(np.median(ppv))
     data["std_passengers"].append(np.std(ppv))
+    data["active_taxis"].append(active_taxis)
+    data["mean_km_travelled"].append(np.mean(km_travelled))
+    data["std_km_travelled"].append(np.std(km_travelled))
+    data["total_km_travelled"].append(sum(km_travelled))
     data["n_vehicles"].append(n_vecs)
     data["capacity"].append(cap)
     data["rebalancing"].append(rebalancing)
@@ -172,6 +181,10 @@ def process_performance(fin, data):
     data["n_ignored"].append(pd.n_ignored)
 
 
+def process_requests(fin, data):
+    pass
+
+
 def convert_to_dataframe(data, folder_info, is_long=0):
     freq = "30S"
     start = folder_info.get_start_date()
@@ -205,6 +218,7 @@ def extract_metrics(folder, n_vecs, cap, rebalancing, is_long):
             t = i * TIME_STEP
             filename = g_folder + DATA_FILE_TEMPLATE.format(GRAPHS_PREFIX, t)
             with io.open(filename) as fin:
+                process_requests(fin, data)
                 process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long)
                 move_to_passengers(fin, data)
                 process_passengers(fin, data)
