@@ -1,4 +1,3 @@
 Seq	Host	Starttime	Runtime	Send	Receive	Exitval	Signal	Command
-1	:	1462804448.911	0.648	0	0	0	0	scripts/load_metrics.py data-test1.zip
-2	:	1462804448.912	0.666	0	0	0	0	scripts/load_metrics.py data-test2.zip
-19	:	1462804449.186	0.962	0	0	0	0	scripts/load_metrics.py v1000-c4-w600-p0-1-18-2013-1460930949
+1	:	1462819490.878	0.412	0	0	0	0	scripts/load_metrics.py data-test1.zip
+2	:	1462819490.879	0.440	0	0	0	0	scripts/load_metrics.py data-test2.zip

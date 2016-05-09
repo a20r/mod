@@ -28,8 +28,19 @@ clrs = ["ro-", "go-", "bo-", "co-"]
 
 
 def prettify(text):
-    words = text.split("_")
-    return " ".join(w.capitalize() for w in words)
+    if text == "n_pickups":
+        return "Num Pickups"
+    else:
+        words = text.split("_")
+        return " ".join(w.capitalize() for w in words)
+
+
+def make_wt_title(field, wt):
+    return "{} w/ M.W.T: {}".format(prettify(field), wt)
+
+
+def make_vec_title(field, nv):
+    return "{} w/ N.V: {}".format(prettify(field), nv)
 
 
 def create_latex_table(df):
@@ -82,11 +93,11 @@ def make_ts_plots():
                                  shadow=True, bbox_to_anchor=(1, 0.5))
                 plt.ylabel(field)
                 fig.autofmt_xdate()
-                plt.savefig("figs/ts-{}-{}-{}.pdf".format(field, v, wt),
+                plt.savefig("figs/ts-{}-v{}-w{}.pdf".format(field, v, wt),
                             bbox_extra_artists=(lgd,), bbox_inches='tight')
 
 
-def make_avg_plots_with_vecs():
+def get_avg_ys_vecs():
     ys = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     stds = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     for wt in waiting_times:
@@ -96,30 +107,66 @@ def make_avg_plots_with_vecs():
                     df = tabler.get_metrics(v, cap, wt, 0)
                     ys[field][cap][wt].append(np.mean(df[field]))
                     stds[field][cap][wt].append(np.std(df[field]))
+    return ys, stds
+
+
+def get_avg_ys_wts():
+    ys = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    stds = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    for v in vehicles:
+        for wt in waiting_times:
+            for field in fields:
+                for cap in caps:
+                    df = tabler.get_metrics(v, cap, wt, 0)
+                    ys[field][cap][v].append(np.mean(df[field]))
+                    stds[field][cap][v].append(np.std(df[field]))
+    return ys, stds
+
+
+
+def make_avg_plots_with_vecs():
+    ys, stds = get_avg_ys_vecs()
     for field in fields:
         for wt in waiting_times:
             fig, ax = plt.subplots()
             for cap, clr in zip(caps, clrs):
                 plt.plot(vehicles, ys[field][cap][wt], clr,
                         label="Cap: {}".format(cap))
-                ax.set_xticks(vehicles)
-                plt.xlim([min(vehicles) - 100, max(vehicles) + 100])
-                plt.ylabel(prettify(field))
-                plt.xlabel("Num Vehicles")
-                lgd = plt.legend(loc="center left", fancybox=True,
-                                shadow=True, bbox_to_anchor=(1, 0.5))
-                plt.title("Waiting Time: {}".format(wt))
-                plt.savefig("figs/avg-with_vecs-{}-{}.pdf".format(field, wt),
-                            bbox_extra_artists=(lgd,), bbox_inches='tight')
+            ax.set_xticks(vehicles)
+            plt.xlim([min(vehicles) - 100, max(vehicles) + 100])
+            plt.ylabel(prettify(field))
+            plt.xlabel("Num Vehicles")
+            lgd = plt.legend(loc="center left", fancybox=True,
+                            shadow=True, bbox_to_anchor=(1, 0.5))
+            plt.title(make_wt_title(field, wt))
+            plt.savefig("figs/avg-with_vecs-{}-w{}.pdf".format(field, wt),
+                        bbox_extra_artists=(lgd,), bbox_inches='tight')
+            plt.close()
 
 
 def make_avg_plots_with_wts():
-    for wt in waiting_times:
-        pass
+    ys, stds = get_avg_ys_wts()
+    for field in fields:
+        for v in vehicles:
+            fig, ax = plt.subplots()
+            for cap, clr in zip(caps, clrs):
+                plt.plot(waiting_times, ys[field][cap][v], clr,
+                        label="Cap: {}".format(cap))
+            ax.set_xticks(waiting_times)
+            plt.xlim([min(waiting_times) - 10, max(waiting_times) + 10])
+            plt.ylabel(prettify(field))
+            plt.xlabel("Max Waiting Time")
+            lgd = plt.legend(loc="center left", fancybox=True,
+                            shadow=True, bbox_to_anchor=(1, 0.5))
+            plt.title(make_vec_title(field, v))
+            plt.savefig("figs/avg-with_wts-{}-v{}.pdf".format(field, v),
+                        bbox_extra_artists=(lgd,), bbox_inches='tight')
+            plt.close()
 
 
 if __name__ == "__main__":
     plt.ioff()
     sns.set_context("poster", font_scale=2.2)
     make_avg_plots_with_vecs()
+    make_avg_plots_with_wts()
     # make_ts_plots()

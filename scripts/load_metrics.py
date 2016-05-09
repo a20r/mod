@@ -103,9 +103,6 @@ def get_subdirs(a_dir):
 
 
 def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long):
-    fin.readline()
-    n_reqs = int(re.findall(r"\d+", fin.readline())[0])
-    data["n_reqs"].append(n_reqs)
     while True:
         line = fin.readline()
         if "Vehicles" in line:
@@ -182,7 +179,20 @@ def process_performance(fin, data):
 
 
 def process_requests(fin, data):
-    pass
+    fin.readline()
+    fin.readline()
+    l = fin.readline()
+    n_reqs_assigned = 0
+    n_reqs_unassigned = 0
+    while len(l) > 0:
+        assigned = re.findall(r"-?\d+", l)[11]
+        if assigned > 0:
+            n_reqs_assigned += 1
+        else:
+            n_reqs_unassigned += 1
+    data["n_reqs_assigned"].append(n_reqs_assigned)
+    data["n_reqs_unassigned"].append(n_reqs_unassigned)
+    data["n_reqs"].append(n_reqs_assigned + n_reqs_unassigned)
 
 
 def convert_to_dataframe(data, folder_info, is_long=0):
