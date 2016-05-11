@@ -15,7 +15,7 @@ from progressbar import ProgressBar, ETA, Percentage, Bar
 from multiprocessing import Pool
 
 
-SHOW_IND_PROGRESS = False
+SHOW_IND_PROGRESS = True
 TIME_STEP = 30
 GRAPHS_PREFIX = "graphs"
 DATA_FILE_TEMPLATE = "data-{}-{}.txt"
@@ -184,12 +184,13 @@ def process_requests(fin, data):
     l = fin.readline()
     n_reqs_assigned = 0
     n_reqs_unassigned = 0
-    while len(l) > 0:
-        assigned = re.findall(r"-?\d+", l)[11]
+    while len(l) > 1:
+        assigned = re.findall(r"[-+]?\d*\.\d+|\d+", l)[11]
         if assigned > 0:
             n_reqs_assigned += 1
         else:
             n_reqs_unassigned += 1
+        l = fin.readline()
     data["n_reqs_assigned"].append(n_reqs_assigned)
     data["n_reqs_unassigned"].append(n_reqs_unassigned)
     data["n_reqs"].append(n_reqs_assigned + n_reqs_unassigned)
@@ -292,10 +293,9 @@ def get_ready_folders(folder):
 
 def extract_all_dataframes(folder):
     data_dirs = get_ready_folders(folder)
-    preface = "Extracting Metrics: "
-    widgets = [preface, Bar(), Percentage(), "| ", ETA()]
-    pbar = ProgressBar(widgets=widgets, maxval=len(data_dirs)).start()
-    counter = 1
+    # widgets = [preface, Bar(), Percentage(), "| ", ETA()]
+    # pbar = ProgressBar(widgets=widgets, maxval=len(data_dirs)).start()
+    # counter = 1
     for data_folder in data_dirs:
         pool = Pool(8)
         dirs = get_subdirs(folder + data_folder)
@@ -306,16 +306,17 @@ def extract_all_dataframes(folder):
             dfs.append(wdf)
         df = pandas.concat(dfs)
         df.to_csv(folder + data_folder + "/metrics.csv")
-        pbar.update(counter)
-        counter += 1
+        # pbar.update(counter)
+        # counter += 1
         pool.close()
-    pbar.finish()
+    # pbar.finish()
 
 
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     main_folder = "/home/wallar/nfs/data/data-sim/"
-    folder = sys.argv[1]
-    if len(folder.split("-")) == 4:
-        df = extract_dataframe(main_folder + folder)
-        df.to_csv(main_folder + folder + "/metrics.csv")
+    extract_all_dataframes(main_folder)
+    # folder = sys.argv[1]
+    # if len(folder.split("-")) == 4:
+    #     df = extract_dataframe(main_folder + folder)
+    #     df.to_csv(main_folder + folder + "/metrics.csv")

@@ -18,7 +18,7 @@ instances = [(500, 1, 0), (500, 2, 0), (500, 3, 0), (500, 4, 0),
 
 
 n_vecs = [125, 250, 375, 500, 625, 750, 1000]
-
+predictions = [0, 100, 200, 300, 400]
 waiting_times = [120, 300, 420]
 vehicles = [1000, 2000, 3000]
 fields = ["mean_waiting_time", "mean_passengers", "mean_delay", "n_pickups",
@@ -41,6 +41,10 @@ def make_wt_title(field, wt):
 
 def make_vec_title(field, nv):
     return "{} w/ N.V: {}".format(prettify(field), nv)
+
+
+def make_pred_title(field, wt, nv):
+    return "{} w/ M.W.T: {}, Cap.: {}".format(prettify(field), wt, cap)
 
 
 def create_latex_table(df):
@@ -123,6 +127,41 @@ def get_avg_ys_wts():
     return ys, stds
 
 
+def get_avg_ys_ps():
+    ys = defaultdict(lambda: defaultdict(list))
+    stds = defaultdict(lambda: defaultdict(list))
+    cap = 4
+    wt = 300
+    for v in vehicles:
+        for field in fields:
+            for p in predictions:
+                df = tabler.get_metrics(v, cap, wt, p)
+                ys[field][p].append(np.mean(df[field]))
+                stds[field][p].append(np.std(df[field]))
+    return ys, stds
+
+
+def make_avg_plots_with_preds():
+    ys, stds = get_avg_ys_ps()
+    cap = 4
+    wt = 300
+    for field in fields:
+        fig, ax = plt.subplots()
+        for p, clr in zip(predictions, clrs):
+            plt.plot(vehicles, ys[field][p], clr,
+                    label="Preds: {}".format(p))
+        ax.set_xticks(vehicles)
+        plt.xlim([min(vehicles) - 100, max(vehicles) + 100])
+        plt.ylabel(prettify(field))
+        plt.xlabel("Num Vehicles")
+        lgd = plt.legend(loc="center left", fancybox=True,
+                        shadow=True, bbox_to_anchor=(1, 0.5))
+        plt.title(make_pred_title(field, wt, cap))
+        plt.savefig(
+            "figs/avg-with-preds-{}.pdf".format(field),
+            bbox_extra_artists=(lgd,), bbox_inches='tight')
+        plt.close()
+
 
 def make_avg_plots_with_vecs():
     ys, stds = get_avg_ys_vecs()
@@ -139,7 +178,7 @@ def make_avg_plots_with_vecs():
             lgd = plt.legend(loc="center left", fancybox=True,
                             shadow=True, bbox_to_anchor=(1, 0.5))
             plt.title(make_wt_title(field, wt))
-            plt.savefig("figs/avg-with_vecs-{}-w{}.pdf".format(field, wt),
+            plt.savefig("figs/avg-with-vecs-{}-w{}.pdf".format(field, wt),
                         bbox_extra_artists=(lgd,), bbox_inches='tight')
             plt.close()
 
@@ -159,7 +198,7 @@ def make_avg_plots_with_wts():
             lgd = plt.legend(loc="center left", fancybox=True,
                             shadow=True, bbox_to_anchor=(1, 0.5))
             plt.title(make_vec_title(field, v))
-            plt.savefig("figs/avg-with_wts-{}-v{}.pdf".format(field, v),
+            plt.savefig("figs/avg-with-wts-{}-v{}.pdf".format(field, v),
                         bbox_extra_artists=(lgd,), bbox_inches='tight')
             plt.close()
 
@@ -167,6 +206,7 @@ def make_avg_plots_with_wts():
 if __name__ == "__main__":
     plt.ioff()
     sns.set_context("poster", font_scale=2.2)
+    make_avg_plots_with_preds()
     make_avg_plots_with_vecs()
     make_avg_plots_with_wts()
     # make_ts_plots()
