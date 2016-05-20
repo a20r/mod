@@ -1,7 +1,6 @@
 #! /usr/bin/python
 
 import warnings
-import sys
 import io
 import common
 import os
@@ -9,13 +8,14 @@ import os.path
 import numpy as np
 import pandas
 import re
+from cStringIO import StringIO
 from collections import defaultdict
 from datetime import datetime
 from progressbar import ProgressBar, ETA, Percentage, Bar
 from multiprocessing import Pool
 
 
-SHOW_IND_PROGRESS = True
+SHOW_IND_PROGRESS = False
 TIME_STEP = 30
 GRAPHS_PREFIX = "graphs"
 DATA_FILE_TEMPLATE = "data-{}-{}.txt"
@@ -89,7 +89,6 @@ class FolderInfo(object):
         t = "[n_vehicles: {}, capacity: {}, waiting_time: {}, predictions: {}]"
         return t.format(*self.nums)
 
-
     def __str__(self):
         t = "(n_vehicles: {}, capacity: {}, waiting_time: {}, predictions: {})"
         return t.format(*self.nums)
@@ -97,12 +96,28 @@ class FolderInfo(object):
     def __repr__(self):
         return "FolderInfo({})".format(", ".join(str(n) for n in self.nums))
 
+
 def get_subdirs(a_dir):
         return [name for name in os.listdir(a_dir)
                 if os.path.isdir(os.path.join(a_dir, name))]
 
 
-def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long):
+def get_empty_type(line):
+    line_sep = line.split("%")
+    passes = re.findall(r"-?\d+", line_sep[1])
+    reqs = re.findall(r"-?\d+", line_sep[2])
+    is_rb = int(line_sep[-1]) == 0
+    if is_rb == 1:
+        return "empty_rebalancing"
+    elif len(passes) == 0 and len(reqs) > 0 and is_rb == 0:
+        return "empty_moving_to_pickup"
+    elif len(passes) == 0 and len(reqs) == 0 and is_rb == 0:
+        return "empty_waiting"
+    else:
+        return "not_empty"
+
+
+def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long, last_ps):
     while True:
         line = fin.readline()
         if "Vehicles" in line:
@@ -111,13 +126,33 @@ def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long):
     km_travelled = list()
     line = fin.readline()
     active_taxis = 0.0
+    taxi_pass_count = defaultdict(int)
+    empty_types = defaultdict(int)
+    passes_list = list()
+    n_shared = 0
+    counter = 0
+    ets = ["empty_rebalancing", "empty_moving_to_pickup",
+           "empty_waiting", "not_empty"]
+
     while len(line) > 1:
         passes = re.findall(r"-?\d+", line.split("%")[1])
+        passes_list.append(passes)
         ppv.append(len(passes))
         km = float(line.split("%")[5])
         km_travelled.append(km)
         active_taxis += 1 if len(passes) > 0 else 0
+        taxi_pass_count["time_pass_{}".format(len(passes))] += 1
+        empty_type = get_empty_type(line)
+        empty_types[empty_type] += 1
+        if last_ps is None:
+            n_shared = 0
+        else:
+            l_ps_set = set(last_ps[counter])
+            ps_set = set(passes)
+            if l_ps_set != ps_set and len(l_ps_set & ps_set) > 0:
+                n_shared += 1
         line = fin.readline()
+
     data["mean_passengers"].append(np.mean(ppv))
     data["med_passengers"].append(np.median(ppv))
     data["std_passengers"].append(np.std(ppv))
@@ -129,6 +164,15 @@ def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long):
     data["capacity"].append(cap)
     data["rebalancing"].append(rebalancing)
     data["is_long"].append(is_long)
+    data["n_shared"].append(n_shared)
+
+    for i in xrange(11):
+        key = "time_pass_{}".format(i)
+        data[key].append(taxi_pass_count[key])
+    for et in ets:
+        data[et].append(empty_types[et])
+
+    return passes_list
 
 
 def move_to_passengers(fin, data):
@@ -228,9 +272,12 @@ def extract_metrics(folder, n_vecs, cap, rebalancing, is_long):
         try:
             t = i * TIME_STEP
             filename = g_folder + DATA_FILE_TEMPLATE.format(GRAPHS_PREFIX, t)
-            with io.open(filename) as fin:
+            last_ps = None
+            with open(filename, "rb") as fstream:
+                fin = StringIO(fstream.read())
                 process_requests(fin, data)
-                process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long)
+                last_ps = process_vehicles(
+                    fin, data, n_vecs, cap, rebalancing, is_long, last_ps)
                 move_to_passengers(fin, data)
                 process_passengers(fin, data)
                 process_performance(fin, data)
@@ -286,30 +333,34 @@ def get_ready_folders(folder):
     ret_dirs = list()
     dirs = get_subdirs(folder)
     for dr in dirs:
-        if len(dr.split("-")) == 4:
+        l = len(dr.split("-"))
+        if l == 4 or l == 5:
             ret_dirs.append(dr)
     return ret_dirs
 
 
 def extract_all_dataframes(folder):
     data_dirs = get_ready_folders(folder)
-    # widgets = [preface, Bar(), Percentage(), "| ", ETA()]
-    # pbar = ProgressBar(widgets=widgets, maxval=len(data_dirs)).start()
-    # counter = 1
+    preface = "Extracting DataFrames: "
+    widgets = [preface, Bar(), Percentage(), "| ", ETA()]
+    counter = 1
+    master_folders = list()
     for data_folder in data_dirs:
-        pool = Pool(8)
         dirs = get_subdirs(folder + data_folder)
         folder_l = [folder + data_folder] * len(dirs)
-        folders = zip(folder_l, dirs)
-        dfs = list()
-        for wdf in pool.imap_unordered(extract_dataframe_worker, folders):
-            dfs.append(wdf)
-        df = pandas.concat(dfs)
-        df.to_csv(folder + data_folder + "/metrics.csv")
-        # pbar.update(counter)
-        # counter += 1
-        pool.close()
-    # pbar.finish()
+        master_folders.extend(zip(folder_l, dirs))
+
+    pbar = ProgressBar(widgets=widgets, maxval=len(master_folders)).start()
+    dfs = list()
+    pool = Pool(32)
+    for wdf in pool.imap_unordered(extract_dataframe_worker, master_folders):
+        dfs.append(wdf)
+        pbar.update(counter)
+        counter += 1
+    df = pandas.concat(dfs)
+    df.to_csv(folder + data_folder + "/metrics_new.csv")
+    pool.close()
+    pbar.finish()
 
 
 if __name__ == "__main__":

@@ -98,7 +98,7 @@ def make_ts_plots():
                 ax.xaxis.set_major_formatter(fmt)
                 lgd = plt.legend(loc="center left", fancybox=True,
                                  shadow=True, bbox_to_anchor=(1, 0.5))
-                plt.ylabel(field)
+                plt.ylabel(prettify(field))
                 fig.autofmt_xdate()
                 plt.savefig("figs/ts-{}-v{}-w{}.pdf".format(field, v, wt),
                             bbox_extra_artists=(lgd,), bbox_inches='tight')
