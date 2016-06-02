@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import tabler
 from datetime import datetime
-from collections import defaultdict
 from itertools import product
 from table_common import table_header, line_tp, table_footer
+from collections import defaultdict
 
 instances = [(500, 1, 0), (500, 2, 0), (500, 3, 0), (500, 4, 0),
              (125, 4, 0), (250, 4, 0), (375, 4, 0), (625, 4, 0),
@@ -25,7 +25,8 @@ waiting_times = [120, 300, 420]
 vehicles = [1000, 2000, 3000]
 fields = ["mean_waiting_time", "mean_passengers", "mean_delay", "n_pickups",
           "mean_travel_delay", "serviced_percentage", "total_km_travelled",
-          "km_travelled_per_car"]
+          "km_travelled_per_car", "empty_rebalancing",
+          "empty_moving_to_pickup", "empty_waiting", "not_empty"]
 caps = [1, 2, 4, 10]
 clrs = ["ro", "go", "bo", "co", "mo"]
 
@@ -93,8 +94,8 @@ def make_ts_plots():
                 fig, ax = plt.subplots()
                 for cap, clr in zip(caps, clrs):
                     df = tabler.get_metrics(v, cap, wt, 0)
-                    plot_ts(df, field, clr, alpha=0.8,
-                            label="Cap: {}".format(cap))
+                    plot_ts(df, field, clr + "--", alpha=0.8,
+                            label="Cap: {}".format(cap), markersize=4)
                 ax.xaxis.set_major_formatter(fmt)
                 lgd = plt.legend(loc="center left", fancybox=True,
                                  shadow=True, bbox_to_anchor=(1, 0.5))
@@ -105,7 +106,7 @@ def make_ts_plots():
 
 
 def get_avg_dataframe():
-    cols=["predictions", "vehicles", "waiting_time", "capacity"] + fields \
+    cols = ["predictions", "vehicles", "waiting_time", "capacity"] + fields \
         + map(lambda f: f + "_std", fields)
     data = pd.DataFrame(columns=cols)
     counter = 0
@@ -129,10 +130,10 @@ def make_avg_plots_with_preds(big_d):
     d = big_d.query("capacity == 4 and waiting_time == 300")
     cap, wt = 4, 300
     for field in fields:
-        ax = sns.pointplot(x="vehicles", y=field, hue="predictions", data=d)
+        sns.pointplot(x="vehicles", y=field, hue="predictions", data=d)
         plt.ylabel(prettify(field))
         plt.xlabel("Num Vehicles")
-        lgd = plt.legend(
+        plt.legend(
             loc="center left", fancybox=True,
             shadow=True, bbox_to_anchor=(1, 0.5),
             title="Predictions")
@@ -168,7 +169,7 @@ def make_avg_plots_with_vecs(big_d):
             if i > 1:
                 ax.get_yaxis().set_ticklabels([])
             if i == len(waiting_times):
-                lgd = plt.legend(
+                plt.legend(
                     loc="center left", fancybox=True,
                     shadow=True, bbox_to_anchor=(1, 0.5),
                     title="Capacities")
@@ -209,7 +210,7 @@ def make_avg_plots_with_wts(big_d):
             if i > 1:
                 ax.get_yaxis().set_ticklabels([])
             if i == len(waiting_times):
-                lgd = plt.legend(
+                plt.legend(
                     loc="center left", fancybox=True,
                     shadow=True, bbox_to_anchor=(1, 0.5),
                     title="Capacities")
@@ -224,11 +225,26 @@ def make_avg_plots_with_wts(big_d):
         plt.close()
 
 
+def make_empty_type_plots(big_d):
+    data = defaultdict(list)
+    empty_fields = ["empty_rebalancing", "empty_moving_to_pickup",
+                    "empty_waiting", "not_empty"]
+    data["Empty Type"] = empty_fields
+    for ef in empty_fields:
+        data["Number of Trips"].append(big_d[ef].sum())
+    df = pd.DataFrame(data)
+    sns.barplot(x="Empty Type", y="Number of Trips", data=df)
+    filename = "figs/empty_type_bar_plot.pdf"
+    plt.savefig(filename, bbox_inches="tight")
+    plt.show()
+
+
 if __name__ == "__main__":
     plt.ioff()
     sns.set_context("poster", font_scale=1.7)
-    big_d = get_avg_dataframe()
-    make_avg_plots_with_preds(big_d)
-    make_avg_plots_with_wts(big_d)
-    make_avg_plots_with_vecs(big_d)
+    # big_d = get_avg_dataframe()
+    # make_avg_plots_with_preds(big_d)
+    # make_avg_plots_with_wts(big_d)
+    # make_avg_plots_with_vecs(big_d)
+    # make_empty_type_plots(big_d)
     make_ts_plots()

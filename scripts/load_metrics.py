@@ -1,6 +1,7 @@
 #! /usr/bin/python
 
 import warnings
+# import sys
 import io
 import common
 import os
@@ -106,12 +107,12 @@ def get_empty_type(line):
     line_sep = line.split("%")
     passes = re.findall(r"-?\d+", line_sep[1])
     reqs = re.findall(r"-?\d+", line_sep[2])
-    is_rb = int(line_sep[-1]) == 0
-    if is_rb == 1:
+    is_rb = int(line_sep[-1]) == 1
+    if is_rb:
         return "empty_rebalancing"
-    elif len(passes) == 0 and len(reqs) > 0 and is_rb == 0:
+    elif len(passes) == 0 and len(reqs) > 0 and not is_rb:
         return "empty_moving_to_pickup"
-    elif len(passes) == 0 and len(reqs) == 0 and is_rb == 0:
+    elif len(passes) == 0 and len(reqs) == 0 and not is_rb:
         return "empty_waiting"
     else:
         return "not_empty"
@@ -150,7 +151,7 @@ def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long, last_ps):
             l_ps_set = set(last_ps[counter])
             ps_set = set(passes)
             if l_ps_set != ps_set and len(l_ps_set & ps_set) > 0:
-                n_shared += 1
+                n_shared += len(l_ps_set - ps_set)
         line = fin.readline()
 
     data["mean_passengers"].append(np.mean(ppv))
@@ -263,14 +264,14 @@ def extract_metrics(folder, n_vecs, cap, rebalancing, is_long):
     if is_long == 0:
         fl = common.MAX_SECONDS / TIME_STEP
     else:
-        fl = len(os.listdir(g_folder))
+        fl = len(os.listdir(g_folder)) - 60
     if SHOW_IND_PROGRESS:
         preface = "Extracting Metrics (" + g_folder + "): "
         widgets = [preface, Bar(), Percentage(), "| ", ETA()]
         pbar = ProgressBar(widgets=widgets, maxval=fl).start()
     for i in xrange(fl):
         try:
-            t = i * TIME_STEP
+            t = i * TIME_STEP + 1800
             filename = g_folder + DATA_FILE_TEMPLATE.format(GRAPHS_PREFIX, t)
             last_ps = None
             with open(filename, "rb") as fstream:
@@ -341,25 +342,23 @@ def get_ready_folders(folder):
 
 def extract_all_dataframes(folder):
     data_dirs = get_ready_folders(folder)
-    preface = "Extracting DataFrames: "
+    preface = "Extracting Metrics: "
     widgets = [preface, Bar(), Percentage(), "| ", ETA()]
+    pbar = ProgressBar(widgets=widgets, maxval=len(data_dirs)).start()
     counter = 1
-    master_folders = list()
     for data_folder in data_dirs:
+        pool = Pool(8)
         dirs = get_subdirs(folder + data_folder)
         folder_l = [folder + data_folder] * len(dirs)
-        master_folders.extend(zip(folder_l, dirs))
-
-    pbar = ProgressBar(widgets=widgets, maxval=len(master_folders)).start()
-    dfs = list()
-    pool = Pool(32)
-    for wdf in pool.imap_unordered(extract_dataframe_worker, master_folders):
-        dfs.append(wdf)
+        folders = zip(folder_l, dirs)
+        dfs = list()
+        for wdf in pool.imap_unordered(extract_dataframe_worker, folders):
+            dfs.append(wdf)
+        df = pandas.concat(dfs)
+        df.to_csv(folder + data_folder + "/metrics_newer.csv")
         pbar.update(counter)
         counter += 1
-    df = pandas.concat(dfs)
-    df.to_csv(folder + data_folder + "/metrics_new.csv")
-    pool.close()
+        pool.close()
     pbar.finish()
 
 
@@ -367,7 +366,9 @@ if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     main_folder = "/home/wallar/nfs/data/data-sim/"
     extract_all_dataframes(main_folder)
-    # folder = sys.argv[1]
-    # if len(folder.split("-")) == 4:
-    #     df = extract_dataframe(main_folder + folder)
-    #     df.to_csv(main_folder + folder + "/metrics.csv")
+    # for folder in sys.argv[1:]:
+    #     l = len(folder.split("-"))
+    #     if l == 4 or l == 5:
+    #         print folder
+    #         df = extract_dataframe(main_folder + folder)
+    #         df.to_csv(main_folder + folder + "/metrics_new.csv")
