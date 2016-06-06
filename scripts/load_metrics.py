@@ -110,9 +110,9 @@ def get_empty_type(line):
     is_rb = int(line_sep[-1]) == 1
     if is_rb:
         return "empty_rebalancing"
-    elif len(passes) == 0 and len(reqs) > 0 and not is_rb:
+    if len(passes) == 0 and len(reqs) > 0 and not is_rb:
         return "empty_moving_to_pickup"
-    elif len(passes) == 0 and len(reqs) == 0 and not is_rb:
+    if len(passes) == 0 and len(reqs) == 0 and not is_rb:
         return "empty_waiting"
     else:
         return "not_empty"
@@ -365,7 +365,8 @@ def extract_all_dataframes(folder):
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     main_folder = "/home/wallar/nfs/data/data-sim/"
-    extract_all_dataframes(main_folder)
+    print "NOT DOING ANYTHING"
+    # extract_all_dataframes(main_folder)
     # for folder in sys.argv[1:]:
     #     l = len(folder.split("-"))
     #     if l == 4 or l == 5:
