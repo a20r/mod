@@ -3,7 +3,7 @@ import common
 import numpy as np
 import matplotlib
 import pandas as pd
-# matplotlib.use("Agg")
+matplotlib.use("Agg")
 from matplotlib.dates import DateFormatter
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -142,6 +142,7 @@ def make_ts_plot(vecs, wt, rb, field):
                 bbox_extra_artists=(lgd,), bbox_inches='tight')
     plt.close()
 
+
 @print_here()
 def make_ts_area_plot(vecs, cap, wt, rb):
     plt.figure()
@@ -172,6 +173,7 @@ def make_ts_area_plot(vecs, cap, wt, rb):
     plt.savefig("figs/ts-area-v{}-c{}-w{}.png".format(vecs, cap, wt),
                 bbox_extra_artists=(lgd,), bbox_inches='tight')
     plt.close()
+
 
 @print_here(False)
 def get_avg_dataframe():
@@ -299,6 +301,7 @@ def make_avg_plots_with_wts(big_d):
 
 @print_here(False)
 def make_empty_type_plots(big_d):
+    plt.figure()
     data = defaultdict(list)
     empty_fields = ["empty_rebalancing", "empty_moving_to_pickup",
                     "empty_waiting", "not_empty"]
@@ -309,7 +312,7 @@ def make_empty_type_plots(big_d):
     sns.barplot(x="Empty Type", y="Number of Trips", data=df)
     filename = "figs/empty_type_bar_plot.pdf"
     plt.savefig(filename, bbox_inches="tight")
-    plt.show()
+    plt.close()
 
 
 @print_here(False)
@@ -337,4 +340,4 @@ if __name__ == "__main__":
     make_avg_plots_with_wts(big_d)
     make_avg_plots_with_vecs(big_d)
     make_empty_type_plots(big_d)
-    # make_ts_plots()
+    make_ts_plots()

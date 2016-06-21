@@ -153,6 +153,7 @@ def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long, last_ps):
             if l_ps_set != ps_set and len(l_ps_set & ps_set) > 0:
                 n_shared += len(l_ps_set - ps_set)
         line = fin.readline()
+        counter += 1
 
     data["mean_passengers"].append(np.mean(ppv))
     data["med_passengers"].append(np.median(ppv))
@@ -264,14 +265,15 @@ def extract_metrics(folder, n_vecs, cap, rebalancing, is_long):
     if is_long == 0:
         fl = common.MAX_SECONDS / TIME_STEP
     else:
-        fl = len(os.listdir(g_folder)) - 60
+        fl = len(os.listdir(g_folder))
     if SHOW_IND_PROGRESS:
         preface = "Extracting Metrics (" + g_folder + "): "
         widgets = [preface, Bar(), Percentage(), "| ", ETA()]
         pbar = ProgressBar(widgets=widgets, maxval=fl).start()
     for i in xrange(fl):
         try:
-            t = i * TIME_STEP + 1800
+            # t = i * TIME_STEP + 1800
+            t = i * TIME_STEP
             filename = g_folder + DATA_FILE_TEMPLATE.format(GRAPHS_PREFIX, t)
             last_ps = None
             with open(filename, "rb") as fstream:
@@ -355,7 +357,7 @@ def extract_all_dataframes(folder):
         for wdf in pool.imap_unordered(extract_dataframe_worker, folders):
             dfs.append(wdf)
         df = pandas.concat(dfs)
-        df.to_csv(folder + data_folder + "/metrics_newer.csv")
+        df.to_csv(folder + data_folder + "/metrics_even_newer.csv")
         pbar.update(counter)
         counter += 1
         pool.close()
@@ -365,8 +367,8 @@ def extract_all_dataframes(folder):
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     main_folder = "/home/wallar/nfs/data/data-sim/"
-    print "NOT DOING ANYTHING"
-    # extract_all_dataframes(main_folder)
+    # print "NOT DOING ANYTHING"
+    extract_all_dataframes(main_folder)
     # for folder in sys.argv[1:]:
     #     l = len(folder.split("-"))
     #     if l == 4 or l == 5:
