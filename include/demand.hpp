@@ -168,7 +168,7 @@ namespace mod
                 load_probs(fn_probs);
                 cout << "Loading stations..." << endl;
                 load_stations(fn_stations);
-                cout << "Loading distances..." << endl;
+                cout << "Loading times..." << endl;
                 load_times(fn_times);
                 cout << "Loading paths..." << endl;
                 load_paths(fn_paths);
@@ -189,10 +189,18 @@ namespace mod
             {
                 cout << "Loading stations..." << endl;
                 load_stations(fn_stations);
-                cout << "Loading distances..." << endl;
+                cout << "Loading times..." << endl;
                 load_times(fn_times);
                 cout << "Loading paths..." << endl;
                 load_paths(fn_paths);
+            }
+
+            void reload(string fn_times, string fn_paths)
+            {
+                cout << "Loading times..." << endl;
+                reload_times(fn_times);
+                cout << "Loading paths..." << endl;
+                reload_paths(fn_paths);
             }
 
             void load_probs(string fn_probs)
@@ -253,6 +261,12 @@ namespace mod
                     }
                     stations.push_back(GeoLocation(lat, lon));
                 }
+            }
+
+            void reload_times(string fn_times)
+            {
+                times.clear();
+                load_times(fn_times);
             }
 
             void load_times(string fn_times)
@@ -358,6 +372,11 @@ namespace mod
                 int closest_station = get_station(gl);
                 double dist = get_station(closest_station).distance(gl);
                 return dist + times[closest_station][station];
+            }
+
+            double get_travel_time(int station1, int station2) const
+            {
+                return times[station1][station2];
             }
 
             int get_station(GeoLocation gl)
