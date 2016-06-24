@@ -367,11 +367,5 @@ def extract_all_dataframes(folder):
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     main_folder = "/home/wallar/nfs/data/data-sim/"
-    # print "NOT DOING ANYTHING"
-    extract_all_dataframes(main_folder)
-    # for folder in sys.argv[1:]:
-    #     l = len(folder.split("-"))
-    #     if l == 4 or l == 5:
-    #         print folder
-    #         df = extract_dataframe(main_folder + folder)
-    #         df.to_csv(main_folder + folder + "/metrics_new.csv")
+    print "NOT DOING ANYTHING"
+    # extract_all_dataframes(main_folder)
