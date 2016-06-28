@@ -118,7 +118,7 @@ def get_empty_type(line):
         return "not_empty"
 
 
-def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long, last_ps):
+def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long, trip_of_pass_shared):
     while True:
         line = fin.readline()
         if "Vehicles" in line:
@@ -131,6 +131,7 @@ def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long, last_ps):
     empty_types = defaultdict(int)
     passes_list = list()
     n_shared = 0
+    n_shared_overall = 0
     counter = 0
     ets = ["empty_rebalancing", "empty_moving_to_pickup",
            "empty_waiting", "not_empty"]
@@ -145,13 +146,17 @@ def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long, last_ps):
         taxi_pass_count["time_pass_{}".format(len(passes))] += 1
         empty_type = get_empty_type(line)
         empty_types[empty_type] += 1
-        if last_ps is None:
-            n_shared = 0
-        else:
-            l_ps_set = set(last_ps[counter])
-            ps_set = set(passes)
-            if l_ps_set != ps_set and len(l_ps_set & ps_set) > 0:
-                n_shared += len(l_ps_set - ps_set)
+        if len(passes) is 1:
+            # Check if it was shared before
+            if trip_of_pass_shared[passes[0]] == 1:
+                n_shared_overall += 1
+        elif len(passes)>1:
+            # They are sharing
+            for i in [0, len(passes)-1]:
+                n_shared_overall += 1
+                if trip_of_pass_shared[passes[i]] == 0:
+                    n_shared += 1
+                    trip_of_pass_shared[passes[i]] = 1
         line = fin.readline()
         counter += 1
 
@@ -167,6 +172,7 @@ def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long, last_ps):
     data["rebalancing"].append(rebalancing)
     data["is_long"].append(is_long)
     data["n_shared"].append(n_shared)
+    data["n_shared_overall"].append(n_shared_overall)
 
     for i in xrange(11):
         key = "time_pass_{}".format(i)
@@ -174,7 +180,7 @@ def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long, last_ps):
     for et in ets:
         data[et].append(empty_types[et])
 
-    return passes_list
+    return trip_of_pass_shared
 
 
 def move_to_passengers(fin, data):
@@ -275,12 +281,12 @@ def extract_metrics(folder, n_vecs, cap, rebalancing, is_long):
             # t = i * TIME_STEP + 1800
             t = i * TIME_STEP
             filename = g_folder + DATA_FILE_TEMPLATE.format(GRAPHS_PREFIX, t)
-            last_ps = None
+            trip_of_pass_shared = [0] * 1000000
             with open(filename, "rb") as fstream:
                 fin = StringIO(fstream.read())
                 process_requests(fin, data)
-                last_ps = process_vehicles(
-                    fin, data, n_vecs, cap, rebalancing, is_long, last_ps)
+                trip_of_pass_shared = process_vehicles(
+                    fin, data, n_vecs, cap, rebalancing, is_long, trip_of_pass_shared)
                 move_to_passengers(fin, data)
                 process_passengers(fin, data)
                 process_performance(fin, data)
