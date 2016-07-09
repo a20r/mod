@@ -118,7 +118,8 @@ def get_empty_type(line):
         return "not_empty"
 
 
-def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long, trip_of_pass_shared):
+def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long,
+                     trip_of_pass_shared):
     while True:
         line = fin.readline()
         if "Vehicles" in line:
@@ -138,6 +139,7 @@ def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long, trip_of_pass_
 
     while len(line) > 1:
         passes = re.findall(r"-?\d+", line.split("%")[1])
+        passes = map(int, passes)
         passes_list.append(passes)
         ppv.append(len(passes))
         km = float(line.split("%")[5])
@@ -146,13 +148,13 @@ def process_vehicles(fin, data, n_vecs, cap, rebalancing, is_long, trip_of_pass_
         taxi_pass_count["time_pass_{}".format(len(passes))] += 1
         empty_type = get_empty_type(line)
         empty_types[empty_type] += 1
-        if len(passes) is 1:
+        if len(passes) == 1:
             # Check if it was shared before
             if trip_of_pass_shared[passes[0]] == 1:
                 n_shared_overall += 1
-        elif len(passes)>1:
+        elif len(passes) > 1:
             # They are sharing
-            for i in [0, len(passes)-1]:
+            for i in [0, len(passes) - 1]:
                 n_shared_overall += 1
                 if trip_of_pass_shared[passes[i]] == 0:
                     n_shared += 1
@@ -286,7 +288,8 @@ def extract_metrics(folder, n_vecs, cap, rebalancing, is_long):
                 fin = StringIO(fstream.read())
                 process_requests(fin, data)
                 trip_of_pass_shared = process_vehicles(
-                    fin, data, n_vecs, cap, rebalancing, is_long, trip_of_pass_shared)
+                    fin, data, n_vecs, cap, rebalancing, is_long,
+                    trip_of_pass_shared)
                 move_to_passengers(fin, data)
                 process_passengers(fin, data)
                 process_performance(fin, data)
@@ -363,7 +366,7 @@ def extract_all_dataframes(folder):
         for wdf in pool.imap_unordered(extract_dataframe_worker, folders):
             dfs.append(wdf)
         df = pandas.concat(dfs)
-        df.to_csv(folder + data_folder + "/metrics_even_newer.csv")
+        df.to_csv(folder + data_folder + "/metrics_even_newerest.csv")
         pbar.update(counter)
         counter += 1
         pool.close()

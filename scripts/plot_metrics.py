@@ -27,9 +27,10 @@ fields = ["mean_waiting_time", "mean_passengers", "mean_delay", "n_pickups",
           "mean_travel_delay", "serviced_percentage", "total_km_travelled",
           "km_travelled_per_car", "empty_rebalancing",
           "empty_moving_to_pickup", "empty_waiting", "not_empty",
-          "active_taxis", "n_shared"]
+          "active_taxis", "n_shared", "n_shared_perc"]
 caps = [1, 2, 4, 10]
-clrs = ["ro", "go", "bo", "co", "mo"]
+clrs = [sns.xkcd_rgb["grey"], sns.xkcd_rgb["sky blue"],
+        sns.xkcd_rgb["bright red"], sns.xkcd_rgb["black"]]
 
 
 def print_here(pargs=True):
@@ -88,56 +89,55 @@ def create_latex_table(df):
     return table_header + inner_lines + table_footer
 
 
+def is_first_20_mins(t):
+    return t.hour == 0 and t.minute <= 20
+
+
 def plot_ts(df, field, *args, **kwargs):
     dates = df["time"]
     values = df[field]
+    vals = list()
     dts = list()
     for i in xrange(len(dates)):
         dt = datetime.strptime(dates.iloc[i], common.date_format)
-        dts.append(dt)
+        if not is_first_20_mins(dt):
+            dts.append(dt)
+            vals.append(values.iloc[i])
     dts = matplotlib.dates.date2num(dts)
-    plt.plot_date(dts, values, *args, **kwargs)
+    return plt.plot_date(dts, vals, *args, **kwargs)
 
 
+@print_here(False)
 def make_ts_plots():
-    fmt = DateFormatter("%m/%d")
     for field in fields:
         for v in vehicles:
             for wt in waiting_times:
-                fig, ax = plt.subplots()
-                for cap, clr in zip(caps, clrs):
-                    df = tabler.get_metrics(v, cap, wt, 0)
-                    plot_ts(df, field, clr + "--", alpha=0.8,
-                            label="Cap: {}".format(cap), markersize=4)
-                ax.xaxis.set_major_formatter(fmt)
-                lgd = plt.legend(loc="center left", fancybox=True,
-                                 shadow=True, bbox_to_anchor=(1, 0.5))
-                plt.ylabel(prettify(field))
-                fig.autofmt_xdate()
-                plt.savefig("figs/ts-{}-v{}-w{}.pdf".format(field, v, wt),
-                            bbox_extra_artists=(lgd,), bbox_inches='tight')
+                make_ts_plot(v, wt, 0, field)
+
+
+def set_legend_marker_size(lgd, size):
+    for i in xrange(len(lgd.legendHandles)):
+        lgd.legendHandles[i]._legmarker.set_markersize(size)
 
 
 @print_here()
 def make_ts_plot(vecs, wt, rb, field):
-    plt.figure()
-    ax = plt.gca()
-    for c in caps:
-        df = tabler.get_metrics(vecs, c, wt, rb)
-        ax = df.plot(x="time", y=field, kind="line",
-                     label="Cap: %d" % c, ax=ax, style=".-",
-                     figsize=(18, 10))
-    max_x_ticks = ax.get_xticks()[-1]
-    ax.set_xticks(np.arange(0, max_x_ticks + 1, max_x_ticks / 7))
-    dr = pd.date_range(start="05-05-16", periods=len(ax.get_xticks()))
-    dr = dr.map(lambda t: t.strftime("%m/%d"))
-    ax.set_xticklabels(dr)
-    lgd = ax.legend([1, 2, 4, 10], title="Capacity", loc='center left',
-                    bbox_to_anchor=(1.0, 0.5))
-    ax.set_ylabel(prettify(field))
-    d_str = "N. Vecs: {}, M.W.T: {}, R.B:{}".format(vecs, wt, rb)
-    ax.set_title("{} Over Time w/ ".format(prettify(field)) + d_str)
-    ax.set_xlabel("Time")
+    fmt = DateFormatter("%a")
+    fig, ax = plt.subplots()
+    fig.set_size_inches(15, 10)
+    for cap, clr in zip(caps, clrs):
+        df = tabler.get_metrics(vecs, cap, wt, 0)
+        locs, labels = plt.xticks()
+        plot_ts(df, field, "o", color=clr, alpha=1,
+                label=str(cap), markersize=7)
+    ax.xaxis.set_major_formatter(fmt)
+    lgd = plt.legend(loc="center left", fancybox=True,
+                     shadow=True, bbox_to_anchor=(1, 0.5),
+                     title="Capacity")
+    set_legend_marker_size(lgd, 33)
+    plt.ylabel(prettify(field))
+    fig.autofmt_xdate()
+    plt.title("N. Vecs: {}, M.W.T: {}".format(vecs, wt))
     plt.savefig("figs/ts-{}-v{}-w{}.png".format(field, vecs, wt),
                 bbox_extra_artists=(lgd,), bbox_inches='tight')
     plt.close()
@@ -173,6 +173,39 @@ def make_ts_area_plot(vecs, cap, wt, rb):
     plt.savefig("figs/ts-area-v{}-c{}-w{}.png".format(vecs, cap, wt),
                 bbox_extra_artists=(lgd,), bbox_inches='tight')
     plt.close()
+
+
+@print_here()
+def make_ts_area_plot_single(vecs, cap, wt, rb):
+    plt.figure()
+    df = tabler.get_metrics(vecs, cap, wt, rb)
+    subfields = ["empty_waiting", "empty_rebalancing",
+                 "empty_moving_to_pickup"]
+    subfields.extend(["time_pass_%d" % i for i in xrange(1, 11)])
+    df_small = df[subfields].copy()
+    ax = df_small.plot(kind="area", colormap="rainbow",
+                       figsize=(22, 10))
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.9, box.height])
+    labels = ["Waiting", "Rebalancing", "Picking Up"]
+    labels.extend(["N. Pass: %d" % n for n in xrange(1, 11)])
+    lgd = ax.legend(labels,
+                    loc='center left',
+                    bbox_to_anchor=(1.0, 0.5))
+    d_str = "N. Vecs: {}, Cap: {}, M.W.T: {}, R.B:{}".format(vecs, cap, wt, rb)
+    ax.set_title("Vehicle Occupancy Over Time w/ " + d_str)
+    max_x_ticks = ax.get_xticks()[-1]
+    ax.set_xticks(np.arange(0, max_x_ticks + 1, max_x_ticks / 7))
+    dr = pd.date_range(start="05-05-16", periods=len(ax.get_xticks()))
+    dr = dr.map(lambda t: t.strftime("%m/%d"))
+    ax.set_xticklabels(dr)
+    vals = ax.get_yticks()
+    ax.set_yticklabels(['{:3.2f}%'.format(x / 10) for x in vals])
+    ax.set_xlabel("Time")
+    plt.savefig("figs/ts-area-v{}-c{}-w{}.png".format(vecs, cap, wt),
+                bbox_extra_artists=(lgd,), bbox_inches='tight')
+    plt.close()
+
 
 
 @print_here(False)
@@ -211,7 +244,7 @@ def make_avg_plots_with_preds(big_d):
             title="Predictions")
         plt.title(make_pred_title(field, wt, cap))
         plt.savefig(
-            "figs/avg-with-preds-{}.pdf".format(field),
+            "figs/avg-with-preds-{}.png".format(field),
             bbox_inches='tight')
         plt.close()
 
@@ -252,7 +285,7 @@ def make_avg_plots_with_vecs(big_d):
                 min_val = min(d[field])
         for ax in axes:
             ax.set_ylim(min_val - 0.1 * max_val, 1.1 * max_val)
-        filename = "figs/avg-with-vecs-{}.pdf".format(field)
+        filename = "figs/avg-with-vecs-{}.png".format(field)
         plt.savefig(filename, bbox_inches='tight')
         plt.close()
 
@@ -294,7 +327,7 @@ def make_avg_plots_with_wts(big_d):
                 min_val = min(d[field])
         for ax in axes:
             ax.set_ylim(min_val - 0.1 * max_val, 1.1 * max_val)
-        filename = "figs/avg-with-wts-{}.pdf".format(field)
+        filename = "figs/avg-with-wts-{}.png".format(field)
         plt.savefig(filename, bbox_inches='tight')
         plt.close()
 
@@ -310,7 +343,7 @@ def make_empty_type_plots(big_d):
         data["Number of Trips"].append(big_d[ef].sum())
     df = pd.DataFrame(data)
     sns.barplot(x="Empty Type", y="Number of Trips", data=df)
-    filename = "figs/empty_type_bar_plot.pdf"
+    filename = "figs/empty_type_bar_plot.png"
     plt.savefig(filename, bbox_inches="tight")
     plt.close()
 
@@ -330,11 +363,13 @@ def make_all_ts_area_plots():
 if __name__ == "__main__":
     plt.ioff()
     sns.set_context("poster", font_scale=1.7)
-    make_all_ts_area_plots()
-    make_all_ts_plots()
-    big_d = get_avg_dataframe()
-    make_avg_plots_with_preds(big_d)
-    make_avg_plots_with_wts(big_d)
-    make_avg_plots_with_vecs(big_d)
-    make_empty_type_plots(big_d)
-    make_ts_plots()
+    # make_all_ts_area_plots()
+    # make_all_ts_plots()
+    # big_d = get_avg_dataframe()
+    # make_avg_plots_with_preds(big_d)
+    # make_avg_plots_with_wts(big_d)
+    # make_avg_plots_with_vecs(big_d)
+    # make_empty_type_plots(big_d)
+    # make_ts_plots()
+    # make_ts_plot(1000, 120, 0, "mean_passengers")
+    make_ts_plot(3000, 120, 0, "n_shared_perc")

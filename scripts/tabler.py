@@ -12,16 +12,17 @@ TEMPLATE_PATH = "sandbox/table_template.html"
 
 
 def get_metrics(n_vehicles, cap, waiting_time, predictions):
-    m_file = NFS_PATH + "v{}-c{}-w{}-p{}/metrics_even_newer.csv".format(
+    m_file = NFS_PATH + "v{}-c{}-w{}-p{}/metrics_even_newerest.csv".format(
         n_vehicles, cap, waiting_time, predictions)
     df = pandas.read_csv(m_file)
+    df = df.query("time.hour > 0")
     df["serviced_percentage"] = df["n_pickups"].sum() \
         / (df["n_pickups"].sum() + df["n_ignored"].sum())
     df["mean_travel_delay"] = df["mean_delay"] - df["mean_waiting_time"]
-    # df["assigned_reqs_perc"] = (df["n_reqs"] - df["n_ignored"]) / df["n_reqs"]
     df["serviced_percentage"] = df["n_pickups"].sum() / \
         (df["n_ignored"].sum() + df["n_pickups"].sum())
     df["km_travelled_per_car"] = df["total_km_travelled"] / df["n_vehicles"]
+    df["n_shared_perc"] = df["n_shared"] / (df["n_shared"] + df["time_pass_1"])
     df.drop("Unnamed: 0", axis=1, inplace=True)
     df.drop("capacity", axis=1, inplace=True)
     df.drop("is_long", axis=1, inplace=True)
