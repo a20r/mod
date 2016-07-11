@@ -7,6 +7,7 @@ from plot_metrics import print_here
 
 
 NFS_PATH = "/home/wallar/nfs/data/data-sim/"
+NFS_PATH = "/data/drl/mod_sim_data/data-sim/"
 
 
 predictions = ["0-nR", 0, 100, 200, 300, 400]
@@ -32,6 +33,7 @@ def generate_time_df():
     for v, c, wt, d in product(vehicles, caps, waiting_times, range(1, 8)):
         s, e = get_comp_filenames(v, c, wt, 0, d)
         diff = path.getctime(e) - path.getctime(s)
+        print diff
         data.loc[counter] = [v, c, wt, d - 1, diff]
         counter += 1
     return data
