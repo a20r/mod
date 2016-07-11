@@ -318,7 +318,7 @@ def make_avg_plots(big_d, plot_type):
         min_val = None
         axes = list()
         fig = plt.figure()
-        fig.set_size_inches(18, 7)
+        fig.set_size_inches(18, 8)
         for i, v in enumerate(iover, start=1):
             plt.subplot(1, len(iover), i)
             if plot_type == "comp_times":
