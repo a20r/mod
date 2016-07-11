@@ -306,7 +306,7 @@ def make_avg_plots(big_d, plot_type):
                             make_vec_title,
                             fields + ["n_shared_per_passenger"]),
                    "wts": (vehicles, "vehicles", "waiting_time",
-                           "Max Waiting Time", waiting_times,
+                           "Max Waiting Time [s]", waiting_times,
                            make_wt_title,
                            fields + ["n_shared_per_passenger"]),
                    "comp_times": (vehicles, "vehicles", "waiting_time",
@@ -318,7 +318,7 @@ def make_avg_plots(big_d, plot_type):
         min_val = None
         axes = list()
         fig = plt.figure()
-        fig.set_size_inches(18, 8)
+        fig.set_size_inches(18, 7)
         for i, v in enumerate(iover, start=1):
             plt.subplot(1, len(iover), i)
             if plot_type == "comp_times":
@@ -414,7 +414,7 @@ def make_comp_times_plot(df, wt, day):
                        data=df_small, palette=clrs)
     ax.set_xticklabels(vehicles)
     ax.set_xlabel("Number of Vehicles")
-    ax.set_ylabel("Computational Time [hr]")
+    ax.set_ylabel("Mean Computational Time [s]")
     ax.set_ylim(0, 1.05 * max(df_small["comp_time"]))
     plt.title("M.W.T: {}, Day: {}".format(wt, days[day]))
     vals = ax.get_yticks()
@@ -439,7 +439,7 @@ def make_avg_comp_times_plot(df, wt):
                        data=df_small, palette=clrs)
     ax.set_xticklabels(vehicles)
     ax.set_xlabel("Number of Vehicles")
-    ax.set_ylabel("Avg. Computational Time [hr]")
+    ax.set_ylabel("Mean Computational Time [s]")
     # ax.set_ylim(0, 1.05 * max(df_small["comp_time"]))
     plt.title("M.W.T: {}".format(wt))
     vals = ax.get_yticks()
