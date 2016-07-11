@@ -309,9 +309,9 @@ def make_avg_plots(big_d, plot_type):
                            "Max Waiting Time", waiting_times,
                            make_wt_title,
                            fields + ["n_shared_per_passenger"]),
-                   "comp_times": (waiting_times, "waiting_time", "vehicles",
-                                  "Number of Vehicles", vehicles,
-                                  make_vec_title, ["comp_time"])}
+                   "comp_times": (vehicles, "vehicles", "waiting_time",
+                                  "Max Waiting Time", waiting_times,
+                                  make_wt_title, ["comp_time"])}
     iover, qstr, xcol, xlabel, xticklabels, tfunc, fs = plot_params[plot_type]
     for field in fs:
         max_val = None
