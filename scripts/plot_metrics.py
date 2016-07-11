@@ -403,11 +403,11 @@ def make_comp_times_plot(df, wt, day):
                        data=df_small, palette=clrs)
     ax.set_xticklabels(vehicles)
     ax.set_xlabel("Number of Vehicles")
-    ax.set_ylabel("Mean Computational Time [s]")
+    ax.set_ylabel("Mean Computational Time [hr]")
     ax.set_ylim(0, 1.05 * max(df_small["comp_time"]))
     plt.title("M.W.T: {}, Day: {}".format(wt, days[day]))
     vals = ax.get_yticks()
-    ax.set_yticklabels(['{:3.1f}'.format(x / 3600) for x in vals])
+    ax.set_yticklabels(['{:3.1f}'.format(x) for x in vals])
     handles, _ = ax.get_legend_handles_labels()
     plt.legend(
         handles,
@@ -432,7 +432,7 @@ def make_avg_comp_times_plot(df, wt):
     # ax.set_ylim(0, 1.05 * max(df_small["comp_time"]))
     plt.title("M.W.T: {}".format(wt))
     vals = ax.get_yticks()
-    ax.set_yticklabels(['{:3.1f}'.format(x / 3600) for x in vals])
+    ax.set_yticklabels(['{:3.1f}'.format(x) for x in vals])
     handles, _ = ax.get_legend_handles_labels()
     plt.legend(
         handles,
