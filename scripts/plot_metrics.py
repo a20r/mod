@@ -301,11 +301,16 @@ def make_avg_plots_with_preds(big_d):
 def make_avg_plots(big_d, plot_type):
     plot_params = {"vecs": (waiting_times, "waiting_time", "vehicles",
                             "Number of Vehicles", vehicles,
-                            make_vec_title),
+                            make_vec_title,
+                            fields + ["n_shared_per_passenger"]),
                    "wts": (vehicles, "vehicles", "waiting_time",
                            "Max Waiting Time", waiting_times,
-                           make_wt_title)}
-    iover, qstr, xcol, xlabel, xticklabels, tfunc = plot_params[plot_type]
+                           make_wt_title,
+                           fields + ["n_shared_per_passenger"]),
+                   "comp_times": (waiting_times, "waiting_time", "vehicles",
+                                  "Number of Vehicles", vehicles,
+                                  make_vec_title, ["comp_time"])}
+    iover, qstr, xcol, xlabel, xticklabels, tfunc, fs = plot_params[plot_type]
     for field in fields + ["n_shared_per_passenger"]:
         max_val = None
         min_val = None
@@ -461,6 +466,7 @@ if __name__ == "__main__":
              "avg": [make_avg_plots_with_preds,
                      lambda d: make_avg_plots(d, "vecs"),
                      lambda d: make_avg_plots(d, "wts"),
+                     lambda d: make_avg_plots(d, "comp_times"),
                      make_empty_type_plots],
              "ts": [make_all_ts_plots],
              "comp_times": [make_all_comp_times_plots]}
