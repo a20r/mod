@@ -83,7 +83,7 @@ def prettify(text):
         return "Mean Distance Travelled [km]"
     if text == "serviced_percentage":
         return "% of Serviced Requests"
-    if text == "comp_times":
+    if text == "comp_time":
         return "Avg. Computational Time [hr]"
     else:
         words = text.split("_")
