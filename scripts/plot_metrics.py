@@ -227,7 +227,8 @@ def make_ts_area_plot_single(vecs, cap, wt, rb, weekday):
     dr = dr.map(lambda t: t.strftime("%H"))
     ax.set_xticklabels(dr)
     vals = ax.get_yticks()
-    ax.set_yticklabels(['{:3.0f}%'.format(x / 10) for x in vals])
+    ax.set_yticklabels(['{:3.0f}%'.format((x / 10) / (vecs / 1000))
+                        for x in vals])
     ax.set_xlabel("Hour")
     plt.savefig(
         "figs/ts-area-v{}-c{}-w{}-{}.png".format(vecs, cap, wt, days[weekday]),
@@ -271,7 +272,7 @@ def make_avg_plots_with_preds(big_d):
         plt.ylabel(prettify(field))
         plt.xlabel("Num Vehicles")
         handles, _ = ax.get_legend_handles_labels()
-        lgd = plt.legend(
+        plt.legend(
             handles,
             ["No R.B.", 0, 100, 200, 300, 400],
             loc="center left", fancybox=True,
@@ -322,7 +323,7 @@ def make_avg_plots(big_d, plot_type):
                 ax.get_yaxis().set_ticklabels([])
             if i == len(waiting_times):
                 handles, _ = ax.get_legend_handles_labels()
-                lgd = plt.legend(
+                plt.legend(
                     handles,
                     [1, 2, 4, 10],
                     loc="center left", fancybox=True,
@@ -396,7 +397,7 @@ def make_comp_times_plot(df, wt, day):
     vals = ax.get_yticks()
     ax.set_yticklabels(['{:3.1f}'.format(x / 3600) for x in vals])
     handles, _ = ax.get_legend_handles_labels()
-    lgd = plt.legend(
+    plt.legend(
         handles,
         [1, 2, 4, 10],
         loc="center left", fancybox=True,
@@ -421,7 +422,7 @@ def make_avg_comp_times_plot(df, wt):
     vals = ax.get_yticks()
     ax.set_yticklabels(['{:3.1f}'.format(x / 3600) for x in vals])
     handles, _ = ax.get_legend_handles_labels()
-    lgd = plt.legend(
+    plt.legend(
         handles,
         [1, 2, 4, 10],
         loc="center left", fancybox=True,
@@ -430,7 +431,6 @@ def make_avg_comp_times_plot(df, wt):
     filename = "figs/comp-time-w{}.png".format(wt)
     plt.savefig(filename, bbox_inches='tight')
     plt.close()
-
 
 
 if __name__ == "__main__":
@@ -442,7 +442,7 @@ if __name__ == "__main__":
         "--plot_type", dest="plot_type", type=str,
         help=("Specifies the type of plot to generate. "
               "The options are 'area', 'area_single_day'"
-              ", 'avg', or 'ts'"))
+              ", 'avg', 'comp_times', or 'ts'"))
     args = parser.parse_args()
     plots = {"area": [make_all_ts_area_plots],
              "area_single_day": [make_all_ts_area_single_plots],
