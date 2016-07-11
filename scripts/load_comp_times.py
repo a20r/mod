@@ -32,6 +32,8 @@ def generate_time_df():
     for v, c, wt, d in product(vehicles, caps, waiting_times, range(1, 8)):
         s, e = get_comp_filenames(v, c, wt, 0, d)
         diff = path.getctime(e) - path.getctime(s)
+        if diff > 100 * 3600:
+            diff = None
         data.loc[counter] = [v, c, wt, d - 1, diff]
         counter += 1
     return data
