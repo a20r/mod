@@ -311,7 +311,7 @@ def make_avg_plots(big_d, plot_type):
                                   "Number of Vehicles", vehicles,
                                   make_vec_title, ["comp_time"])}
     iover, qstr, xcol, xlabel, xticklabels, tfunc, fs = plot_params[plot_type]
-    for field in fields + ["n_shared_per_passenger"]:
+    for field in fs:
         max_val = None
         min_val = None
         axes = list()
@@ -319,7 +319,10 @@ def make_avg_plots(big_d, plot_type):
         fig.set_size_inches(18, 8)
         for i, v in enumerate(iover, start=1):
             plt.subplot(1, len(iover), i)
-            q = "predictions == 0 and {} == {}".format(qstr, v)
+            if plot_type == "comp_times":
+                q = "{} == {}".format(qstr, v)
+            else:
+                q = "predictions == 0 and {} == {}".format(qstr, v)
             d = big_d.query(q)
             ax = sns.pointplot(x=xcol, y=field, hue="capacity", data=d,
                                palette=clrs)
@@ -398,6 +401,7 @@ def make_all_comp_times_plots():
         make_comp_times_plot(df, wt, day)
     for wt in waiting_times:
         make_avg_comp_times_plot(df, wt)
+    make_avg_plots(df, "comp_times")
 
 
 @print_here()
@@ -466,7 +470,6 @@ if __name__ == "__main__":
              "avg": [make_avg_plots_with_preds,
                      lambda d: make_avg_plots(d, "vecs"),
                      lambda d: make_avg_plots(d, "wts"),
-                     lambda d: make_avg_plots(d, "comp_times"),
                      make_empty_type_plots],
              "ts": [make_all_ts_plots],
              "comp_times": [make_all_comp_times_plots]}
