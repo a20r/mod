@@ -66,11 +66,23 @@ def print_here(pargs=True):
 
 def prettify(text):
     if text == "n_pickups":
-        return "Num Pickups"
+        return "Number of Pickups"
     if text == "n_shared":
-        return "Num Shared"
+        return "Number of Shared Rides"
     if text == "n_shared_per_passenger":
         return "Num Shared / Passenger"
+    if text == "mean_waiting_time":
+        return "Mean Waiting Time [s]"
+    if text == "mean_delay":
+        return "Mean Delay [s]"
+    if text == "mean_travel_delay":
+        return "Mean Travel Delay [s]"
+    if text == "n_shared_perc":
+        return "% of Shared Trips"
+    if text == "km_travelled_per_car":
+        return "Mean Distance Travelled [km]"
+    if text == "serviced_percentage":
+        return "% of Serviced Requests"
     else:
         words = text.split("_")
         return " ".join(w.capitalize() for w in words)
@@ -299,7 +311,7 @@ def make_avg_plots(big_d, plot_type):
         min_val = None
         axes = list()
         fig = plt.figure()
-        fig.set_size_inches(18, 5)
+        fig.set_size_inches(18, 8)
         for i, v in enumerate(iover, start=1):
             plt.subplot(1, len(iover), i)
             q = "predictions == 0 and {} == {}".format(qstr, v)
@@ -391,7 +403,7 @@ def make_comp_times_plot(df, wt, day):
                        data=df_small, palette=clrs)
     ax.set_xticklabels(vehicles)
     ax.set_xlabel("Number of Vehicles")
-    ax.set_ylabel("Computational Time [hr]")
+    ax.set_ylabel("Mean Computational Time [s]")
     ax.set_ylim(0, 1.05 * max(df_small["comp_time"]))
     plt.title("M.W.T: {}, Day: {}".format(wt, days[day]))
     vals = ax.get_yticks()
