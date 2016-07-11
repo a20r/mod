@@ -32,7 +32,7 @@ def generate_time_df():
     counter = 0
     for v, c, wt, d in product(vehicles, caps, waiting_times, range(1, 8)):
         s, e = get_comp_filenames(v, c, wt, 0, d)
-        diff = path.getctime(e) - path.getctime(s)
+        diff = (path.getctime(e) - path.getctime(s)) / 2878
         print diff
         data.loc[counter] = [v, c, wt, d - 1, diff]
         counter += 1
