@@ -15,7 +15,6 @@ def get_metrics(n_vehicles, cap, waiting_time, predictions):
     m_file = NFS_PATH + "v{}-c{}-w{}-p{}/metrics_even_newerest.csv".format(
         n_vehicles, cap, waiting_time, predictions)
     df = pandas.read_csv(m_file)
-    df = df.query("time.hour > 0")
     df["serviced_percentage"] = df["n_pickups"].sum() \
         / (df["n_pickups"].sum() + df["n_ignored"].sum())
     df["mean_travel_delay"] = df["mean_delay"] - df["mean_waiting_time"]
