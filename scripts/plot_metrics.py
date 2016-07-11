@@ -84,7 +84,7 @@ def prettify(text):
     if text == "serviced_percentage":
         return "% of Serviced Requests"
     if text == "comp_time":
-        return "Avg. Computational Time [hr]"
+        return "Mean Computational Time [s]"
     else:
         words = text.split("_")
         return " ".join(w.capitalize() for w in words)
@@ -310,7 +310,7 @@ def make_avg_plots(big_d, plot_type):
                            make_wt_title,
                            fields + ["n_shared_per_passenger"]),
                    "comp_times": (vehicles, "vehicles", "waiting_time",
-                                  "Max Waiting Time", waiting_times,
+                                  "Max Waiting Time [s]", waiting_times,
                                   make_wt_title, ["comp_time"])}
     iover, qstr, xcol, xlabel, xticklabels, tfunc, fs = plot_params[plot_type]
     for field in fs:
@@ -414,7 +414,7 @@ def make_comp_times_plot(df, wt, day):
                        data=df_small, palette=clrs)
     ax.set_xticklabels(vehicles)
     ax.set_xlabel("Number of Vehicles")
-    ax.set_ylabel("Mean Computational Time [s]")
+    ax.set_ylabel("Computational Time [s]")
     ax.set_ylim(0, 1.05 * max(df_small["comp_time"]))
     plt.title("M.W.T: {}, Day: {}".format(wt, days[day]))
     vals = ax.get_yticks()
