@@ -376,5 +376,5 @@ def extract_all_dataframes(folder):
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     main_folder = "/home/wallar/nfs/data/data-sim/"
-    print "NOT DOING ANYTHING"
-    # extract_all_dataframes(main_folder)
+    # print "NOT DOING ANYTHING"
+    extract_all_dataframes(main_folder)
