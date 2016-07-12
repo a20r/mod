@@ -350,7 +350,7 @@ def make_avg_plots(big_d, plot_type):
                     [1, 2, 4, 10],
                     loc="center left", fancybox=True,
                     shadow=True, bbox_to_anchor=(1, 0.5),
-                    title="Capacities", markerscale=3)
+                    title="Capacity", markerscale=3)
             if max_val is None or max_val < max(d[field]):
                 max_val = max(d[field])
             if min_val is None or min_val > min(d[field]):
@@ -425,7 +425,7 @@ def make_comp_times_plot(df, wt, day):
         [1, 2, 4, 10],
         loc="center left", fancybox=True,
         shadow=True, bbox_to_anchor=(1, 0.5),
-        title="Capacities", markerscale=3)
+        title="Capacity", markerscale=3)
     filename = "figs/comp-time-w{}-{}.png".format(wt, days[day])
     plt.savefig(filename, bbox_inches='tight')
     plt.close()
@@ -450,7 +450,7 @@ def make_avg_comp_times_plot(df, wt):
         [1, 2, 4, 10],
         loc="center left", fancybox=True,
         shadow=True, bbox_to_anchor=(1, 0.5),
-        title="Capacities", markerscale=3)
+        title="Capacity", markerscale=3)
     filename = "figs/comp-time-w{}.png".format(wt)
     plt.savefig(filename, bbox_inches='tight')
     plt.close()

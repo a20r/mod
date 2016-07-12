@@ -278,12 +278,12 @@ def extract_metrics(folder, n_vecs, cap, rebalancing, is_long):
         preface = "Extracting Metrics (" + g_folder + "): "
         widgets = [preface, Bar(), Percentage(), "| ", ETA()]
         pbar = ProgressBar(widgets=widgets, maxval=fl).start()
+    trip_of_pass_shared = [0] * 1000000
     for i in xrange(fl):
         try:
             # t = i * TIME_STEP + 1800
             t = i * TIME_STEP
             filename = g_folder + DATA_FILE_TEMPLATE.format(GRAPHS_PREFIX, t)
-            trip_of_pass_shared = [0] * 1000000
             with open(filename, "rb") as fstream:
                 fin = StringIO(fstream.read())
                 process_requests(fin, data)
@@ -363,10 +363,10 @@ def extract_all_dataframes(folder):
         folder_l = [folder + data_folder] * len(dirs)
         folders = zip(folder_l, dirs)
         dfs = list()
-        for wdf in pool.imap_unordered(extract_dataframe_worker, folders):
+        for wdf in pool.imap(extract_dataframe_worker, folders):
             dfs.append(wdf)
         df = pandas.concat(dfs)
-        df.to_csv(folder + data_folder + "/metrics_even_newerest.csv")
+        df.to_csv(folder + data_folder + "/metrics_pnas.csv")
         pbar.update(counter)
         counter += 1
         pool.close()
