@@ -158,7 +158,7 @@ def set_legend_linewidth(lgd, lw):
 def make_ts_plot(vecs, wt, rb, field):
     fmt = DateFormatter("%a")
     fig, ax = plt.subplots()
-    fig.set_size_inches(13, 10)
+    fig.set_size_inches(13, 8)
     for cap, clr in zip(caps, clrs):
         df = tabler.get_metrics(vecs, cap, wt, 0)
         locs, labels = plt.xticks()
