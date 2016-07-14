@@ -12,7 +12,7 @@ TEMPLATE_PATH = "sandbox/table_template.html"
 
 
 def get_metrics(n_vehicles, cap, waiting_time, predictions):
-    m_file = NFS_PATH + "v{}-c{}-w{}-p{}/metrics_even_newerest.csv".format(
+    m_file = NFS_PATH + "v{}-c{}-w{}-p{}/metrics_pnas.csv".format(
         n_vehicles, cap, waiting_time, predictions)
     df = pandas.read_csv(m_file)
     df["serviced_percentage"] = df["n_pickups"].sum() \
