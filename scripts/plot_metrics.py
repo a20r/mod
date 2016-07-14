@@ -70,7 +70,7 @@ def prettify(text):
     if text == "n_shared":
         return "Number of Shared Rides"
     if text == "n_shared_per_passenger":
-        return "Num Shared / Passenger"
+        return "% of Shared Rides"
     if text == "mean_waiting_time":
         return "Mean Waiting Time [s]"
     if text == "mean_delay":
@@ -82,7 +82,7 @@ def prettify(text):
     if text == "km_travelled_per_car":
         return "Mean Distance Travelled [km]"
     if text == "serviced_percentage":
-        return "% of Serviced Requests"
+        return "% serviced requests"
     if text == "comp_time":
         return "Mean Computational Time [s]"
     else:
@@ -267,7 +267,7 @@ def get_avg_dataframe():
                 f_stds.append(np.std(df[field]))
             data.loc[counter] = [p, int(v), int(wt), int(cap)] \
                 + f_vals + f_stds \
-                + [df["n_shared"].sum() / df["n_pickups"].sum()]
+                + [100 * df["n_shared"].sum() / df["n_pickups"].sum()]
             counter += 1
         except IOError:
             pass
