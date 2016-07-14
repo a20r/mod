@@ -72,7 +72,7 @@ def create_table(table_filename):
 
 
 if __name__ == "__main__":
-    tab = create_table("/home/wallar/nfs/data/table.json")
+    tab = create_table("table.json")
     """
     with open(OUTPUT_PATH, "w") as fout:
         with open(TEMPLATE_PATH) as fin:
