@@ -6,7 +6,8 @@ from load_metrics import get_ready_folders, FolderInfo
 from progressbar import ProgressBar, ETA, Percentage, Bar
 
 
-NFS_PATH = "/home/wallar/nfs/data/data-sim/"
+# NFS_PATH = "/home/wallar/nfs/data/data-sim/"
+NFS_PATH = "/data/drl/mod_sim_data/data-sim/"
 OUTPUT_PATH = "/home/wallar/www/table.html"
 TEMPLATE_PATH = "sandbox/table_template.html"
 
@@ -67,11 +68,15 @@ def create_table(table_filename):
     with open(table_filename, "w") as f:
         json.dump(datas, f)
     datas = sorted(datas, cmp=comparator)
-    return tabulate(datas, headers, tablefmt="html")
+    return tabulate(datas, headers, tablefmt="latex")
 
 
 if __name__ == "__main__":
     tab = create_table("/home/wallar/nfs/data/table.json")
+    """
     with open(OUTPUT_PATH, "w") as fout:
         with open(TEMPLATE_PATH) as fin:
             fout.write(fin.read() + "\n" + tab)
+    """
+    with open("table.tex", "w") as fout:
+        fout.write(tab)
