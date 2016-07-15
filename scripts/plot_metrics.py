@@ -8,11 +8,12 @@ matplotlib.use("Agg")
 from matplotlib.dates import DateFormatter
 import matplotlib.pyplot as plt
 import seaborn as sns
-import tabler
+from common import get_metrics
 from datetime import datetime
 from itertools import product
 from table_common import table_header, line_tp, table_footer
 from collections import defaultdict
+
 
 instances = [(500, 1, 0), (500, 2, 0), (500, 3, 0), (500, 4, 0),
              (125, 4, 0), (250, 4, 0), (375, 4, 0), (625, 4, 0),
@@ -28,7 +29,7 @@ fields = ["mean_waiting_time", "mean_passengers", "mean_delay", "n_pickups",
           "mean_travel_delay", "serviced_percentage", "total_km_travelled",
           "km_travelled_per_car", "empty_rebalancing",
           "empty_moving_to_pickup", "empty_waiting", "not_empty",
-          "active_taxis", "n_shared", "n_shared_perc"]
+          "active_taxis", "n_shared"]
 caps = [1, 2, 4, 10]
 clrs = [sns.xkcd_rgb["grey"], sns.xkcd_rgb["sky blue"],
         sns.xkcd_rgb["bright red"], sns.xkcd_rgb["black"]]
@@ -160,7 +161,7 @@ def make_ts_plot(vecs, wt, rb, field):
     fig, ax = plt.subplots()
     fig.set_size_inches(13, 8)
     for cap, clr in zip(caps, clrs):
-        df = tabler.get_metrics(vecs, cap, wt, 0)
+        df = get_metrics(vecs, cap, wt, 0)
         locs, labels = plt.xticks()
         plot_ts(df, field, "o", color=clr, alpha=1,
                 label=str(cap))
@@ -180,7 +181,7 @@ def make_ts_plot(vecs, wt, rb, field):
 @print_here()
 def make_ts_area_plot(vecs, cap, wt, rb):
     plt.figure()
-    df = tabler.get_metrics(vecs, cap, wt, rb)
+    df = get_metrics(vecs, cap, wt, rb)
     subfields = ["empty_waiting", "empty_rebalancing",
                  "empty_moving_to_pickup"]
     subfields.extend(["time_pass_%d" % i for i in xrange(1, cap + 1)])
@@ -213,7 +214,7 @@ def make_ts_area_plot(vecs, cap, wt, rb):
 @print_here()
 def make_ts_area_plot_single(vecs, cap, wt, rb, weekday):
     plt.figure()
-    df = tabler.get_metrics(vecs, cap, wt, rb)
+    df = get_metrics(vecs, cap, wt, rb)
     subfields = ["empty_waiting", "empty_rebalancing",
                  "empty_moving_to_pickup"]
     subfields.extend(["time_pass_%d" % i for i in xrange(1, cap + 1)])
@@ -253,20 +254,18 @@ def make_ts_area_plot_single(vecs, cap, wt, rb, weekday):
 @print_here(False)
 def get_avg_dataframe():
     cols = ["predictions", "vehicles", "waiting_time", "capacity"] + fields \
-        + map(lambda f: f + "_std", fields) + ["n_shared_per_passenger"]
+        + ["n_shared_per_passenger"]
     data = pd.DataFrame(columns=cols)
     counter = 0
     gen = product(predictions, vehicles, caps, waiting_times)
     for (p, v, cap, wt) in gen:
         f_vals = list()
-        f_stds = list()
         try:
-            df = tabler.get_metrics(v, cap, wt, p)
+            df = get_metrics(v, cap, wt, p)
             for field in fields:
                 f_vals.append(np.mean(df[field]))
-                f_stds.append(np.std(df[field]))
             data.loc[counter] = [p, int(v), int(wt), int(cap)] \
-                + f_vals + f_stds \
+                + f_vals \
                 + [100 * df["n_shared"].sum() / df["n_pickups"].sum()]
             counter += 1
         except IOError:

@@ -1,5 +1,27 @@
 
 import re
+import pandas
+
+
+NFS_PATH = "/home/wallar/nfs/data/data-sim/"
+
+
+def get_metrics(n_vehicles, cap, waiting_time, predictions):
+    m_file = NFS_PATH + "v{}-c{}-w{}-p{}/metrics_pnas.csv".format(
+        n_vehicles, cap, waiting_time, predictions)
+    df = pandas.read_csv(m_file)
+    df["serviced_percentage"] = df["n_pickups"].sum() \
+        / (df["n_pickups"].sum() + df["n_ignored"].sum())
+    df["mean_travel_delay"] = df["mean_delay"] - df["mean_waiting_time"]
+    df["serviced_percentage"] = df["n_pickups"].sum() / \
+        (df["n_ignored"].sum() + df["n_pickups"].sum())
+    df["km_travelled_per_car"] = df["total_km_travelled"] / df["n_vehicles"]
+    df["n_shared_perc"] = df["n_shared"] / (df["n_shared"] + df["time_pass_1"])
+    df.drop("Unnamed: 0", axis=1, inplace=True)
+    df.drop("capacity", axis=1, inplace=True)
+    df.drop("is_long", axis=1, inplace=True)
+    df.drop("n_vehicles", axis=1, inplace=True)
+    return df
 
 
 def load_kml_poly():

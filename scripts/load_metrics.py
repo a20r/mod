@@ -357,16 +357,19 @@ def extract_all_dataframes(folder):
     widgets = [preface, Bar(), Percentage(), "| ", ETA()]
     pbar = ProgressBar(widgets=widgets, maxval=len(data_dirs)).start()
     counter = 1
+    print data_dirs
     for data_folder in data_dirs:
         pool = Pool(8)
         dirs = get_subdirs(folder + data_folder)
         folder_l = [folder + data_folder] * len(dirs)
         folders = zip(folder_l, dirs)
         dfs = list()
+        print map(lambda v: v[1].split("-")[4], folders)
+        continue
         for wdf in pool.imap(extract_dataframe_worker, folders):
             dfs.append(wdf)
         df = pandas.concat(dfs)
-        df.to_csv(folder + data_folder + "/metrics_pnas.csv")
+        df.to_csv(folder + data_folder + "/metrics_pnas_2.csv")
         pbar.update(counter)
         counter += 1
         pool.close()

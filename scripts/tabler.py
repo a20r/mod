@@ -1,33 +1,25 @@
 
-import pandas
-import json
+# import json
 from tabulate import tabulate
-from load_metrics import get_ready_folders, FolderInfo
-from progressbar import ProgressBar, ETA, Percentage, Bar
+# from load_metrics import get_ready_folders, FolderInfo
+# from progressbar import ProgressBar, ETA, Percentage, Bar
+# import common
+from plot_metrics import get_avg_dataframe, prettify
 
 
-# NFS_PATH = "/home/wallar/nfs/data/data-sim/"
-NFS_PATH = "/data/drl/mod_sim_data/data-sim/"
+NFS_PATH = "/home/wallar/nfs/data/data-sim/"
+# NFS_PATH = "/data/drl/mod_sim_data/data-sim/"
 OUTPUT_PATH = "/home/wallar/www/table.html"
 TEMPLATE_PATH = "sandbox/table_template.html"
 
 
-def get_metrics(n_vehicles, cap, waiting_time, predictions):
-    m_file = NFS_PATH + "v{}-c{}-w{}-p{}/metrics_pnas.csv".format(
-        n_vehicles, cap, waiting_time, predictions)
-    df = pandas.read_csv(m_file)
-    df["serviced_percentage"] = df["n_pickups"].sum() \
-        / (df["n_pickups"].sum() + df["n_ignored"].sum())
-    df["mean_travel_delay"] = df["mean_delay"] - df["mean_waiting_time"]
-    df["serviced_percentage"] = df["n_pickups"].sum() / \
-        (df["n_ignored"].sum() + df["n_pickups"].sum())
-    df["km_travelled_per_car"] = df["total_km_travelled"] / df["n_vehicles"]
-    df["n_shared_perc"] = df["n_shared"] / (df["n_shared"] + df["time_pass_1"])
-    df.drop("Unnamed: 0", axis=1, inplace=True)
-    df.drop("capacity", axis=1, inplace=True)
-    df.drop("is_long", axis=1, inplace=True)
-    df.drop("n_vehicles", axis=1, inplace=True)
-    return df
+ordered_fields = ["vehicles", "capacity", "waiting_time", "predictions",
+                  "mean_waiting_time", "n_shared_per_passenger",
+                  "mean_passengers", "mean_delay",
+                  "n_pickups", "mean_travel_delay", "serviced_percentage",
+                  "total_km_travelled", "km_travelled_per_car",
+                  "empty_rebalancing", "empty_moving_to_pickup",
+                  "empty_waiting", "not_empty", "active_taxis", "n_shared"]
 
 
 def avg_cols(df):
@@ -43,36 +35,41 @@ def comparator(A, B):
     return 0
 
 
-def create_table(table_filename):
-    dirs = get_ready_folders(NFS_PATH)
-    datas = list()
-    preface = "Creating Table: "
-    widgets = [preface, Bar(), Percentage(), "| ", ETA()]
-    pbar = ProgressBar(widgets=widgets, maxval=len(dirs)).start()
-    headers = None
-    for i, dr in enumerate(dirs):
-        try:
-            info = FolderInfo(dr)
-            metrics = get_metrics(
-                info.n_vehicles, info.max_capacity,
-                info.max_waiting_time, info.predictions)
-            avg_metrics = avg_cols(metrics).to_dict()
-            datas.append(info.to_dict().values()
-                         + avg_metrics.values())
-            if headers is None:
-                headers = info.to_dict().keys() + avg_metrics.keys()
-        except IOError:
-            pass
-        pbar.update(i + 1)
-    pbar.finish()
-    with open(table_filename, "w") as f:
-        json.dump(datas, f)
+def rearrange(datas, perm):
+    new_datas = list()
+    for row in datas:
+        new_row = [0] * len(row)
+        for i, val in enumerate(row):
+            new_row[perm[i]] = val
+        new_datas.append(new_row)
+    return new_datas
+
+
+def find_permutation(control, alternate):
+    """ Returns a mapping from alternate to control """
+    reverse_dict = dict()
+    perm = [0] * len(control)
+    for i, val in enumerate(alternate):
+        reverse_dict[val] = i
+    for i, val in enumerate(control):
+        perm[reverse_dict[val]] = i
+    return perm
+
+
+def create_table():
+    df = get_avg_dataframe()
+    datas = df.to_dict(orient="records")
+    headers = datas[0].keys()
+    perm = find_permutation(ordered_fields, headers)
+    datas = map(lambda v: v.values(), datas)
+    datas = rearrange(datas, perm)
     datas = sorted(datas, cmp=comparator)
-    return tabulate(datas, headers, tablefmt="latex")
+    ord_headers = map(prettify, ordered_fields)
+    return tabulate(datas, ord_headers, tablefmt="latex")
 
 
 if __name__ == "__main__":
-    tab = create_table("table.json")
+    tab = create_table()
     """
     with open(OUTPUT_PATH, "w") as fout:
         with open(TEMPLATE_PATH) as fin:
