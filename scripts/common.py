@@ -10,6 +10,8 @@ def get_metrics(n_vehicles, cap, waiting_time, predictions):
     m_file = NFS_PATH + "v{}-c{}-w{}-p{}/metrics_pnas.csv".format(
         n_vehicles, cap, waiting_time, predictions)
     df = pandas.read_csv(m_file)
+    df.sort_values("time", inplace=True)
+    df.reset_index(inplace=True)
     df["serviced_percentage"] = df["n_pickups"].sum() \
         / (df["n_pickups"].sum() + df["n_ignored"].sum())
     df["mean_travel_delay"] = df["mean_delay"] - df["mean_waiting_time"]
@@ -28,7 +30,7 @@ def load_kml_poly():
     try:
         with open("data/nyc.kml") as fin:
             data = fin.read()
-            cs = re.findall(r"<coordinates>[\s\S]*?<\/coordinates>", data)[0]\
+            cs = re.findall(r"<coordinates>[\s\S]*?<\/coordinates>", data)[0] \
                 .split("<coordinates>")[1]\
                 .split(",0 ")[:-2]
             poly = list()

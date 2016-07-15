@@ -11,7 +11,6 @@ import seaborn as sns
 from common import get_metrics
 from datetime import datetime
 from itertools import product
-from table_common import table_header, line_tp, table_footer
 from collections import defaultdict
 
 
@@ -103,30 +102,6 @@ def make_pred_title(wt, cap):
     return "M.W.T: {}, Cap: {}".format(wt, cap)
 
 
-def create_latex_table(df):
-    lines = list()
-    for i, (n_vecs, cap, rb) in enumerate(instances):
-        st = df
-        n_hrs = common.MAX_SECONDS / (60 * 60.0)
-        pickups = np.sum(st["n_pickups"]) / n_hrs
-        ignored = np.sum(st["n_ignored"]) / n_hrs
-        pickups_std = 3600 * np.std(st["n_pickups"]) / common.MAX_SECONDS
-        ignored_std = 3600 * np.std(st["n_ignored"]) / common.MAX_SECONDS
-        waiting_time = np.mean(st["mean_waiting_time"])
-        waiting_time_std = np.std(st["mean_waiting_time"])
-        delay = np.mean(st["mean_delay"])
-        delay_std = np.std(st["mean_delay"])
-        occupancy = np.mean(st["mean_passengers"])
-        occupancy_std = np.std(st["mean_passengers"])
-        line = line_tp.format(
-            i + 1, n_vecs, cap, pickups, pickups_std,
-            ignored, ignored_std, waiting_time, waiting_time_std,
-            delay, delay_std, occupancy, occupancy_std)
-        lines.append(line)
-    inner_lines = "\n\\hline\n".join(line for line in lines)
-    return table_header + inner_lines + table_footer
-
-
 def is_first_10_mins(t):
     return t.hour == 0 and t.minute <= 10
 
@@ -171,6 +146,10 @@ def make_ts_plot(vecs, wt, rb, field):
                      title="Capacity")
     set_legend_marker_size(lgd, 40)
     plt.ylabel(prettify(field))
+    if "%" in prettify(field):
+        ax.set_ylim([0, 1])
+        vals = ax.get_yticks()
+        ax.set_yticklabels(['{:3.0f}%'.format(x * 100) for x in vals])
     fig.autofmt_xdate()
     plt.title("N. Vecs: {}, M.W.T: {}".format(vecs, wt))
     plt.savefig("figs/ts-{}-v{}-w{}.png".format(field, vecs, wt),
@@ -266,7 +245,7 @@ def get_avg_dataframe():
                 f_vals.append(np.mean(df[field]))
             data.loc[counter] = [p, int(v), int(wt), int(cap)] \
                 + f_vals \
-                + [100 * df["n_shared"].sum() / df["n_pickups"].sum()]
+                + [df["n_shared"].sum() / df["n_pickups"].sum()]
             counter += 1
         except IOError:
             pass
@@ -283,6 +262,10 @@ def make_avg_plots_with_preds(big_d):
         ax = sns.pointplot(x="vehicles", y=field, hue="predictions", data=d)
         ax.set_xticklabels(vehicles)
         plt.ylabel(prettify(field))
+        if "%" in prettify(field):
+            ax.set_ylim([0, 1])
+            vals = ax.get_yticks()
+            ax.set_yticklabels(['{:3.0f}%'.format(x * 100) for x in vals])
         plt.xlabel("Num Vehicles")
         handles, _ = ax.get_legend_handles_labels()
         plt.legend(
@@ -334,6 +317,11 @@ def make_avg_plots(big_d, plot_type):
             ax.set_xticklabels(xticklabels)
             if i == 1:
                 plt.ylabel(prettify(field))
+                if "%" in prettify(field):
+                    ax.set_ylim([0, 1])
+                    vals = ax.get_yticks()
+                    ax.set_yticklabels(
+                        ['{:3.0f}%'.format(x * 100) for x in vals])
             else:
                 plt.ylabel("")
             if i == 2:
@@ -461,7 +449,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=("Creates plots plots for MOD"))
     parser.add_argument(
-        "--plot_type", dest="plot_type", type=str,
+        "--plot-type", dest="plot_type", type=str,
         help=("Specifies the type of plot to generate. "
               "The options are 'area', 'area_single_day'"
               ", 'avg', 'comp_times', or 'ts'"))
