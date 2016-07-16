@@ -4,6 +4,7 @@ import pandas
 
 
 NFS_PATH = "/home/wallar/nfs/data/data-sim/"
+# ]]NFS_PATH = "/data/drl/mod_sim_data/data-sim/"
 
 
 def get_metrics(n_vehicles, cap, waiting_time, predictions):
