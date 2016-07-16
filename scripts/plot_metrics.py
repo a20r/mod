@@ -82,7 +82,7 @@ def prettify(text):
     if text == "km_travelled_per_car":
         return "Mean Distance Travelled [km]"
     if text == "serviced_percentage":
-        return "% serviced requests"
+        return "% Serviced Requests"
     if text == "comp_time":
         return "Mean Computational Time [s]"
     else:
@@ -166,7 +166,7 @@ def make_ts_area_plot(vecs, cap, wt, rb):
     subfields.extend(["time_pass_%d" % i for i in xrange(1, cap + 1)])
     df_small = df[subfields].copy()
     ax = df_small.plot(kind="area", colormap="rainbow",
-                       figsize=(13, 10))
+                       figsize=(16, 10)) # (13, 10)
     labels = ["Waiting", "Rebalancing", "Picking Up"]
     labels.extend(["N. Pass: %d" % n for n in xrange(1, cap + 1)])
     handles, _ = ax.get_legend_handles_labels()
