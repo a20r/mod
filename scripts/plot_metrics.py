@@ -202,7 +202,7 @@ def make_ts_area_plot_single(vecs, cap, wt, rb, weekday):
     df_small = df_small.query(q_str)
     df_small.index = range(2879)
     ax = df_small.plot(kind="area", colormap="rainbow",
-                       figsize=(13, 10))
+                       figsize=(16, 10)) # (13, 10)
     labels = ["Waiting", "Rebalancing", "Picking Up"]
     labels.extend(["N. Pass: %d" % n for n in xrange(1, cap + 1)])
     handles, _ = ax.get_legend_handles_labels()
