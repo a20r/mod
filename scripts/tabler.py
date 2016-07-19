@@ -21,7 +21,11 @@ TEMPLATE_PATH = "sandbox/table_template.html"
 ordered_fields = ["vehicles", "capacity", "waiting_time", "delay",
                     "serviced_percentage", "mean_waiting_time",
                     "mean_travel_delay", "mean_passengers", 
-                    "n_shared_per_passenger", "km_travelled_per_car"]
+                    "n_shared_per_passenger", "km_travelled_per_car",
+                    "predictions", "n_pickups", "mean_delay", "total_km_travelled",
+                    "empty_rebalancing", "empty_moving_to_pickup",
+                    "empty_waiting", "not_empty", "active_taxis", "n_shared"
+                    ]
 
 
 ct_fields = ["vehicles", "capacity", "waiting_time", "comp_time"]
