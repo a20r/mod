@@ -318,12 +318,12 @@ def make_avg_plots(big_d, plot_type):
             if i == 1:
                 plt.ylabel(prettify(field))
                 if "%" in prettify(field):
-                    # ax.set_ylim([0, 1])
                     vals = ax.get_yticks()
                     print field, vals
                     yticklabels = ['{:3.0f}%'.format(x * 100) for x in vals]
                     print field, yticklabels
                     ax.set_yticklabels(yticklabels)
+                    ax.set_ylim([0, 1])
             else:
                 plt.ylabel("")
             if i == 2:
