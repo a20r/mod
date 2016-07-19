@@ -10,22 +10,21 @@ OUTPUT_PATH = "/home/wallar/www/{}.html"
 TEMPLATE_PATH = "sandbox/table_template.html"
 
 
-ordered_fields = ["vehicles", "capacity", "waiting_time", "predictions",
-                  "mean_waiting_time", "n_shared_per_passenger",
-                  "mean_passengers", "mean_delay",
-                  "n_pickups", "mean_travel_delay", "serviced_percentage",
-                  "total_km_travelled", "km_travelled_per_car",
-                  "empty_rebalancing", "empty_moving_to_pickup",
-                  "empty_waiting", "not_empty", "active_taxis", "n_shared"]
+# ordered_fields = ["vehicles", "capacity", "waiting_time", "predictions",
+#                   "mean_waiting_time", "n_shared_per_passenger",
+#                   "mean_passengers", "mean_delay",
+#                   "n_pickups", "mean_travel_delay", "serviced_percentage",
+#                   "total_km_travelled", "km_travelled_per_car",
+#                   "empty_rebalancing", "empty_moving_to_pickup",
+#                   "empty_waiting", "not_empty", "active_taxis", "n_shared"]
 
-# ordered_fields = ["vehicles", "capacity", "waiting_time", "delay",
-#                     "serviced_percentage", "mean_waiting_time",
-#                     "mean_travel_delay", "mean_passengers", 
-#                     "n_shared_per_passenger", "km_travelled_per_car",
-#                     "predictions", "n_pickups", "mean_delay", "total_km_travelled",
-#                     "empty_rebalancing", "empty_moving_to_pickup",
-#                     "empty_waiting", "not_empty", "active_taxis", "n_shared"
-#                     ]
+ordered_fields = ["vehicles", "capacity", "waiting_time", "delay",
+                     "serviced_percentage", "mean_waiting_time",
+                     "mean_travel_delay", "mean_passengers", 
+                    "n_shared_per_passenger", "km_travelled_per_car",
+                    "predictions", "n_pickups", "mean_delay", "total_km_travelled",
+                    "empty_rebalancing", "empty_moving_to_pickup",
+                    "empty_waiting", "not_empty", "active_taxis", "n_shared"]
 
 ct_fields = ["vehicles", "capacity", "waiting_time", "comp_time"]
 
