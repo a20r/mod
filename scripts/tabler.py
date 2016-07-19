@@ -77,7 +77,7 @@ def create_table(df, ord_fields, tablefmt):
 
 if __name__ == "__main__":
     df = get_avg_dataframe()
-    tab = create_table(df, ordered_fields, "html")
+    # tab = create_table(df, ordered_fields, "html")
     # with open(OUTPUT_PATH.format("table"), "w") as fout:
     #     with open(TEMPLATE_PATH) as fin:
     #         fout.write(fin.read() + "\n" + tab)
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     tab = create_table(ct_df, ct_fields, "latex")
     with open("comp_times_table.tex", "w") as fout:
         fout.write(tab)
-    tab = create_table(ct_df, ct_fields, "html")
+    # tab = create_table(ct_df, ct_fields, "html")
     # with open(OUTPUT_PATH.format("comp_times"), "w") as fout:
     #     with open(TEMPLATE_PATH) as fin:
     #         fout.write(fin.read() + "\n" + tab)
