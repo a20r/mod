@@ -73,7 +73,7 @@ if __name__ == "__main__":
     with open(OUTPUT_PATH.format("table"), "w") as fout:
         with open(TEMPLATE_PATH) as fin:
             fout.write(fin.read() + "\n" + tab)
-    tabl = create_table(df, ordered_fields, "latex")
+    tab = create_table(df, ordered_fields, "latex")
     with open("table.tex", "w") as fout:
         fout.write(tab)
     ct_df = pd.read_csv("data/times.csv")

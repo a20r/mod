@@ -258,7 +258,7 @@ def make_avg_plots_with_preds(big_d):
     cap, wt = 4, 300
     fig = plt.figure()
     fig.set_size_inches(13, 10)
-    for field in fields:
+    for field in fields + ["n_shared_per_passenger"]:
         ax = sns.pointplot(x="vehicles", y=field, hue="predictions", data=d)
         ax.set_xticklabels(vehicles)
         plt.ylabel(prettify(field))
