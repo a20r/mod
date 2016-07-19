@@ -318,7 +318,7 @@ def make_avg_plots(big_d, plot_type):
             if i == 1:
                 plt.ylabel(prettify(field))
                 if "%" in prettify(field):
-                    # ax.set_ylim([0, 1])
+                    ax.set_ylim([0, 1])
                     vals = ax.get_yticks()
                     # ax.set_yticklabels(
                     #     ['{:3.0f}%'.format(x * 100) for x in vals])
