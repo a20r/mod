@@ -166,7 +166,7 @@ def make_ts_area_plot(vecs, cap, wt, rb):
     subfields.extend(["time_pass_%d" % i for i in xrange(1, cap + 1)])
     df_small = df[subfields].copy()
     ax = df_small.plot(kind="area", colormap="rainbow",
-                       figsize=(16, 10)) # (13, 10)
+                       figsize=(16, 10))
     labels = ["Waiting", "Rebalancing", "Picking Up"]
     labels.extend(["N. Pass: %d" % n for n in xrange(1, cap + 1)])
     handles, _ = ax.get_legend_handles_labels()
@@ -202,7 +202,7 @@ def make_ts_area_plot_single(vecs, cap, wt, rb, weekday):
     df_small = df_small.query(q_str)
     df_small.index = range(2879)
     ax = df_small.plot(kind="area", colormap="rainbow",
-                       figsize=(16, 10)) # (13, 10)
+                       figsize=(16, 10))
     labels = ["Waiting", "Rebalancing", "Picking Up"]
     labels.extend(["N. Pass: %d" % n for n in xrange(1, cap + 1)])
     handles, _ = ax.get_legend_handles_labels()
@@ -320,8 +320,9 @@ def make_avg_plots(big_d, plot_type):
                 if "%" in prettify(field):
                     ax.set_ylim([0, 1])
                     vals = ax.get_yticks()
-                    # ax.set_yticklabels(
-                    #     ['{:3.0f}%'.format(x * 100) for x in vals])
+                    yticklabels = ['{:3.0f}%'.format(x * 100) for x in vals]
+                    print field, yticklabels
+                    ax.set_yticklabels(yticklabels)
             else:
                 plt.ylabel("")
             if i == 2:
