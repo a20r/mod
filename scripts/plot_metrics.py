@@ -320,9 +320,7 @@ def make_avg_plots(big_d, plot_type):
                 if "%" in prettify(field):
                     ax.set_ylim([0, 1])
                     vals = ax.get_yticks()
-                    print field, vals
                     yticklabels = ['{:3.0f}%'.format(x * 100) for x in vals]
-                    print field, yticklabels
                     ax.set_yticklabels(yticklabels)
             else:
                 plt.ylabel("")
@@ -344,9 +342,11 @@ def make_avg_plots(big_d, plot_type):
                 max_val = max(d[field])
             if min_val is None or min_val > min(d[field]):
                 min_val = min(d[field])
-        if not "%" in prettify(field):
-            for ax in axes:
+        for ax in axes:
+            if not "%" in prettify(field):
                 ax.set_ylim(min_val - 0.1 * max_val, 1.1 * max_val)
+            else:
+                ax.set_ylim(0, 1)
         filename = "figs/avg-with-{}-{}.png".format(plot_type, field)
         plt.savefig(filename, bbox_inches='tight')
         plt.close()
