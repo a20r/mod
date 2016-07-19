@@ -5,18 +5,23 @@ from plot_metrics import get_avg_dataframe, prettify
 
 
 NFS_PATH = "/home/wallar/nfs/data/data-sim/"
-# NFS_PATH = "/data/drl/mod_sim_data/data-sim/"
+NFS_PATH = "/data/drl/mod_sim_data/data-sim/"
 OUTPUT_PATH = "/home/wallar/www/{}.html"
 TEMPLATE_PATH = "sandbox/table_template.html"
 
 
-ordered_fields = ["vehicles", "capacity", "waiting_time", "predictions",
-                  "mean_waiting_time", "n_shared_per_passenger",
-                  "mean_passengers", "mean_delay",
-                  "n_pickups", "mean_travel_delay", "serviced_percentage",
-                  "total_km_travelled", "km_travelled_per_car",
-                  "empty_rebalancing", "empty_moving_to_pickup",
-                  "empty_waiting", "not_empty", "active_taxis", "n_shared"]
+# ordered_fields = ["vehicles", "capacity", "waiting_time", "predictions",
+#                   "mean_waiting_time", "n_shared_per_passenger",
+#                   "mean_passengers", "mean_delay",
+#                   "n_pickups", "mean_travel_delay", "serviced_percentage",
+#                   "total_km_travelled", "km_travelled_per_car",
+#                   "empty_rebalancing", "empty_moving_to_pickup",
+#                   "empty_waiting", "not_empty", "active_taxis", "n_shared"]
+
+ordered_fields = ["vehicles", "capacity", "waiting_time", "delay",
+                    "serviced_percentage", "mean_waiting_time",
+                    "mean_travel_delay", "mean_passengers", 
+                    "n_shared_per_passenger", "km_travelled_per_car"]
 
 
 ct_fields = ["vehicles", "capacity", "waiting_time", "comp_time"]
@@ -68,11 +73,17 @@ def create_table(df, ord_fields, tablefmt):
 
 
 if __name__ == "__main__":
+    if (NFS_PATH == "/data/drl/mod_sim_data/data-sim/"):
+        CREATE_HTML = False
+    else:
+        CREATE_HTML = True
+
     df = get_avg_dataframe()
-    tab = create_table(df, ordered_fields, "html")
-    with open(OUTPUT_PATH.format("table"), "w") as fout:
-        with open(TEMPLATE_PATH) as fin:
-            fout.write(fin.read() + "\n" + tab)
+    if (CREATE_HTML):
+        tab = create_table(df, ordered_fields, "html")
+        with open(OUTPUT_PATH.format("table"), "w") as fout:
+            with open(TEMPLATE_PATH) as fin:
+                fout.write(fin.read() + "\n" + tab)
     tab = create_table(df, ordered_fields, "latex")
     with open("table.tex", "w") as fout:
         fout.write(tab)
@@ -84,7 +95,8 @@ if __name__ == "__main__":
     tab = create_table(ct_df, ct_fields, "latex")
     with open("comp_times_table.tex", "w") as fout:
         fout.write(tab)
-    tab = create_table(ct_df, ct_fields, "html")
-    with open(OUTPUT_PATH.format("comp_times"), "w") as fout:
-        with open(TEMPLATE_PATH) as fin:
-            fout.write(fin.read() + "\n" + tab)
+    if (CREATE_HTML):
+        tab = create_table(ct_df, ct_fields, "html")
+        with open(OUTPUT_PATH.format("comp_times"), "w") as fout:
+            with open(TEMPLATE_PATH) as fin:
+                fout.write(fin.read() + "\n" + tab)
