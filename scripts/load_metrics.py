@@ -341,6 +341,16 @@ def extract_dataframe(folder):
     return pandas.concat(dfs)
 
 
+def extract_dataframe_subdir(dr):
+    subdir = dr + "/"
+    params = load_parameters(subdir + "parameters.txt")
+    n_vehicles = params["NUMBER_VEHICLES"]
+    cap = params["maxPassengersVehicle"]
+    rebalancing = params["USE_REBALANCING"]
+    df = extract_metrics(subdir, n_vehicles, cap, rebalancing, 1)
+    return df
+
+
 def get_ready_folders(folder):
     ret_dirs = list()
     dirs = get_subdirs(folder)
@@ -357,7 +367,6 @@ def extract_all_dataframes(folder):
     widgets = [preface, Bar(), Percentage(), "| ", ETA()]
     pbar = ProgressBar(widgets=widgets, maxval=len(data_dirs)).start()
     counter = 1
-    print data_dirs
     for data_folder in data_dirs:
         pool = Pool(8)
         dirs = get_subdirs(folder + data_folder)
@@ -378,6 +387,10 @@ def extract_all_dataframes(folder):
 
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
-    main_folder = "/home/wallar/nfs/data/data-sim/"
+    NFS_PATH = "/home/wallar/nfs/data/data-sim/"
+    # main_folder = NFS_PATH + "v1000-c4-w300-p100-1-18-2013-1472918830"
+    main_folder = "/home/wallar/fast_data/v1000-c4-w300-p100-1-18-2013-1472934520"
+    df = extract_dataframe_subdir(main_folder)
+    df.to_csv("../nyc-taxi-analysis/data/pred-metrics-randomized.csv")
     # print "NOT DOING ANYTHING"
-    extract_all_dataframes(main_folder)
+    # extract_all_dataframes(main_folder)
