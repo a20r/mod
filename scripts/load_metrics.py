@@ -399,7 +399,6 @@ def extract_all_dataframes(folder):
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     NFS_PATH = "/home/wallar/nfs/data/data-sim/"
-    main_folder = NFS_PATH + "v2000-c4-w300-p200-1-18-2013-1472949586"
     dirs = glob.glob(NFS_PATH + "*p*00*2013*")
     extract_new_dataframes(dirs)
     # df = extract_dataframe_subdir(main_folder)
