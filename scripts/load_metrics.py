@@ -345,12 +345,14 @@ def extract_dataframe(folder):
 def extract_dataframe_subdir(dr):
     subdir = dr + "/"
     print subdir
-    params = load_parameters(subdir + "parameters.txt")
-    n_vehicles = params["NUMBER_VEHICLES"]
-    cap = params["maxPassengersVehicle"]
-    rebalancing = params["USE_REBALANCING"]
-    df = extract_metrics(subdir, n_vehicles, cap, rebalancing, 1)
-    df.to_csv(subdir + "metrics_icra.csv")
+    n_folders = len(glob.glob(subdir + "graphs/*.txt"))
+    if n_folders < 2879:
+        params = load_parameters(subdir + "parameters.txt")
+        n_vehicles = params["NUMBER_VEHICLES"]
+        cap = params["maxPassengersVehicle"]
+        rebalancing = params["USE_REBALANCING"]
+        df = extract_metrics(subdir, n_vehicles, cap, rebalancing, 1)
+        df.to_csv(subdir + "metrics_icra.csv")
     return df
 
 
