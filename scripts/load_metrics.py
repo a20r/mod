@@ -353,7 +353,7 @@ def extract_dataframe_subdir(dr):
         rebalancing = params["USE_REBALANCING"]
         df = extract_metrics(subdir, n_vehicles, cap, rebalancing, 1)
         df.to_csv(subdir + "metrics_icra.csv")
-    return df
+        return df
 
 
 def extract_new_dataframes(dirs):
