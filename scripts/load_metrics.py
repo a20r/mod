@@ -1,6 +1,7 @@
 #! /usr/bin/python
 
 import warnings
+import glob
 # import sys
 import io
 import common
@@ -343,12 +344,20 @@ def extract_dataframe(folder):
 
 def extract_dataframe_subdir(dr):
     subdir = dr + "/"
+    print subdir
     params = load_parameters(subdir + "parameters.txt")
     n_vehicles = params["NUMBER_VEHICLES"]
     cap = params["maxPassengersVehicle"]
     rebalancing = params["USE_REBALANCING"]
     df = extract_metrics(subdir, n_vehicles, cap, rebalancing, 1)
+    df.to_csv(subdir + "metrics_icra.csv")
     return df
+
+
+def extract_new_dataframes(dirs):
+    pool = Pool(8)
+    pool.map(extract_dataframe_subdir, dirs)
+    pool.close()
 
 
 def get_ready_folders(folder):
@@ -367,6 +376,8 @@ def extract_all_dataframes(folder):
     widgets = [preface, Bar(), Percentage(), "| ", ETA()]
     pbar = ProgressBar(widgets=widgets, maxval=len(data_dirs)).start()
     counter = 1
+    print data_dirs
+    exit()
     for data_folder in data_dirs:
         pool = Pool(8)
         dirs = get_subdirs(folder + data_folder)
@@ -388,9 +399,8 @@ def extract_all_dataframes(folder):
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     NFS_PATH = "/home/wallar/nfs/data/data-sim/"
-    # main_folder = NFS_PATH + "v1000-c4-w300-p100-1-18-2013-1472918830"
-    main_folder = "/home/wallar/fast_data/v1000-c4-w300-p100-1-18-2013-1472934520"
-    df = extract_dataframe_subdir(main_folder)
-    df.to_csv("../nyc-taxi-analysis/data/pred-metrics-randomized.csv")
-    # print "NOT DOING ANYTHING"
-    # extract_all_dataframes(main_folder)
+    main_folder = NFS_PATH + "v2000-c4-w300-p200-1-18-2013-1472949586"
+    dirs = glob.glob(NFS_PATH + "*p*00*2013*")
+    extract_new_dataframes(dirs)
+    # df = extract_dataframe_subdir(main_folder)
+    # df.to_csv("../nyc-taxi-analysis/data/pred-v2000-c4-w300-p200-1-18-2013.csv")
