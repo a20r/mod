@@ -1,6 +1,8 @@
 #! /usr/bin/python
 
 import warnings
+import tqdm
+import pandas as pd
 import glob
 # import sys
 import io
@@ -344,21 +346,27 @@ def extract_dataframe(folder):
 
 def extract_dataframe_subdir(dr):
     subdir = dr + "/"
-    print subdir
+    #print subdir
     n_folders = len(glob.glob(subdir + "graphs/*.txt"))
-    if n_folders < 2879:
+    exists = len(glob.glob(subdir + "metrics_icra.csv")) > 0
+    if exists:
+        mets = pd.read_csv(subdir + "metrics_icra.csv")
+    if n_folders == 2879 and (not exists or mets.shape[0] < 2879):
         params = load_parameters(subdir + "parameters.txt")
         n_vehicles = params["NUMBER_VEHICLES"]
         cap = params["maxPassengersVehicle"]
         rebalancing = params["USE_REBALANCING"]
         df = extract_metrics(subdir, n_vehicles, cap, rebalancing, 1)
         df.to_csv(subdir + "metrics_icra.csv")
-    return df
+        return df
 
 
 def extract_new_dataframes(dirs):
-    pool = Pool(8)
-    pool.map(extract_dataframe_subdir, dirs)
+    pool = Pool(24)
+    pbar = tqdm.tqdm(total=len(dirs))
+    for job in pool.imap(extract_dataframe_subdir, dirs):
+        pbar.update(1)
+    pbar.close()
     pool.close()
 
 
@@ -400,8 +408,8 @@ def extract_all_dataframes(folder):
 
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
-    NFS_PATH = "/home/wallar/nfs/data/data-sim/"
-    dirs = glob.glob(NFS_PATH + "*p*00*2013*")
+    NFS_PATH = "/data/drl/mod_sim_data/data-sim/"
+    dirs = glob.glob(NFS_PATH + "*p[2|4|6]00*2013*")
     extract_new_dataframes(dirs)
     # df = extract_dataframe_subdir(main_folder)
     # df.to_csv("../nyc-taxi-analysis/data/pred-v2000-c4-w300-p200-1-18-2013.csv")
