@@ -15,6 +15,7 @@ from collections import defaultdict
 from tqdm import tqdm
 
 
+demands = ["half", "same", "double"]
 intervals = [10, 20, 30, 40, 50]
 predictions = ["0-nR", 0, 100, 200, 300, 400]
 waiting_times = [120, 300, 420]
@@ -487,12 +488,61 @@ def make_interval_comp_plots(df):
     plt.close()
 
 
+def make_demand_df():
+    dfs = list()
+    for i in demands:
+        df = common.get_demand_metrics(i)
+        df["n_shared_per_passenger"] = df["n_shared"].sum() \
+            / df["n_pickups"].sum()
+        ser = df[fields + ["n_shared_per_passenger"]].mean()
+        data = ser.values.reshape((1, 15))
+        mean_df = pd.DataFrame(data=data, columns=ser.index)
+        mean_df["demand"] = i
+        dfs.append(mean_df)
+    big_d = pd.concat(dfs)
+    return big_d
+
+
+def make_demand_plots(df):
+    for field in tqdm(fields + ["n_shared_per_passenger"]):
+        fig, ax = plt.subplots(1, 1, figsize=(18, 7))
+        ax = sns.pointplot(x="demand", y=field, data=df,
+                           color=sns.xkcd_rgb["black"], ax=ax)
+        ax.set_xlabel("Nominal Number of Requests")
+        ax.set_ylabel(prettify(field))
+        ax.set_xticklabels(["x0.5", "1", "x2"])
+        if "%" in prettify(field):
+            ax.set_ylim(0, 1)
+            vals = ax.get_yticks()
+            yticklabels = ['{:3.0f}%'.format(x * 100) for x in vals]
+            ax.set_yticklabels(yticklabels)
+        filename = "figs/demand-{}.png".format(field)
+        plt.savefig(filename, bbox_inches="tight")
+        plt.close()
+
+
+def make_demand_comp_plots(df):
+    fig, ax = plt.subplots(1, 1, figsize=(18, 7))
+    sns.pointplot(x="demand", y="comp_time", data=df, ax=ax,
+                  color=sns.xkcd_rgb["black"])
+    ax.set_ylabel(prettify("comp_time"))
+    ax.set_xlabel("Nominal Number of Requests")
+    ax.set_xticklabels(["x0.5", "1", "x2"])
+    plt.savefig("figs/demand-comp_time.png", bbox_inches="tight")
+    plt.close()
+
+
 if __name__ == "__main__":
     sns.set_context("poster", font_scale=2)
-    df = make_interval_df()
-    make_interval_plots(df)
-    comp_df = pd.read_csv("data/interval-times.csv")
-    make_interval_comp_plots(comp_df)
+    # df = make_interval_df()
+    # make_interval_plots(df)
+    # comp_df = pd.read_csv("data/demand-times.csv")
+    # make_interval_comp_plots(comp_df)
+    df = make_demand_df()
+    make_demand_plots(df)
+    comp_df = pd.read_csv("data/demand-times.csv")
+    make_demand_comp_plots(comp_df)
+
     # plt.ioff()
     # sns.set_context("poster", font_scale=2)
     # parser = argparse.ArgumentParser(
