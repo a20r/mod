@@ -12,15 +12,10 @@ from common import get_metrics
 from datetime import datetime
 from itertools import product
 from collections import defaultdict
+from tqdm import tqdm
 
 
-instances = [(500, 1, 0), (500, 2, 0), (500, 3, 0), (500, 4, 0),
-             (125, 4, 0), (250, 4, 0), (375, 4, 0), (625, 4, 0),
-             (750, 4, 0), (1000, 4, 0), (250, 4, 1), (375, 4, 1),
-             (500, 4, 1), (625, 4, 1), (750, 4, 1)]
-
-
-n_vecs = [125, 250, 375, 500, 625, 750, 1000]
+intervals = [10, 20, 30, 40, 50]
 predictions = ["0-nR", 0, 100, 200, 300, 400]
 waiting_times = [120, 300, 420]
 vehicles = [1000, 2000, 3000]
@@ -85,6 +80,8 @@ def prettify(text):
         return "% Serviced Requests"
     if text == "comp_time":
         return "Mean Computational Time [s]"
+    if text == "interval":
+        return "Step Size [s]"
     else:
         words = text.split("_")
         return " ".join(w.capitalize() for w in words)
@@ -446,29 +443,78 @@ def make_avg_comp_times_plot(df, wt):
     plt.close()
 
 
+def make_interval_df():
+    dfs = list()
+    for i in intervals:
+        df = common.get_interval_metrics(i)
+        df["n_shared_per_passenger"] = df["n_shared"].sum() \
+            / df["n_pickups"].sum()
+        ser = df[fields + ["n_shared_per_passenger"]].mean()
+        data = ser.values.reshape((1, 15))
+        mean_df = pd.DataFrame(data=data, columns=ser.index)
+        mean_df["interval"] = i
+        dfs.append(mean_df)
+    big_d = pd.concat(dfs)
+    return big_d
+
+
+def make_interval_plots(df):
+    for field in tqdm(fields + ["n_shared_per_passenger"]):
+        fig, ax = plt.subplots(1, 1, figsize=(18, 7))
+        ax = sns.pointplot(x="interval", y=field, data=df,
+                           color=sns.xkcd_rgb["black"], ax=ax)
+        filename = "figs/interval-{}.png".format(field)
+        ax.set_xlabel("Step Size [s]")
+        ax.set_ylabel(prettify(field))
+        if "%" in prettify(field):
+            ax.set_ylim(0, 1)
+            vals = ax.get_yticks()
+            yticklabels = ['{:3.0f}%'.format(x * 100) for x in vals]
+            ax.set_yticklabels(yticklabels)
+
+        plt.savefig(filename, bbox_inches="tight")
+        plt.close()
+
+
+def make_interval_comp_plots(df):
+    fig, ax = plt.subplots(1, 1, figsize=(18, 7))
+    sns.pointplot(x="interval", y="comp_time", data=df, ax=ax,
+                  color=sns.xkcd_rgb["black"])
+    ax.set_xlabel("Step Size [s]")
+    ax.set_ylabel(prettify("comp_time"))
+    ax.set_xticklabels(intervals)
+    plt.savefig("figs/interval-comp_time.png", bbox_inches="tight")
+    plt.close()
+
+
 if __name__ == "__main__":
-    plt.ioff()
     sns.set_context("poster", font_scale=2)
-    parser = argparse.ArgumentParser(
-        description=("Creates plots plots for MOD"))
-    parser.add_argument(
-        "--plot-type", dest="plot_type", type=str,
-        help=("Specifies the type of plot to generate. "
-              "The options are 'area', 'area_single_day'"
-              ", 'avg', 'comp_times', or 'ts'"))
-    args = parser.parse_args()
-    plots = {"area": [make_all_ts_area_plots],
-             "area_single_day": [make_all_ts_area_single_plots],
-             "avg": [make_avg_plots_with_preds,
-                     lambda d: make_avg_plots(d, "vecs"),
-                     lambda d: make_avg_plots(d, "wts"),
-                     make_empty_type_plots],
-             "ts": [make_all_ts_plots],
-             "comp_times": [make_all_comp_times_plots]}
-    if args.plot_type == "avg":
-        big_d = get_avg_dataframe()
-        for func in plots["avg"]:
-            func(big_d)
-    else:
-        for func in plots[args.plot_type]:
-            func()
+    df = make_interval_df()
+    make_interval_plots(df)
+    comp_df = pd.read_csv("data/interval-times.csv")
+    make_interval_comp_plots(comp_df)
+    # plt.ioff()
+    # sns.set_context("poster", font_scale=2)
+    # parser = argparse.ArgumentParser(
+    #     description=("Creates plots plots for MOD"))
+    # parser.add_argument(
+    #     "--plot-type", dest="plot_type", type=str,
+    #     help=("Specifies the type of plot to generate. "
+    #           "The options are 'area', 'area_single_day'"
+    #           ", 'avg', 'comp_times', or 'ts'"))
+    # args = parser.parse_args()
+    # plots = {"area": [make_all_ts_area_plots],
+    #          "area_single_day": [make_all_ts_area_single_plots],
+    #          "avg": [make_avg_plots_with_preds,
+    #                  lambda d: make_avg_plots(d, "vecs"),
+    #                  lambda d: make_avg_plots(d, "wts"),
+    #                  make_empty_type_plots],
+    #          "ts": [make_all_ts_plots],
+    #          "comp_times": [make_all_comp_times_plots]}
+    # if args.plot_type == "avg":
+    #     big_d = get_avg_dataframe()
+    #     for func in plots["avg"]:
+    #         func(big_d)
+    # else:
+    #     for func in plots[args.plot_type]:
+    #         func()

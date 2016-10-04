@@ -362,7 +362,7 @@ def extract_dataframe_subdir(dr):
 
 
 def extract_new_dataframes(dirs):
-    pool = Pool(24)
+    pool = Pool(8)
     pbar = tqdm.tqdm(total=len(dirs))
     for job in pool.imap(extract_dataframe_subdir, dirs):
         pbar.update(1)
