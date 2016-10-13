@@ -1,5 +1,5 @@
 
-import argparse
+# import argparse
 import common
 import numpy as np
 import matplotlib
@@ -15,6 +15,7 @@ from collections import defaultdict
 from tqdm import tqdm
 
 
+hours = ["same", "t12", "t19"]
 demands = ["half", "same", "double"]
 intervals = [10, 20, 30, 40, 50]
 predictions = ["0-nR", 0, 100, 200, 300, 400]
@@ -28,6 +29,7 @@ fields = ["mean_waiting_time", "mean_passengers", "mean_delay", "n_pickups",
 caps = [1, 2, 4, 10]
 clrs = [sns.xkcd_rgb["grey"], sns.xkcd_rgb["sky blue"],
         sns.xkcd_rgb["bright red"], sns.xkcd_rgb["black"]]
+dem_clrs = [sns.xkcd_rgb["grey"], sns.xkcd_rgb["bright red"]]
 days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
         "Saturday"]
 
@@ -490,15 +492,17 @@ def make_interval_comp_plots(df):
 
 def make_demand_df():
     dfs = list()
-    for i in demands:
-        df = common.get_demand_metrics(i)
-        df["n_shared_per_passenger"] = df["n_shared"].sum() \
-            / df["n_pickups"].sum()
-        ser = df[fields + ["n_shared_per_passenger"]].mean()
-        data = ser.values.reshape((1, 15))
-        mean_df = pd.DataFrame(data=data, columns=ser.index)
-        mean_df["demand"] = i
-        dfs.append(mean_df)
+    for cap in [1, 4]:
+        for i in demands:
+            df = common.get_demand_metrics(i, cap)
+            df["n_shared_per_passenger"] = df["n_shared"].sum() \
+                / df["n_pickups"].sum()
+            ser = df[fields + ["n_shared_per_passenger"]].mean()
+            data = ser.values.reshape((1, 15))
+            mean_df = pd.DataFrame(data=data, columns=ser.index)
+            mean_df["demand"] = i
+            mean_df["capacity"] = cap
+            dfs.append(mean_df)
     big_d = pd.concat(dfs)
     return big_d
 
@@ -506,16 +510,18 @@ def make_demand_df():
 def make_demand_plots(df):
     for field in tqdm(fields + ["n_shared_per_passenger"]):
         fig, ax = plt.subplots(1, 1, figsize=(18, 7))
-        ax = sns.pointplot(x="demand", y=field, data=df,
-                           color=sns.xkcd_rgb["black"], ax=ax)
+        ax = sns.pointplot(x="demand", y=field, hue="capacity", data=df,
+                           palette=dem_clrs, ax=ax)
         ax.set_xlabel("Nominal Number of Requests")
         ax.set_ylabel(prettify(field))
-        ax.set_xticklabels(["x0.5", "1", "x2"])
+        ax.set_xticklabels(["x0.5", "x1", "x2"])
         if "%" in prettify(field):
             ax.set_ylim(0, 1)
             vals = ax.get_yticks()
             yticklabels = ['{:3.0f}%'.format(x * 100) for x in vals]
             ax.set_yticklabels(yticklabels)
+        handles, _ = ax.get_legend_handles_labels()
+        ax.legend(handles, [1, 4], title="Capacity")
         filename = "figs/demand-{}.png".format(field)
         plt.savefig(filename, bbox_inches="tight")
         plt.close()
@@ -523,21 +529,71 @@ def make_demand_plots(df):
 
 def make_demand_comp_plots(df):
     fig, ax = plt.subplots(1, 1, figsize=(18, 7))
-    sns.pointplot(x="demand", y="comp_time", data=df, ax=ax,
-                  color=sns.xkcd_rgb["black"])
+    sns.pointplot(x="demand", y="comp_time", hue="capacity", data=df, ax=ax,
+                  palette=dem_clrs)
     ax.set_ylabel(prettify("comp_time"))
     ax.set_xlabel("Nominal Number of Requests")
-    ax.set_xticklabels(["x0.5", "1", "x2"])
+    ax.set_xticklabels(["x0.5", "x1", "x2"])
+    handles, _ = ax.get_legend_handles_labels()
+    ax.legend(handles, [1, 4], title="Capacity")
     plt.savefig("figs/demand-comp_time.png", bbox_inches="tight")
+    plt.close()
+
+
+def make_hour_df():
+    dfs = list()
+    for i in hours:
+        df = common.get_hour_metrics(i)
+        df["n_shared_per_passenger"] = df["n_shared"].sum() \
+            / df["n_pickups"].sum()
+        ser = df[fields + ["n_shared_per_passenger"]].mean()
+        data = ser.values.reshape((1, 15))
+        mean_df = pd.DataFrame(data=data, columns=ser.index)
+        mean_df["hour"] = i
+        dfs.append(mean_df)
+    big_d = pd.concat(dfs)
+    return big_d
+
+
+def make_hour_plots(df):
+    for field in tqdm(fields + ["n_shared_per_passenger"]):
+        fig, ax = plt.subplots(1, 1, figsize=(18, 7))
+        ax = sns.pointplot(x="hour", y=field, data=df,
+                           color=sns.xkcd_rgb["black"], ax=ax)
+        filename = "figs/hour-{}.png".format(field)
+        ax.set_xlabel("Time of Day used for Travel Time")
+        ax.set_ylabel(prettify(field))
+        ax.set_xticklabels(["Mean", "12 am", "7 pm"])
+        if "%" in prettify(field):
+            ax.set_ylim(0, 1)
+            vals = ax.get_yticks()
+            yticklabels = ['{:3.0f}%'.format(x * 100) for x in vals]
+            ax.set_yticklabels(yticklabels)
+
+        plt.savefig(filename, bbox_inches="tight")
+        plt.close()
+
+
+def make_hour_comp_plots(df):
+    fig, ax = plt.subplots(1, 1, figsize=(18, 7))
+    sns.pointplot(x="hour", y="comp_time", data=df, ax=ax,
+                  color=sns.xkcd_rgb["black"])
+    ax.set_xlabel("Time of Day used for Travel Time")
+    ax.set_ylabel(prettify("comp_time"))
+    ax.set_xticklabels(["Mean", "12 am", "7 pm"])
+    plt.savefig("figs/hour-comp_time.png", bbox_inches="tight")
     plt.close()
 
 
 if __name__ == "__main__":
     sns.set_context("poster", font_scale=2)
-    # df = make_interval_df()
-    # make_interval_plots(df)
-    # comp_df = pd.read_csv("data/demand-times.csv")
-    # make_interval_comp_plots(comp_df)
+    df = make_hour_df()
+    comp_df = pd.read_csv("data/hour-times.csv")
+    make_hour_plots(df)
+    df = make_interval_df()
+    make_interval_plots(df)
+    comp_df = pd.read_csv("data/interval-times.csv")
+    make_interval_comp_plots(comp_df)
     df = make_demand_df()
     make_demand_plots(df)
     comp_df = pd.read_csv("data/demand-times.csv")

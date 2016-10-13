@@ -50,12 +50,40 @@ def get_interval_metrics(interval):
     return df
 
 
-def get_demand_metrics(demand):
+def get_demand_metrics(demand, cap=4):
     if demand == "same":
-        return get_metrics(2000, 4, 300, 0)
+        return get_metrics(2000, cap, 300, 0)
+    if cap == 1:
+        if demand == "half":
+            demand = "short"
+        if demand == "double":
+            demand = "long"
 
     m_file = NFS_PATH + "v{}-c{}-w{}-p{}-{}/metrics_pnas.csv".format(
-        2000, 4, 300, 0, demand)
+        2000, cap, 300, 0, demand)
+    df = pandas.read_csv(m_file)
+    df.sort_values("time", inplace=True)
+    df.reset_index(inplace=True)
+    df["serviced_percentage"] = df["n_pickups"].sum() \
+        / (df["n_pickups"].sum() + df["n_ignored"].sum())
+    df["mean_travel_delay"] = df["mean_delay"] - df["mean_waiting_time"]
+    df["serviced_percentage"] = df["n_pickups"].sum() / \
+        (df["n_ignored"].sum() + df["n_pickups"].sum())
+    df["km_travelled_per_car"] = df["total_km_travelled"] / df["n_vehicles"]
+    df["n_shared_perc"] = df["n_shared"] / (df["n_shared"] + df["time_pass_1"])
+    df.drop("Unnamed: 0", axis=1, inplace=True)
+    df.drop("capacity", axis=1, inplace=True)
+    df.drop("is_long", axis=1, inplace=True)
+    df.drop("n_vehicles", axis=1, inplace=True)
+    return df
+
+
+def get_hour_metrics(hour, cap=4):
+    if hour == "same":
+        return get_metrics(2000, cap, 300, 0)
+
+    m_file = NFS_PATH + "v{}-c{}-w{}-p{}-{}/metrics_pnas.csv".format(
+        2000, cap, 300, 0, hour)
     df = pandas.read_csv(m_file)
     df.sort_values("time", inplace=True)
     df.reset_index(inplace=True)

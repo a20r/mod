@@ -72,12 +72,17 @@ def generate_interval_time_df():
     return data
 
 
-def get_demand_comp_filenames(demand, day):
+def get_demand_comp_filenames(demand, cap, day):
     if demand == "same":
-        return get_comp_filenames(2000, 4, 300, 0, day)
+        return get_comp_filenames(2000, cap, 300, 0, day)
+    if cap == 1:
+        if demand == "half":
+            demand = "short"
+        if demand == "double":
+            demand = "long"
     dir_temp = ("v{0}-c{1}-w{2}-p{3}-{5}/"
                 "v{0}-c{1}-w{2}-p{3}-{4}-18-2013-*/graphs/")
-    graph_dir = dir_temp.format(2000, 4, 300, 0, day, demand)
+    graph_dir = dir_temp.format(2000, cap, 300, 0, day, demand)
     first = glob.glob(NFS_PATH + graph_dir + "data-graphs-0.txt")[0]
     last = glob.glob(NFS_PATH + graph_dir + "data-graphs-86340.txt")[0]
     return first, last
@@ -85,11 +90,37 @@ def get_demand_comp_filenames(demand, day):
 
 @print_here()
 def generate_demand_time_df():
-    cols = ["demand", "day", "comp_time"]
+    cols = ["demand", "capacity", "day", "comp_time"]
     data = pd.DataFrame(columns=cols)
     counter = 0
-    for i, d in product(demands, range(1, 8)):
-        s, e = get_demand_comp_filenames(i, d)
+    for i, c, d in product(demands, [1, 4], range(1, 8)):
+        s, e = get_demand_comp_filenames(i, c, d)
+        diff = (path.getctime(e) - path.getctime(s)) / 2878
+        if diff > 500:
+            diff = 2.9
+        data.loc[counter] = [i, c, d - 1, diff]
+        counter += 1
+    return data
+
+
+def get_hour_comp_filenames(hour, day, cap=4):
+    if hour == "same":
+        return get_comp_filenames(2000, cap, 300, 0, day)
+    dir_temp = ("v{0}-c{1}-w{2}-p{3}-{5}/"
+                "v{0}-c{1}-w{2}-p{3}-{4}-18-2013-*/graphs/")
+    graph_dir = dir_temp.format(2000, cap, 300, 0, day, hour)
+    first = glob.glob(NFS_PATH + graph_dir + "data-graphs-0.txt")[0]
+    last = glob.glob(NFS_PATH + graph_dir + "data-graphs-86340.txt")[0]
+    return first, last
+
+
+@print_here()
+def generate_hour_time_df():
+    cols = ["hour", "day", "comp_time"]
+    data = pd.DataFrame(columns=cols)
+    counter = 0
+    for i, d in product(["same", "t12", "t19"], range(1, 8)):
+        s, e = get_hour_comp_filenames(i, d)
         diff = (path.getctime(e) - path.getctime(s)) / 2878
         if diff > 500:
             diff = 2.9
@@ -99,5 +130,5 @@ def generate_demand_time_df():
 
 
 if __name__ == "__main__":
-    df = generate_demand_time_df()
-    df.to_csv("data/demand-times.csv")
+    df = generate_hour_time_df()
+    df.to_csv("data/hour-times.csv")
