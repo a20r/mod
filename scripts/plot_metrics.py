@@ -558,7 +558,7 @@ def make_hour_df():
 def make_hour_plots(df):
     for field in tqdm(fields + ["n_shared_per_passenger"]):
         fig, ax = plt.subplots(1, 1, figsize=(18, 7))
-        ax = sns.pointplot(x="hour", y=field, data=df,
+        ax = sns.barplot(x="hour", y=field, data=df,
                            color=sns.xkcd_rgb["black"], ax=ax)
         filename = "figs/hour-{}.png".format(field)
         ax.set_xlabel("Time of Day used for Travel Time")
@@ -576,7 +576,7 @@ def make_hour_plots(df):
 
 def make_hour_comp_plots(df):
     fig, ax = plt.subplots(1, 1, figsize=(18, 7))
-    sns.pointplot(x="hour", y="comp_time", data=df, ax=ax,
+    sns.barplot(x="hour", y="comp_time", data=df, ax=ax,
                   color=sns.xkcd_rgb["black"])
     ax.set_xlabel("Time of Day used for Travel Time")
     ax.set_ylabel(prettify("comp_time"))
