@@ -590,6 +590,7 @@ if __name__ == "__main__":
     df = make_hour_df()
     comp_df = pd.read_csv("data/hour-times.csv")
     make_hour_plots(df)
+    make_hour_comp_plots(comp_df)
     df = make_interval_df()
     make_interval_plots(df)
     comp_df = pd.read_csv("data/interval-times.csv")
