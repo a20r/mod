@@ -465,7 +465,7 @@ def make_interval_plots(df):
     for field in tqdm(fields + ["n_shared_per_passenger"]):
         fig, ax = plt.subplots(1, 1, figsize=(18, 7))
         ax = sns.pointplot(x="interval", y=field, data=df,
-                           color=sns.xkcd_rgb["black"], ax=ax)
+                           color=sns.xkcd_rgb["bright red"], ax=ax)
         filename = "figs/interval-{}.png".format(field)
         ax.set_xlabel("Step Size [s]")
         ax.set_ylabel(prettify(field))
@@ -482,7 +482,7 @@ def make_interval_plots(df):
 def make_interval_comp_plots(df):
     fig, ax = plt.subplots(1, 1, figsize=(18, 7))
     sns.pointplot(x="interval", y="comp_time", data=df, ax=ax,
-                  color=sns.xkcd_rgb["black"])
+                  color=sns.xkcd_rgb["bright red"])
     ax.set_xlabel("Step Size [s]")
     ax.set_ylabel(prettify("comp_time"))
     ax.set_xticklabels(intervals)
@@ -559,7 +559,7 @@ def make_hour_plots(df):
     for field in tqdm(fields + ["n_shared_per_passenger"]):
         fig, ax = plt.subplots(1, 1, figsize=(18, 7))
         ax = sns.barplot(x="hour", y=field, data=df,
-                           color=sns.xkcd_rgb["black"], ax=ax)
+                           color=sns.xkcd_rgb["bright red"], ax=ax)
         filename = "figs/hour-{}.png".format(field)
         ax.set_xlabel("Time of Day used for Travel Time")
         ax.set_ylabel(prettify(field))
@@ -577,7 +577,7 @@ def make_hour_plots(df):
 def make_hour_comp_plots(df):
     fig, ax = plt.subplots(1, 1, figsize=(18, 7))
     sns.barplot(x="hour", y="comp_time", data=df, ax=ax,
-                  color=sns.xkcd_rgb["black"])
+                  color=sns.xkcd_rgb["bright red"])
     ax.set_xlabel("Time of Day used for Travel Time")
     ax.set_ylabel(prettify("comp_time"))
     ax.set_xticklabels(["Mean", "12 am", "7 pm"])
