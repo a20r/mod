@@ -132,25 +132,30 @@ def set_legend_linewidth(lgd, lw):
 
 @print_here()
 def make_ts_plot(vecs, wt, rb, field):
-    fmt = DateFormatter("%a")
+    # fmt = DateFormatter("%a")
+    # matplotlib.rc("font", weight="bold")
+    # matplotlib.rc("axes", labelweight="bold")
+    # matplotlib.rc("figure", titleweight="bold")
     fig, ax = plt.subplots()
-    fig.set_size_inches(13, 8)
+    fig.set_size_inches(2, 1.23)
     for cap, clr in zip(caps, clrs):
         df = get_metrics(vecs, cap, wt, 0)
         locs, labels = plt.xticks()
         plot_ts(df, field, "o", color=clr, alpha=1,
-                label=str(cap))
-    ax.xaxis.set_major_formatter(fmt)
+                label=str(cap), markersize=1)
+    # ax.xaxis.set_major_formatter(fmt)
+    ax.set_xticklabels(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"])
     lgd = plt.legend(loc="center left", fancybox=True,
                      shadow=True, bbox_to_anchor=(1, 0.5),
                      title="Capacity")
-    set_legend_marker_size(lgd, 40)
+    set_legend_marker_size(lgd, 10)
     plt.ylabel(prettify(field))
     if "%" in prettify(field):
         ax.set_ylim([0, 1])
         vals = ax.get_yticks()
         ax.set_yticklabels(['{:3.0f}%'.format(x * 100) for x in vals])
     fig.autofmt_xdate()
+    # plt.title("N. Vecs: {}, M.W.T: {}".format(vecs, wt), fontweight="bold")
     plt.title("N. Vecs: {}, M.W.T: {}".format(vecs, wt))
     plt.savefig("figs/ts-{}-v{}-w{}.png".format(field, vecs, wt),
                 bbox_extra_artists=(lgd,), bbox_inches='tight')
@@ -563,7 +568,7 @@ def make_hour_plots(df):
         filename = "figs/hour-{}.png".format(field)
         ax.set_xlabel("Time of Day used for Travel Time")
         ax.set_ylabel(prettify(field))
-        ax.set_xticklabels(["Mean", "12 am", "7 pm"])
+        ax.set_xticklabels(["Mean", "12:00", "19:00"])
         if "%" in prettify(field):
             ax.set_ylim(0, 1)
             vals = ax.get_yticks()
@@ -580,25 +585,29 @@ def make_hour_comp_plots(df):
                   color=sns.xkcd_rgb["bright red"])
     ax.set_xlabel("Time of Day used for Travel Time")
     ax.set_ylabel(prettify("comp_time"))
-    ax.set_xticklabels(["Mean", "12 am", "7 pm"])
+    ax.set_xticklabels(["Mean", "12:00", "19:00"])
     plt.savefig("figs/hour-comp_time.png", bbox_inches="tight")
     plt.close()
 
 
 if __name__ == "__main__":
-    sns.set_context("poster", font_scale=2)
-    df = make_hour_df()
-    comp_df = pd.read_csv("data/hour-times.csv")
-    make_hour_plots(df)
-    make_hour_comp_plots(comp_df)
-    df = make_interval_df()
-    make_interval_plots(df)
-    comp_df = pd.read_csv("data/interval-times.csv")
-    make_interval_comp_plots(comp_df)
-    df = make_demand_df()
-    make_demand_plots(df)
-    comp_df = pd.read_csv("data/demand-times.csv")
-    make_demand_comp_plots(comp_df)
+    sns.set_context("paper", font_scale=1)
+    matplotlib.rc("font", weight="bold")
+    matplotlib.rc("axes", labelweight="bold")
+    matplotlib.rc("axes", titleweight="bold")
+
+    # df = make_hour_df()
+    # comp_df = pd.read_csv("data/hour-times.csv")
+    # make_hour_plots(df)
+    # make_hour_comp_plots(comp_df)
+    # df = make_interval_df()
+    # make_interval_plots(df)
+    # comp_df = pd.read_csv("data/interval-times.csv")
+    # make_interval_comp_plots(comp_df)
+    # df = make_demand_df()
+    # make_demand_plots(df)
+    # comp_df = pd.read_csv("data/demand-times.csv")
+    # make_demand_comp_plots(comp_df)
 
     # plt.ioff()
     # sns.set_context("poster", font_scale=2)
@@ -625,3 +634,6 @@ if __name__ == "__main__":
     # else:
     #     for func in plots[args.plot_type]:
     #         func()
+    for vecs in [1000, 3000]:
+        for wt in [120, 420]:
+            make_ts_plot(vecs, wt, 0, "mean_passengers")
