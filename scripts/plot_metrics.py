@@ -117,7 +117,7 @@ def plot_ts(df, field, *args, **kwargs):
             dts.append(dt)
             vals.append(values.iloc[i])
     dts = matplotlib.dates.date2num(dts)
-    return plt.plot_date(dts, vals, *args, **kwargs)
+    return plt.plot_date(dts, vals, *args, **kwargs), dts
 
 
 def set_legend_marker_size(lgd, size):
@@ -141,10 +141,21 @@ def make_ts_plot(vecs, wt, rb, field):
     for cap, clr in zip(caps, clrs):
         df = get_metrics(vecs, cap, wt, 0)
         locs, labels = plt.xticks()
-        plot_ts(df, field, "o", color=clr, alpha=1,
-                label=str(cap), markersize=1)
-    # ax.xaxis.set_major_formatter(fmt)
-    ax.set_xticklabels(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"])
+        _, dts = plot_ts(df, field, "o", color=clr, alpha=1,
+                         label=str(cap), markersize=1)
+    ticks = [min(dts)] + list(ax.get_xticks()) + [max(dts)]
+    new_ticks = list()
+    for i in xrange(len(ticks) - 1):
+        new_ticks.append(ticks[i])
+        new_ticks.append(0.5 * (ticks[i] + ticks[i + 1]))
+    new_ticks.append(ticks[-1])
+    ax.set_xticks(new_ticks)
+    short_days = ["Su", "M", "Tu", "W", "Th", "F", "Sa", "Su"]
+    ticklabels = list()
+    for sd in short_days[:-1]:
+        ticklabels.extend([sd, "|"])
+    ticklabels.append(short_days[-1])
+    ax.set_xticklabels(ticklabels)
     lgd = plt.legend(loc="center left", fancybox=True,
                      shadow=True, bbox_to_anchor=(1, 0.5),
                      title="Capacity")
@@ -154,8 +165,7 @@ def make_ts_plot(vecs, wt, rb, field):
         ax.set_ylim([0, 1])
         vals = ax.get_yticks()
         ax.set_yticklabels(['{:3.0f}%'.format(x * 100) for x in vals])
-    fig.autofmt_xdate()
-    # plt.title("N. Vecs: {}, M.W.T: {}".format(vecs, wt), fontweight="bold")
+    # fig.autofmt_xdate()
     plt.title("N. Vecs: {}, M.W.T: {}".format(vecs, wt))
     plt.savefig("figs/ts-{}-v{}-w{}.png".format(field, vecs, wt),
                 bbox_extra_artists=(lgd,), bbox_inches='tight')
