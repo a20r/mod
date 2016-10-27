@@ -137,12 +137,12 @@ def make_ts_plot(vecs, wt, rb, field):
     # matplotlib.rc("axes", labelweight="bold")
     # matplotlib.rc("figure", titleweight="bold")
     fig, ax = plt.subplots()
-    fig.set_size_inches(2, 1.23)
+    fig.set_size_inches(4, 2.46)
     for cap, clr in zip(caps, clrs):
         df = get_metrics(vecs, cap, wt, 0)
         locs, labels = plt.xticks()
         _, dts = plot_ts(df, field, "o", color=clr, alpha=1,
-                         label=str(cap), markersize=1)
+                         label=str(cap), markersize=4)
     ticks = [min(dts)] + list(ax.get_xticks()) + [max(dts)]
     new_ticks = list()
     for i in xrange(len(ticks) - 1):
@@ -155,14 +155,14 @@ def make_ts_plot(vecs, wt, rb, field):
     lgd = plt.legend(loc="center left", fancybox=True,
                      shadow=True, bbox_to_anchor=(1, 0.5),
                      title="Capacity")
-    set_legend_marker_size(lgd, 10)
+    set_legend_marker_size(lgd, 20)
     plt.ylabel(prettify(field))
     if "%" in prettify(field):
         ax.set_ylim([0, 1])
         vals = ax.get_yticks()
         ax.set_yticklabels(['{:3.0f}%'.format(x * 100) for x in vals])
     # fig.autofmt_xdate()
-    plt.title("N. Vecs: {}, M.W.T: {}".format(vecs, wt))
+    # plt.title("N. Vecs: {}, M.W.T: {}".format(vecs, wt))
     plt.savefig("figs/ts-{}-v{}-w{}.png".format(field, vecs, wt),
                 bbox_extra_artists=(lgd,), bbox_inches='tight')
     plt.close()
@@ -598,7 +598,7 @@ def make_hour_comp_plots(df):
 
 
 if __name__ == "__main__":
-    sns.set_context("paper", font_scale=1)
+    sns.set_context("paper", font_scale=2)
     matplotlib.rc("font", weight="bold")
     matplotlib.rc("axes", labelweight="bold")
     matplotlib.rc("axes", titleweight="bold")
