@@ -200,13 +200,14 @@ def make_ts_area_plot(vecs, cap, wt, rb):
     vals = ax.get_yticks()
     ax.set_yticklabels(['{:3.0f}%'.format(x / 10) for x in vals])
     ax.set_xlabel("Time")
-    plt.savefig("figs/ts-area-v{}-c{}-w{}.png".format(vecs, cap, wt),
+    plt.savefig("figs/ts-area-v{}-c{}-w{}.pdf".format(vecs, cap, wt),
                 bbox_extra_artists=(lgd,), bbox_inches='tight')
     plt.close()
 
 
 @print_here()
 def make_ts_area_plot_single(vecs, cap, wt, rb, weekday):
+    sns.set_context("poster", font_scale=2)
     plt.figure()
     df = get_metrics(vecs, cap, wt, rb)
     subfields = ["empty_waiting", "empty_rebalancing",
@@ -240,7 +241,7 @@ def make_ts_area_plot_single(vecs, cap, wt, rb, weekday):
                         for x in vals])
     ax.set_xlabel("Hour")
     plt.savefig(
-        "figs/ts-area-v{}-c{}-w{}-{}.png".format(vecs, cap, wt, days[weekday]),
+        "figs/ts-area-v{}-c{}-w{}-{}.pdf".format(vecs, cap, wt, days[weekday]),
         bbox_extra_artists=(lgd,), bbox_inches='tight')
     plt.close()
 
@@ -644,6 +645,9 @@ if __name__ == "__main__":
     # else:
     #     for func in plots[args.plot_type]:
     #         func()
-    for vecs in [1000, 3000]:
-        for wt in [120, 420]:
-            make_ts_plot(vecs, wt, 0, "mean_passengers")
+    # for vecs in [1000, 3000]:
+    #     for wt in [120, 420]:
+    #         make_ts_plot(vecs, wt, 0, "mean_passengers")
+    make_all_ts_area_plots()
+    make_all_ts_area_single_plots()
+    # make_ts_area_plot_single(2000, 10, 420, 0, 5)
