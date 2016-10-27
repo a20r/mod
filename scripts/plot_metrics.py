@@ -150,11 +150,7 @@ def make_ts_plot(vecs, wt, rb, field):
         new_ticks.append(0.5 * (ticks[i] + ticks[i + 1]))
     new_ticks.append(ticks[-1])
     ax.set_xticks(new_ticks)
-    short_days = ["Su", "M", "Tu", "W", "Th", "F", "Sa", "Su"]
-    ticklabels = list()
-    for sd in short_days[:-1]:
-        ticklabels.extend([sd, "|"])
-    ticklabels.append(short_days[-1])
+    ticklabels = "| Su | Mo | Tu | We | Th | Fr | Sa |".split(" ")
     ax.set_xticklabels(ticklabels)
     lgd = plt.legend(loc="center left", fancybox=True,
                      shadow=True, bbox_to_anchor=(1, 0.5),
@@ -645,9 +641,11 @@ if __name__ == "__main__":
     # else:
     #     for func in plots[args.plot_type]:
     #         func()
-    # for vecs in [1000, 3000]:
-    #     for wt in [120, 420]:
-    #         make_ts_plot(vecs, wt, 0, "mean_passengers")
-    make_all_ts_area_plots()
-    make_all_ts_area_single_plots()
+    for vecs in [1000, 3000]:
+        for wt in [120, 420]:
+            make_ts_plot(vecs, wt, 0, "mean_passengers")
+    # make_all_ts_area_plots()
+    # make_all_ts_area_single_plots()
     # make_ts_area_plot_single(2000, 10, 420, 0, 5)
+    # make_ts_plot(1000, 120, 0, "mean_passengers")
+    # make_all_ts_plots()
