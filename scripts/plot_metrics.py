@@ -177,7 +177,7 @@ def make_ts_area_plot(vecs, cap, wt, rb):
     subfields.extend(["time_pass_%d" % i for i in xrange(1, cap + 1)])
     df_small = df[subfields].copy()
     ax = df_small.plot(kind="area", colormap="rainbow",
-                       figsize=(16, 10))
+                       figsize=(4, 2.2))
     labels = ["Waiting", "Rebalancing", "Picking Up"]
     labels.extend(["N. Pass: %d" % n for n in xrange(1, cap + 1)])
     handles, _ = ax.get_legend_handles_labels()
@@ -185,7 +185,7 @@ def make_ts_area_plot(vecs, cap, wt, rb):
                     reversed(labels),
                     loc='center left',
                     bbox_to_anchor=(1.0, 0.5))
-    set_legend_linewidth(lgd, 30)
+    set_legend_linewidth(lgd, 10)
     d_str = "N. Vecs: {}, Cap: {}, M.W.T: {}".format(vecs, cap, wt, rb)
     ax.set_title("Vehicle Occupancy Over Time \nw/ " + d_str)
     max_x_ticks = ax.get_xticks()[-1]
@@ -195,15 +195,15 @@ def make_ts_area_plot(vecs, cap, wt, rb):
     ax.set_xticklabels(dr)
     vals = ax.get_yticks()
     ax.set_yticklabels(['{:3.0f}%'.format(x / 10) for x in vals])
-    ax.set_xlabel("Time")
-    plt.savefig("figs/ts-area-v{}-c{}-w{}.pdf".format(vecs, cap, wt),
+    # ax.set_xlabel("Time")
+    plt.savefig("figs/ts-area-v{}-c{}-w{}.png".format(vecs, cap, wt),
                 bbox_extra_artists=(lgd,), bbox_inches='tight')
     plt.close()
 
 
 @print_here()
 def make_ts_area_plot_single(vecs, cap, wt, rb, weekday):
-    sns.set_context("poster", font_scale=2)
+    # sns.set_context("poster", font_scale=2)
     plt.figure()
     df = get_metrics(vecs, cap, wt, rb)
     subfields = ["empty_waiting", "empty_rebalancing",
@@ -214,7 +214,7 @@ def make_ts_area_plot_single(vecs, cap, wt, rb, weekday):
     df_small = df_small.query(q_str)
     df_small.index = range(2879)
     ax = df_small.plot(kind="area", colormap="rainbow",
-                       figsize=(16, 10))
+                       figsize=(4, 2.2))
     labels = ["Waiting", "Rebalancing", "Picking Up"]
     labels.extend(["N. Pass: %d" % n for n in xrange(1, cap + 1)])
     handles, _ = ax.get_legend_handles_labels()
@@ -222,7 +222,7 @@ def make_ts_area_plot_single(vecs, cap, wt, rb, weekday):
                     reversed(labels),
                     loc='center left',
                     bbox_to_anchor=(1.0, 0.5))
-    set_legend_linewidth(lgd, 30)
+    set_legend_linewidth(lgd, 10)
     d_str = "N. Vecs: {}, Cap: {}, M.W.T: {}".format(vecs, cap, wt)
     t_str = "Vehicle Occupancy Over Time On {} \n w/ ".format(days[weekday])
     ax.set_title(t_str + d_str)
@@ -235,9 +235,9 @@ def make_ts_area_plot_single(vecs, cap, wt, rb, weekday):
     vals = ax.get_yticks()
     ax.set_yticklabels(['{:3.0f}%'.format((x / 10) / (vecs / 1000))
                         for x in vals])
-    ax.set_xlabel("Hour")
+    # ax.set_xlabel("Hour")
     plt.savefig(
-        "figs/ts-area-v{}-c{}-w{}-{}.pdf".format(vecs, cap, wt, days[weekday]),
+        "figs/ts-area-v{}-c{}-w{}-{}.png".format(vecs, cap, wt, days[weekday]),
         bbox_extra_artists=(lgd,), bbox_inches='tight')
     plt.close()
 
@@ -598,10 +598,13 @@ def make_hour_comp_plots(df):
 
 
 if __name__ == "__main__":
-    sns.set_context("paper", font_scale=2)
-    # matplotlib.rc("font", weight="bold")
-    # matplotlib.rc("axes", labelweight="bold")
-    # matplotlib.rc("axes", titleweight="bold")
+    sns.set_context("paper", font_scale=1)
+    matplotlib.rc("font", weight="bold")
+    matplotlib.rc("axes", labelweight="bold")
+    matplotlib.rc("axes", titleweight="bold")
+    matplotlib.rc("xtick", labelsize=12)
+    matplotlib.rc("ytick", labelsize=12)
+    matplotlib.rc("legend", fontsize=10)
 
     # df = make_hour_df()
     # comp_df = pd.read_csv("data/hour-times.csv")
@@ -646,6 +649,7 @@ if __name__ == "__main__":
     #         make_ts_plot(vecs, wt, 0, "mean_passengers")
     make_all_ts_area_plots()
     make_all_ts_area_single_plots()
-    # make_ts_area_plot_single(2000, 10, 420, 0, 5)
+    # make_ts_area_plot(1000, 1, 120, 0)
+    # make_ts_area_plot_single(1000, 2, 120, 0, 1)
     # make_ts_plot(1000, 120, 0, "mean_passengers")
     # make_all_ts_plots()
