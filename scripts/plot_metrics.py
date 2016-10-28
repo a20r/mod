@@ -599,9 +599,9 @@ def make_hour_comp_plots(df):
 
 if __name__ == "__main__":
     sns.set_context("paper", font_scale=2)
-    matplotlib.rc("font", weight="bold")
-    matplotlib.rc("axes", labelweight="bold")
-    matplotlib.rc("axes", titleweight="bold")
+    # matplotlib.rc("font", weight="bold")
+    # matplotlib.rc("axes", labelweight="bold")
+    # matplotlib.rc("axes", titleweight="bold")
 
     # df = make_hour_df()
     # comp_df = pd.read_csv("data/hour-times.csv")
@@ -641,11 +641,11 @@ if __name__ == "__main__":
     # else:
     #     for func in plots[args.plot_type]:
     #         func()
-    for vecs in [1000, 3000]:
-        for wt in [120, 420]:
-            make_ts_plot(vecs, wt, 0, "mean_passengers")
-    # make_all_ts_area_plots()
-    # make_all_ts_area_single_plots()
+    # for vecs in [1000, 3000]:
+    #     for wt in [120, 420]:
+    #         make_ts_plot(vecs, wt, 0, "mean_passengers")
+    make_all_ts_area_plots()
+    make_all_ts_area_single_plots()
     # make_ts_area_plot_single(2000, 10, 420, 0, 5)
     # make_ts_plot(1000, 120, 0, "mean_passengers")
     # make_all_ts_plots()
