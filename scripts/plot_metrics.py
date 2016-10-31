@@ -327,7 +327,7 @@ def make_avg_plots(big_d, plot_type):
         min_val = None
         axes = list()
         fig = plt.figure()
-        fig.set_size_inches(1.3 * 3.2, 1.5)
+        fig.set_size_inches(1.4 * 3.2, 1.5)
         for i, v in enumerate(iover, start=1):
             plt.subplot(1, len(iover), i)
             plt.subplots_adjust(wspace=0.08)
