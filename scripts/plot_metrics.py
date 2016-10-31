@@ -494,7 +494,7 @@ def make_interval_df():
 
 def make_interval_plots(df):
     for field in tqdm(fields + ["n_shared_per_passenger"]):
-        fig, ax = plt.subplots(1, 1, figsize=(18, 7))
+        fig, ax = plt.subplots(1, 1, figsize=(4.2, 1.5))
         ax = sns.pointplot(x="interval", y=field, data=df,
                            color=sns.xkcd_rgb["bright red"], ax=ax)
         filename = "figs/interval-{}.png".format(field)
@@ -511,7 +511,7 @@ def make_interval_plots(df):
 
 
 def make_interval_comp_plots(df):
-    fig, ax = plt.subplots(1, 1, figsize=(18, 7))
+    fig, ax = plt.subplots(1, 1, figsize=(4.2, 1.5))
     sns.pointplot(x="interval", y="comp_time", data=df, ax=ax,
                   color=sns.xkcd_rgb["bright red"])
     ax.set_xlabel("Step Size [s]")
@@ -540,7 +540,7 @@ def make_demand_df():
 
 def make_demand_plots(df):
     for field in tqdm(fields + ["n_shared_per_passenger"]):
-        fig, ax = plt.subplots(1, 1, figsize=(18, 7))
+        fig, ax = plt.subplots(1, 1, figsize=(4.2, 1.5))
         ax = sns.pointplot(x="demand", y=field, hue="capacity", data=df,
                            palette=dem_clrs, ax=ax)
         ax.set_xlabel("Nominal Number of Requests")
@@ -559,7 +559,7 @@ def make_demand_plots(df):
 
 
 def make_demand_comp_plots(df):
-    fig, ax = plt.subplots(1, 1, figsize=(18, 7))
+    fig, ax = plt.subplots(1, 1, figsize=(4.2, 1.5))
     sns.pointplot(x="demand", y="comp_time", hue="capacity", data=df, ax=ax,
                   palette=dem_clrs)
     ax.set_ylabel(prettify("comp_time"))
@@ -588,7 +588,7 @@ def make_hour_df():
 
 def make_hour_plots(df):
     for field in tqdm(fields + ["n_shared_per_passenger"]):
-        fig, ax = plt.subplots(1, 1, figsize=(18, 7))
+        fig, ax = plt.subplots(1, 1, figsize=(4.2, 1.5))
         ax = sns.barplot(x="hour", y=field, data=df,
                            color=sns.xkcd_rgb["bright red"], ax=ax)
         filename = "figs/hour-{}.png".format(field)
@@ -606,7 +606,7 @@ def make_hour_plots(df):
 
 
 def make_hour_comp_plots(df):
-    fig, ax = plt.subplots(1, 1, figsize=(18, 7))
+    fig, ax = plt.subplots(1, 1, figsize=(4.2, 1.5))
     sns.barplot(x="hour", y="comp_time", data=df, ax=ax,
                   color=sns.xkcd_rgb["bright red"])
     ax.set_xlabel("Time of Day used for Travel Time")
@@ -623,26 +623,26 @@ if __name__ == "__main__":
     matplotlib.rc("axes", labelweight="bold")
     matplotlib.rc("axes", titleweight="bold")
 
-    matplotlib.rc("axes", labelsize=12)
-    matplotlib.rc("axes", titlesize=12)
-    matplotlib.rc("xtick", labelsize=12)
+    matplotlib.rc("axes", labelsize=16)
+    matplotlib.rc("axes", titlesize=18)
+    matplotlib.rc("xtick", labelsize=16)
     matplotlib.rc("ytick", labelsize=12)
     matplotlib.rc("legend", fontsize=12)
 
 
 
-    # df = make_hour_df()
-    # comp_df = pd.read_csv("data/hour-times.csv")
-    # make_hour_plots(df)
-    # make_hour_comp_plots(comp_df)
-    # df = make_interval_df()
-    # make_interval_plots(df)
-    # comp_df = pd.read_csv("data/interval-times.csv")
-    # make_interval_comp_plots(comp_df)
-    # df = make_demand_df()
-    # make_demand_plots(df)
-    # comp_df = pd.read_csv("data/demand-times.csv")
-    # make_demand_comp_plots(comp_df)
+    df = make_hour_df()
+    comp_df = pd.read_csv("data/hour-times.csv")
+    make_hour_plots(df)
+    make_hour_comp_plots(comp_df)
+    df = make_interval_df()
+    make_interval_plots(df)
+    comp_df = pd.read_csv("data/interval-times.csv")
+    make_interval_comp_plots(comp_df)
+    df = make_demand_df()
+    make_demand_plots(df)
+    comp_df = pd.read_csv("data/demand-times.csv")
+    make_demand_comp_plots(comp_df)
 
     # plt.ioff()
     # sns.set_context("poster", font_scale=2)
@@ -670,16 +670,16 @@ if __name__ == "__main__":
     #     for func in plots[args.plot_type]:
     #         func()
 
-    df = pd.read_csv("data/times.csv")
-    make_avg_plots(df, "comp_times")
-    big_d = get_avg_dataframe()
-    make_avg_plots(big_d, "wts")
-
-    matplotlib.rc("axes", labelsize=18)
-    matplotlib.rc("axes", titlesize=13)
-    matplotlib.rc("xtick", labelsize=18)
-    matplotlib.rc("ytick", labelsize=18)
-    matplotlib.rc("legend", fontsize=18)
+    # df = pd.read_csv("data/times.csv")
+    # make_avg_plots(df, "comp_times")
+    # big_d = get_avg_dataframe()
+    # make_avg_plots(big_d, "wts")
+    #
+    # matplotlib.rc("axes", labelsize=18)
+    # matplotlib.rc("axes", titlesize=13)
+    # matplotlib.rc("xtick", labelsize=18)
+    # matplotlib.rc("ytick", labelsize=18)
+    # matplotlib.rc("legend", fontsize=18)
 
     # for vecs in [1000, 3000]:
     #     for wt in [120, 420]:
