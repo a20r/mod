@@ -78,7 +78,7 @@ def prettify(text):
     if text == "n_shared_perc":
         return "% of Shared Trips"
     if text == "km_travelled_per_car":
-        return "Mean Travel Dist [km]"
+        return "Mean Travel [km]"
     if text == "serviced_percentage":
         return "% Serviced Requests"
     if text == "comp_time":
@@ -327,7 +327,7 @@ def make_avg_plots(big_d, plot_type):
         min_val = None
         axes = list()
         fig = plt.figure()
-        fig.set_size_inches(1.4 * 3.2, 1.5)
+        fig.set_size_inches(1.3 * 3.2, 1.5)
         for i, v in enumerate(iover, start=1):
             plt.subplot(1, len(iover), i)
             plt.subplots_adjust(wspace=0.08)
