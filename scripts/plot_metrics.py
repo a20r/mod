@@ -15,7 +15,7 @@ from collections import defaultdict
 from tqdm import tqdm
 
 
-aux_fig_size = (5, 3)
+aux_fig_size = (1.3 * 5, 3)
 hours = ["same", "t12", "t19"]
 demands = ["half", "same", "double"]
 intervals = [10, 20, 30, 40, 50]
