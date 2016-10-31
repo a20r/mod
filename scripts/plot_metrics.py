@@ -78,7 +78,7 @@ def prettify(text):
     if text == "n_shared_perc":
         return "% of Shared Trips"
     if text == "km_travelled_per_car":
-        return "Mean Km Travelled [km]"
+        return "Mean Travel Dist [km]"
     if text == "serviced_percentage":
         return "% Serviced Requests"
     if text == "comp_time":
