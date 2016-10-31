@@ -319,7 +319,7 @@ def make_avg_plots(big_d, plot_type):
                            make_wt_title,
                            fields + ["n_shared_per_passenger"]),
                    "comp_times": (vehicles, "vehicles", "waiting_time",
-                                  "Max Waiting Time [s]", [3, 5, 7],
+                                  "Max Waiting Time [min]", [3, 5, 7],
                                   make_wt_title, ["comp_time"])}
     iover, qstr, xcol, xlabel, xticklabels, tfunc, fs = plot_params[plot_type]
     for field in fs:
@@ -330,7 +330,7 @@ def make_avg_plots(big_d, plot_type):
         fig.set_size_inches(1.3 * 3.2, 1.5)
         for i, v in enumerate(iover, start=1):
             plt.subplot(1, len(iover), i)
-            plt.subplots_adjust(wspace=0.05)
+            plt.subplots_adjust(wspace=0.08)
             if plot_type == "comp_times":
                 q = "{} == {}".format(qstr, v)
             else:
