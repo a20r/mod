@@ -315,11 +315,11 @@ def make_avg_plots(big_d, plot_type):
                             make_vec_title,
                             fields + ["n_shared_per_passenger"]),
                    "wts": (vehicles, "vehicles", "waiting_time",
-                           "Max Waiting Time [min]", [3, 5, 7],
+                           "Max Waiting Time [min]", [2, 5, 7],
                            make_wt_title,
                            fields + ["n_shared_per_passenger"]),
                    "comp_times": (vehicles, "vehicles", "waiting_time",
-                                  "Max Waiting Time [min]", [3, 5, 7],
+                                  "Max Waiting Time [min]", [2, 5, 7],
                                   make_wt_title, ["comp_time"])}
     iover, qstr, xcol, xlabel, xticklabels, tfunc, fs = plot_params[plot_type]
     for field in fs:
