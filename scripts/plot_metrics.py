@@ -5,9 +5,9 @@ import numpy as np
 import matplotlib
 import pandas as pd
 matplotlib.use("Agg")
-from matplotlib.dates import DateFormatter
 import matplotlib.pyplot as plt
 import seaborn as sns
+from matplotlib.lines import Line2D
 from common import get_metrics
 from datetime import datetime
 from itertools import product
@@ -78,11 +78,11 @@ def prettify(text):
     if text == "n_shared_perc":
         return "% of Shared Trips"
     if text == "km_travelled_per_car":
-        return "Mean Distance Travelled [km]"
+        return "Mean Km Travelled [km]"
     if text == "serviced_percentage":
         return "% Serviced Requests"
     if text == "comp_time":
-        return "Mean Computational Time [s]"
+        return "Mean Comp. Time [s]"
     if text == "interval":
         return "Step Size [s]"
     else:
@@ -91,7 +91,7 @@ def prettify(text):
 
 
 def make_wt_title(vec):
-    return "N.V: {}".format(vec)
+    return "m={}".format(vec)
 
 
 def make_vec_title(wt):
@@ -128,6 +128,7 @@ def set_legend_marker_size(lgd, size):
 def set_legend_linewidth(lgd, lw):
     for i in xrange(len(lgd.legendHandles)):
         lgd.legendHandles[i].set_linewidth(lw)
+        lgd.legendHandles[i].set_linestyle(":")
 
 
 @print_here()
@@ -169,6 +170,15 @@ def make_ts_plot(vecs, wt, rb, field):
     plt.close()
 
 
+def fix_area_handles(handles):
+    new_handles = list()
+    for h in handles:
+        nh = Line2D([], [], marker="o", markerfacecolor=h.get_color(),
+                    markersize=15, linestyle='None')
+        new_handles.append(nh)
+    return new_handles
+
+
 @print_here()
 def make_ts_area_plot(vecs, cap, wt, rb):
     plt.figure()
@@ -182,11 +192,13 @@ def make_ts_area_plot(vecs, cap, wt, rb):
     labels = ["Waiting", "Rebalancing", "Picking Up"]
     labels.extend(["N. Pass: %d" % n for n in xrange(1, cap + 1)])
     handles, _ = ax.get_legend_handles_labels()
+    handles = fix_area_handles(handles)
     lgd = ax.legend(reversed(handles),
                     reversed(labels),
                     loc='center left',
-                    bbox_to_anchor=(1.0, 0.5))
-    set_legend_linewidth(lgd, 10)
+                    bbox_to_anchor=(1.0, 0.5),
+                    borderaxespad=0,
+                    handletextpad=0)
     d_str = "N. Vecs: {}, Cap: {}, M.W.T: {}".format(vecs, cap, wt, rb)
     ax.set_title("Vehicle Occupancy Over Time \nw/ " + d_str)
     max_x_ticks = ax.get_xticks()[-1]
@@ -219,11 +231,13 @@ def make_ts_area_plot_single(vecs, cap, wt, rb, weekday):
     labels = ["Waiting", "Rebalancing", "Picking Up"]
     labels.extend(["N. Pass: %d" % n for n in xrange(1, cap + 1)])
     handles, _ = ax.get_legend_handles_labels()
+    handles = fix_area_handles(handles)
     lgd = ax.legend(reversed(handles),
                     reversed(labels),
                     loc='center left',
-                    bbox_to_anchor=(1.0, 0.5))
-    set_legend_linewidth(lgd, 10)
+                    bbox_to_anchor=(1.0, 0.5),
+                    borderaxespad=0,
+                    handletextpad=0)
     d_str = "N. Vecs: {}, Cap: {}, M.W.T: {}".format(vecs, cap, wt)
     t_str = "Vehicle Occupancy Over Time On {} \n w/ ".format(days[weekday])
     ax.set_title(t_str + d_str)
@@ -236,7 +250,7 @@ def make_ts_area_plot_single(vecs, cap, wt, rb, weekday):
     vals = ax.get_yticks()
     ax.set_yticklabels(['{:3.0f}%'.format((x / 10) / (vecs / 1000))
                         for x in vals])
-    # ax.set_xlabel("Hour")
+    ax.set_xlabel("Hour")
     plt.savefig(
         "figs/ts-area-v{}-c{}-w{}-{}.png".format(vecs, cap, wt, days[weekday]),
         bbox_extra_artists=(lgd,), bbox_inches='tight')
@@ -313,9 +327,10 @@ def make_avg_plots(big_d, plot_type):
         min_val = None
         axes = list()
         fig = plt.figure()
-        fig.set_size_inches(18, 7)
+        fig.set_size_inches(3.2, 1.5)
         for i, v in enumerate(iover, start=1):
             plt.subplot(1, len(iover), i)
+            plt.subplots_adjust(wspace=0.05)
             if plot_type == "comp_times":
                 q = "{} == {}".format(qstr, v)
             else:
@@ -345,12 +360,15 @@ def make_avg_plots(big_d, plot_type):
                 ax.get_yaxis().set_ticklabels([])
             if i == len(waiting_times):
                 handles, _ = ax.get_legend_handles_labels()
-                plt.legend(
+                lgd = plt.legend(
                     handles,
                     [1, 2, 4, 10],
                     loc="center left", fancybox=True,
                     shadow=True, bbox_to_anchor=(1, 0.5),
-                    title="Capacity", markerscale=3)
+                    title="Capacity", markerscale=2,
+                    borderaxespad=0,
+                    handletextpad=0)
+                lgd.get_title().set_fontsize(12)
             if max_val is None or max_val < max(d[field]):
                 max_val = max(d[field])
             if min_val is None or min_val > min(d[field]):
@@ -604,11 +622,14 @@ if __name__ == "__main__":
     matplotlib.rc("font", weight="bold")
     matplotlib.rc("axes", labelweight="bold")
     matplotlib.rc("axes", titleweight="bold")
-    matplotlib.rc("axes", labelsize=15)
-    matplotlib.rc("axes", titlesize=13)
-    matplotlib.rc("xtick", labelsize=15)
-    matplotlib.rc("ytick", labelsize=15)
-    matplotlib.rc("legend", fontsize=15)
+
+    matplotlib.rc("axes", labelsize=12)
+    matplotlib.rc("axes", titlesize=12)
+    matplotlib.rc("xtick", labelsize=11)
+    matplotlib.rc("ytick", labelsize=12)
+    matplotlib.rc("legend", fontsize=12)
+
+
 
     # df = make_hour_df()
     # comp_df = pd.read_csv("data/hour-times.csv")
@@ -648,12 +669,24 @@ if __name__ == "__main__":
     # else:
     #     for func in plots[args.plot_type]:
     #         func()
-    for vecs in [1000, 3000]:
-        for wt in [120, 420]:
-            make_ts_plot(vecs, wt, 0, "mean_passengers")
 
-    # make_all_ts_area_plots()
-    # make_all_ts_area_single_plots()
+    df = pd.read_csv("data/times.csv")
+    make_avg_plots(df, "comp_times")
+    big_d = get_avg_dataframe()
+    make_avg_plots(big_d, "wts")
+
+    matplotlib.rc("axes", labelsize=18)
+    matplotlib.rc("axes", titlesize=13)
+    matplotlib.rc("xtick", labelsize=18)
+    matplotlib.rc("ytick", labelsize=18)
+    matplotlib.rc("legend", fontsize=18)
+
+    # for vecs in [1000, 3000]:
+    #     for wt in [120, 420]:
+    #         make_ts_plot(vecs, wt, 0, "mean_passengers")
+
+    make_all_ts_area_plots()
+    make_all_ts_area_single_plots()
     # make_ts_area_plot(1000, 1, 120, 0)
     # make_ts_area_plot_single(1000, 2, 120, 0, 1)
     # make_ts_plot(1000, 120, 0, "mean_passengers")
