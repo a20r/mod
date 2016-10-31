@@ -315,11 +315,11 @@ def make_avg_plots(big_d, plot_type):
                             make_vec_title,
                             fields + ["n_shared_per_passenger"]),
                    "wts": (vehicles, "vehicles", "waiting_time",
-                           "Max Waiting Time [s]", waiting_times,
+                           "Max Waiting Time [min]", [3, 5, 7],
                            make_wt_title,
                            fields + ["n_shared_per_passenger"]),
                    "comp_times": (vehicles, "vehicles", "waiting_time",
-                                  "Max Waiting Time [s]", waiting_times,
+                                  "Max Waiting Time [s]", [3, 5, 7],
                                   make_wt_title, ["comp_time"])}
     iover, qstr, xcol, xlabel, xticklabels, tfunc, fs = plot_params[plot_type]
     for field in fs:
@@ -625,7 +625,7 @@ if __name__ == "__main__":
 
     matplotlib.rc("axes", labelsize=12)
     matplotlib.rc("axes", titlesize=12)
-    matplotlib.rc("xtick", labelsize=11)
+    matplotlib.rc("xtick", labelsize=12)
     matplotlib.rc("ytick", labelsize=12)
     matplotlib.rc("legend", fontsize=12)
 
@@ -685,8 +685,8 @@ if __name__ == "__main__":
     #     for wt in [120, 420]:
     #         make_ts_plot(vecs, wt, 0, "mean_passengers")
 
-    make_all_ts_area_plots()
-    make_all_ts_area_single_plots()
+    # make_all_ts_area_plots()
+    # make_all_ts_area_single_plots()
     # make_ts_area_plot(1000, 1, 120, 0)
     # make_ts_area_plot_single(1000, 2, 120, 0, 1)
     # make_ts_plot(1000, 120, 0, "mean_passengers")
