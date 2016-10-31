@@ -15,6 +15,7 @@ from collections import defaultdict
 from tqdm import tqdm
 
 
+aux_fig_size = (5, 3)
 hours = ["same", "t12", "t19"]
 demands = ["half", "same", "double"]
 intervals = [10, 20, 30, 40, 50]
@@ -494,7 +495,7 @@ def make_interval_df():
 
 def make_interval_plots(df):
     for field in tqdm(fields + ["n_shared_per_passenger"]):
-        fig, ax = plt.subplots(1, 1, figsize=(4.2, 1.5))
+        fig, ax = plt.subplots(1, 1, figsize=aux_fig_size)
         ax = sns.pointplot(x="interval", y=field, data=df,
                            color=sns.xkcd_rgb["bright red"], ax=ax)
         filename = "figs/interval-{}.png".format(field)
@@ -511,7 +512,7 @@ def make_interval_plots(df):
 
 
 def make_interval_comp_plots(df):
-    fig, ax = plt.subplots(1, 1, figsize=(4.2, 1.5))
+    fig, ax = plt.subplots(1, 1, figsize=aux_fig_size)
     sns.pointplot(x="interval", y="comp_time", data=df, ax=ax,
                   color=sns.xkcd_rgb["bright red"])
     ax.set_xlabel("Step Size [s]")
@@ -540,7 +541,7 @@ def make_demand_df():
 
 def make_demand_plots(df):
     for field in tqdm(fields + ["n_shared_per_passenger"]):
-        fig, ax = plt.subplots(1, 1, figsize=(4.2, 1.5))
+        fig, ax = plt.subplots(1, 1, figsize=aux_fig_size)
         ax = sns.pointplot(x="demand", y=field, hue="capacity", data=df,
                            palette=dem_clrs, ax=ax)
         ax.set_xlabel("Nominal Number of Requests")
@@ -559,7 +560,7 @@ def make_demand_plots(df):
 
 
 def make_demand_comp_plots(df):
-    fig, ax = plt.subplots(1, 1, figsize=(4.2, 1.5))
+    fig, ax = plt.subplots(1, 1, figsize=aux_fig_size)
     sns.pointplot(x="demand", y="comp_time", hue="capacity", data=df, ax=ax,
                   palette=dem_clrs)
     ax.set_ylabel(prettify("comp_time"))
@@ -588,7 +589,7 @@ def make_hour_df():
 
 def make_hour_plots(df):
     for field in tqdm(fields + ["n_shared_per_passenger"]):
-        fig, ax = plt.subplots(1, 1, figsize=(4.2, 1.5))
+        fig, ax = plt.subplots(1, 1, figsize=aux_fig_size)
         ax = sns.barplot(x="hour", y=field, data=df,
                            color=sns.xkcd_rgb["bright red"], ax=ax)
         filename = "figs/hour-{}.png".format(field)
@@ -606,7 +607,7 @@ def make_hour_plots(df):
 
 
 def make_hour_comp_plots(df):
-    fig, ax = plt.subplots(1, 1, figsize=(4.2, 1.5))
+    fig, ax = plt.subplots(1, 1, figsize=aux_fig_size)
     sns.barplot(x="hour", y="comp_time", data=df, ax=ax,
                   color=sns.xkcd_rgb["bright red"])
     ax.set_xlabel("Time of Day used for Travel Time")
@@ -626,7 +627,7 @@ if __name__ == "__main__":
     matplotlib.rc("axes", labelsize=16)
     matplotlib.rc("axes", titlesize=18)
     matplotlib.rc("xtick", labelsize=16)
-    matplotlib.rc("ytick", labelsize=12)
+    matplotlib.rc("ytick", labelsize=16)
     matplotlib.rc("legend", fontsize=12)
 
 
