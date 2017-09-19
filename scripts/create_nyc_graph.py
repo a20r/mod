@@ -11,7 +11,7 @@ import os
 import os.path
 import geopy as geo
 from geopy.distance import distance
-# from progressbar import ProgressBar, ETA, Percentage, Bar
+from progressbar import ProgressBar, ETA, Percentage, Bar
 
 
 def load_graph(nyc_dir, fn_edge_times, hour):
@@ -49,9 +49,9 @@ def path_length(G, path):
 
 def create_paths_file(G, fn_paths, fn_times):
     counter = 0
-    # pbar = ProgressBar(
-    #     widgets=["Creating Paths File: ", Bar(), Percentage(), "|", ETA()],
-    #     maxval=pow(len(G.nodes()), 2)).start()
+    pbar = ProgressBar(
+        widgets=["Creating Paths File: ", Bar(), Percentage(), "|", ETA()],
+        maxval=pow(len(G.nodes()), 2)).start()
     with io.open(fn_paths, "wb") as fout:
         with io.open(fn_times, "wb") as ftimes:
             writer = csv.writer(fout, delimiter=" ")
@@ -64,11 +64,11 @@ def create_paths_file(G, fn_paths, fn_times):
                 for j in paths.keys():
                     time_row[int(j)] = tts[int(j)]
                     rows.append([int(i), int(j)] + map(int, paths[int(j)]))
-                    # pbar.update(counter + 1)
+                    pbar.update(counter + 1)
                     counter += 1
                 writer.writerows(rows)
                 times_writer.writerow(time_row)
-            # pbar.finish()
+            pbar.finish()
 
 
 def write_graph(fn_graph, fn_paths, fn_times, nyc_dir, fn_edge_times, hour):
@@ -80,7 +80,7 @@ def write_graph(fn_graph, fn_paths, fn_times, nyc_dir, fn_edge_times, hour):
     if not os.path.exists(dirname):
         os.makedirs(dirname)
     G, stations = load_graph(nyc_dir, fn_edge_times, hour)
-    create_paths_file(G, fn_paths, fn_times)
+    # create_paths_file(G, fn_paths, fn_times)
     G_tuple = (G, stations)
     # print "Writing graph data to file..."
     pstr = pickle.dumps(G_tuple)
@@ -93,7 +93,7 @@ if __name__ == "__main__":
         description="Generates a graph based on Carlo's data")
     parser.add_argument(
         "--nyc_dir", dest="nyc_dir", type=str,
-        default="data/nyc/",
+        default="data/nyc-graph/",
         help="Directory for the NYC graph data")
     parser.add_argument(
         "--fn_edge_times", dest="fn_edge_times", type=str,

@@ -263,7 +263,7 @@ if __name__ == "__main__":
         for a given time interval.")
     parser.add_argument(
         "--fn_raw", dest="fn_raw", type=str,
-        default="data/data_short.csv",
+        default="data/trip_data_short.csv",
         help="CSV file containing the raw NY taxi data.")
     parser.add_argument(
         "--fn_graph", dest="fn_graph", type=str,
