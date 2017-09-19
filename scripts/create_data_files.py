@@ -8,6 +8,7 @@ import argparse
 import pickle
 import planar
 import scipy.spatial as spatial
+import datetime
 from collections import OrderedDict, defaultdict
 from progressbar import ProgressBar, ETA, Percentage, Bar
 
@@ -191,7 +192,7 @@ def create_times_file(stations, times, fn_times):
         pbar.finish()
 
 
-def create_demands_file(stations, fn_raw, fn_demands, kd, fl):
+def create_demands_file(stations, fn_raw, kd, fl):
     pbar = ProgressBar(
         widgets=["Creating Demands File: ", Bar(),
                  Percentage(), "|", ETA()],
@@ -210,8 +211,10 @@ def create_demands_file(stations, fn_raw, fn_demands, kd, fl):
             row = common.clean_dict(row)
             str_time = row["pickup_datetime"]
             t = time.strptime(str_time, common.date_format)
-            cdate = (t.tm_wday + 1, t.tm_yday // 7, t.tm_year)
-            if cdate != cur_date:
+            week = datetime.date(t.tm_year, t.tm_mon, t.tm_mday)\
+                .isocalendar()[1]
+            cdate = (t.tm_wday + 1, week, t.tm_year)
+            if (cdate != cur_date and counter > 0) or i + 1 == fl:
                 cur_date = cdate
                 fname = day_dem_template.format(*cur_date)
                 fout = io.open(fname, "wb")
@@ -240,7 +243,7 @@ def create_demands_file(stations, fn_raw, fn_demands, kd, fl):
 
 
 def create_data_files(fn_raw, fn_graph, fn_stations, fn_probs,
-                      fn_demands, fn_freqs):
+                      fn_freqs):
     fn_cleaned = fn_raw.split(".")[0] + "_cleaned.csv"
     taxi_count = clean_file(fn_raw, fn_cleaned)
     print "Loading graph from file..."
@@ -249,8 +252,8 @@ def create_data_files(fn_raw, fn_graph, fn_stations, fn_probs,
     print "Determining file length..."
     fl = file_length(fn_cleaned)
     create_stations_file(fn_stations, stations)
-    create_demands_file(stations, fn_cleaned, fn_demands, kd, fl)
-    create_probs_file(fn_cleaned, fn_probs, fn_freqs, stations, kd, fl)
+    create_demands_file(stations, fn_cleaned, kd, fl)
+    # create_probs_file(fn_cleaned, fn_probs, fn_freqs, stations, kd, fl)
     print "Taxi Count:", taxi_count
     print "Done :D"
 
@@ -278,14 +281,10 @@ if __name__ == "__main__":
         default="data/probs.csv",
         help="Output CSV file for listing the demand probabilities.")
     parser.add_argument(
-        "--fn_demands", dest="fn_demands", type=str,
-        default="data/demands.csv",
-        help="Output CSV file for time series demands data")
-    parser.add_argument(
         "--fn_freqs", dest="fn_freqs", type=str,
         default="data/freqs.csv",
         help="Output CSV file for frequency of requests for different time\
         intervals over multiple days")
     args = parser.parse_args()
     create_data_files(args.fn_raw, args.fn_graph, args.fn_stations,
-                      args.fn_probs, args.fn_demands, args.fn_freqs)
+                      args.fn_probs, args.fn_freqs)

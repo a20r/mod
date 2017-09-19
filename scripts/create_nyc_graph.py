@@ -18,7 +18,7 @@ def load_graph(nyc_dir, fn_edge_times, hour):
     # print "Making it a graph..."
     sts = np.loadtxt(nyc_dir + "points.csv", delimiter=",")
     edges = np.loadtxt(nyc_dir + "edges.csv", delimiter=",")
-    times = np.loadtxt(nyc_dir + fn_edge_times, delimiter=",")
+    times = np.loadtxt(fn_edge_times, delimiter=",")
     G = nx.DiGraph()
     for i in xrange(sts.shape[0]):
         G.add_node(i, lat=sts[i][1], lon=sts[i][2])
@@ -26,11 +26,11 @@ def load_graph(nyc_dir, fn_edge_times, hour):
         t = times[i][hour + 1]
         G.add_edge(edges[i][1] - 1, edges[i][2] - 1, weight=t)
     poly = planar.Polygon.from_points(common.nyc_poly)
-    for i in G.nodes():
-        data = G.node[i]
-        contains = poly.contains_point(planar.Vec2(data["lon"], data["lat"]))
-        if not contains:
-            G.remove_node(i)
+    # for i in G.nodes():
+    #     data = G.node[i]
+    #     contains = poly.contains_point(planar.Vec2(data["lon"], data["lat"]))
+    #     if not contains:
+    #         G.remove_node(i)
     # print "Finding the largest connected component subgraph"
     G_final = max(nx.strongly_connected_component_subgraphs(G), key=len)
     return G_final, np.fliplr(sts[:, 1:])
@@ -61,7 +61,10 @@ def create_paths_file(G, fn_paths, fn_times):
                 tts, paths = nx.single_source_dijkstra(G, i)
                 rows = list()
                 time_row = [-1] * len(G.nodes())
+                # print sorted(G.nodes())
                 for j in paths.keys():
+                    # print j
+                    # print len(G.nodes())
                     time_row[int(j)] = tts[int(j)]
                     rows.append([int(i), int(j)] + map(int, paths[int(j)]))
                     pbar.update(counter + 1)
@@ -80,7 +83,7 @@ def write_graph(fn_graph, fn_paths, fn_times, nyc_dir, fn_edge_times, hour):
     if not os.path.exists(dirname):
         os.makedirs(dirname)
     G, stations = load_graph(nyc_dir, fn_edge_times, hour)
-    # create_paths_file(G, fn_paths, fn_times)
+    create_paths_file(G, fn_paths, fn_times)
     G_tuple = (G, stations)
     # print "Writing graph data to file..."
     pstr = pickle.dumps(G_tuple)
