@@ -4,3 +4,6 @@ seaborn
 geopy
 planar
 networkx
+tqdm
+shapely
+sklearn

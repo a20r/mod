@@ -124,30 +124,16 @@ def extract_frequencies(fn_raw, stations, kd, fl):
     return num_pd, num_ti, num_tau, num_tau_occ, counter
 
 
-def create_stations_file(fn_stations, stations):
-    fn_javier = fn_stations.split(".")[0] + "_LUT.csv"
-    pbar = ProgressBar(
-        widgets=["Creating Stations File: ", Bar(), Percentage(), "|", ETA()],
-        maxval=stations.shape[0]).start()
-    with io.open(fn_stations, "wb") as fout:
-        with io.open(fn_javier, "wb") as javier:
-            javier_writer = csv.writer(javier, delimiter=" ")
-            javier_writer.writerow([len(stations)])
-            writer = csv.writer(fout)
-            writer.writerow(common.fn_stations_fields)
-            for i, center in enumerate(stations):
-                row = list()
-                row.append(i)
-                row.append(center[1])
-                row.append(center[0])
-                writer.writerow(row)
-                jrow = list()
-                jrow.append(center[0])
-                jrow.append(center[1])
-                jrow.append(i)
-                javier_writer.writerow(jrow)
-                pbar.update(i + 1)
-            pbar.finish()
+def create_stations_file(nodes, fn_javier_stations):
+    with io.open(fn_javier_stations, "wb") as fout:
+        javier_writer = csv.writer(fout, delimiter=" ")
+        javier_writer.writerow([len(nodes)])
+        for i, center in enumerate(nodes):
+            jrow = list()
+            jrow.append(center[0])
+            jrow.append(center[1])
+            jrow.append(i)
+            javier_writer.writerow(jrow)
 
 
 def create_probs_file(fn_raw, fn_probs, fn_freqs, stations, kd, fl):
@@ -192,7 +178,7 @@ def create_times_file(stations, times, fn_times):
         pbar.finish()
 
 
-def create_demands_file(stations, fn_raw, kd, fl):
+def create_demands_file(fn_raw, kd, fl):
     pbar = ProgressBar(
         widgets=["Creating Demands File: ", Bar(),
                  Percentage(), "|", ETA()],
@@ -242,18 +228,15 @@ def create_demands_file(stations, fn_raw, kd, fl):
         pbar.finish()
 
 
-def create_data_files(fn_raw, fn_graph, fn_stations, fn_probs,
-                      fn_freqs):
-    fn_cleaned = fn_raw.split(".")[0] + "_cleaned.csv"
+def create_data_files(fn_raw, fn_nodes, fn_cleaned, fn_javier_stations):
     taxi_count = clean_file(fn_raw, fn_cleaned)
-    print "Loading graph from file..."
-    G, stations = load_graph(fn_graph)
-    kd = spatial.KDTree(stations)
+    # G, stations = load_graph(fn_graph)
+    nodes = np.loadtxt(fn_nodes, delimiter=",")[:, 1:]
+    kd = spatial.KDTree(nodes)
     print "Determining file length..."
     fl = file_length(fn_cleaned)
-    create_stations_file(fn_stations, stations)
-    create_demands_file(stations, fn_cleaned, kd, fl)
-    create_probs_file(fn_cleaned, fn_probs, fn_freqs, stations, kd, fl)
+    create_stations_file(nodes, fn_javier_stations)
+    create_demands_file(fn_cleaned, kd, fl)
     print "Taxi Count:", taxi_count
     print "Done :D"
 
@@ -269,22 +252,17 @@ if __name__ == "__main__":
         default="data/trip_data_short.csv",
         help="CSV file containing the raw NY taxi data.")
     parser.add_argument(
-        "--fn_graph", dest="fn_graph", type=str,
-        default="data/manhattan_graph.pickle",
-        help="Input pickle file for OSM graph data")
+        "--fn_nodes", dest="fn_nodes", type=str,
+        default="data/nyc-graph/points.csv",
+        help="Should be the points used for the graph")
     parser.add_argument(
-        "--fn_stations", dest="fn_stations", type=str,
-        default="data/stations.csv",
-        help="Output CSV file for listing the stations.")
+        "--fn_cleaned", dest="fn_cleaned", type=str,
+        default="data/trip_data_short_cleaned.csv",
+        help="Output cleaned data from the raw data")
     parser.add_argument(
-        "--fn_probs", dest="fn_probs", type=str,
-        default="data/probs.csv",
-        help="Output CSV file for listing the demand probabilities.")
-    parser.add_argument(
-        "--fn_freqs", dest="fn_freqs", type=str,
-        default="data/freqs.csv",
-        help="Output CSV file for frequency of requests for different time\
-        intervals over multiple days")
+        "--fn_javier_stations", dest="fn_javier_stations", type=str,
+        default="data/stations_LUT.csv",
+        help="Output CSV file for listing the stations. This is for Javier")
     args = parser.parse_args()
-    create_data_files(args.fn_raw, args.fn_graph, args.fn_stations,
-                      args.fn_probs, args.fn_freqs)
+    create_data_files(args.fn_raw, args.fn_nodes, args.fn_cleaned,
+                      args.fn_javier_stations)
