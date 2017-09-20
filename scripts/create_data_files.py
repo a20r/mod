@@ -253,7 +253,7 @@ def create_data_files(fn_raw, fn_graph, fn_stations, fn_probs,
     fl = file_length(fn_cleaned)
     create_stations_file(fn_stations, stations)
     create_demands_file(stations, fn_cleaned, kd, fl)
-    # create_probs_file(fn_cleaned, fn_probs, fn_freqs, stations, kd, fl)
+    create_probs_file(fn_cleaned, fn_probs, fn_freqs, stations, kd, fl)
     print "Taxi Count:", taxi_count
     print "Done :D"
 
