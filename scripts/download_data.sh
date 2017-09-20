@@ -2,7 +2,6 @@
 
 set -e
 
-wget http://wallarelvo-tower.csail.mit.edu/essential.zip
-mkdir -p data
-unzip essential.zip -d data
-rm -rf essential.zip
+curl http://wallarelvo-tower.csail.mit.edu/essential.zip >> data.zip
+unzip data.zip
+rm -rf data.zip
