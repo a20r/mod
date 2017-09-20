@@ -44,5 +44,5 @@ python scripts/compute_probs.py \
     --fn_stations=$STATIONS_FILE \
     --fn_freqs=$FREQS_FILE
 
-echo id,lat,lng > $OUT_DIR/nodes.csv
-cat $NYC_DIR/points.csv >> $OUT_DIR/nodes.csv
+echo id,lat,lng > $OUT_DIR/stations.csv
+cat $NYC_DIR/points.csv >> $OUT_DIR/stations.csv

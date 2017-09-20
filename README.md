@@ -25,4 +25,4 @@ file. The command below will make a new file in `data/` called
 
 # Create data for experiments
 
-`$ scripts/create_mod_files.sh`
+`$ scripts/create_mod_files.sh [output dir for new files]`
