@@ -12,10 +12,6 @@ This will create a `data/` directory if one does not already exist. It
 downloads essential data for creating the experimental data needed to run the
 ridesharing experiments
 
-# Create data for experiments
-
-`$ scripts/create_mod_files.sh`
-
 # To create a small dataset
 
 Running the preprocessing on the entire dataset takes a long time. For
@@ -24,3 +20,7 @@ file. The command below will make a new file in `data/` called
 `trip_data_short.csv`. This file contains 10000 lines of `trip_data_5.csv`
 
 `$ head -n 10000 data/trip_data_5.csv > data/trip_data_short.csv`
+
+# Create data for experiments
+
+`$ scripts/create_mod_files.sh`
