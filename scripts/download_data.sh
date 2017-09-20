@@ -2,6 +2,7 @@
 
 set -e
 
-curl http://wallarelvo-tower.csail.mit.edu/essential.zip >> data.zip
-unzip data.zip
-rm -rf data.zip
+wget http://wallarelvo-tower.csail.mit.edu/essential.zip
+unzip essential.zip
+mv essential data
+rm -rf essential.zip
