@@ -2,7 +2,9 @@
 Machine learning and data analysis for **m**obility **o**n **d**emand
 
 # Installing dependencies
-`$ pip install -r requirements.txt`
+This assumes you have Python 2.7 and pip
+
+`$ ./install.sh`
 
 # Getting some data
 
