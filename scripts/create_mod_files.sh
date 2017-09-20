@@ -3,7 +3,7 @@
 set -e
 NYC_DIR=data/nyc-graph/
 EDGE_TIMES_FILE=data/nyc-graph/week.csv
-HOUR=0
+HOUR=avg
 GRAPH_FILE=data/manhattan_graph.pickle
 PATHS_FILE=data/paths.csv
 TIMES_FILE=data/times.csv

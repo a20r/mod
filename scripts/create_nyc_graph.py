@@ -1,7 +1,5 @@
 
-import common
 import argparse
-import planar
 import networkx as nx
 import numpy as np
 import pickle
@@ -23,15 +21,11 @@ def load_graph(nyc_dir, fn_edge_times, hour):
     for i in xrange(sts.shape[0]):
         G.add_node(i, lat=sts[i][1], lon=sts[i][2])
     for i in xrange(edges.shape[0]):
-        t = times[i][hour + 1]
+        if hour == "avg":
+            t = np.mean(times[i])
+        else:
+            t = times[i][int(hour) + 1]
         G.add_edge(edges[i][1] - 1, edges[i][2] - 1, weight=t)
-    poly = planar.Polygon.from_points(common.nyc_poly)
-    # for i in G.nodes():
-    #     data = G.node[i]
-    #     contains = poly.contains_point(planar.Vec2(data["lon"], data["lat"]))
-    #     if not contains:
-    #         G.remove_node(i)
-    # print "Finding the largest connected component subgraph"
     G_final = max(nx.strongly_connected_component_subgraphs(G), key=len)
     return G_final, np.fliplr(sts[:, 1:])
 
@@ -103,7 +97,7 @@ if __name__ == "__main__":
         default="week.csv",
         help="CSV file with the edge times per hour")
     parser.add_argument(
-        "--hour", dest="hour", type=int, default=0,
+        "--hour", dest="hour", default="avg",
         help="Hour of the day being used to generate the graph")
     parser.add_argument(
         "--fn_graph", dest="fn_graph", type=str,
