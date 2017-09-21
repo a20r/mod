@@ -1,6 +1,5 @@
-# mod
-Preprocessing data for **m**obility **o**n **d**emand [![Build Status](https://travis-ci.org/wallarelvo/mod.svg?branch=master)](https://travis-ci.org/wallarelvo/mod)
-
+# mod [![Build Status](https://travis-ci.org/wallarelvo/mod.svg?branch=master)](https://travis-ci.org/wallarelvo/mod)
+Preprocessing data for **m**obility **o**n **d**emand
 # Installing dependencies
 This assumes you have Python 2.7 and pip
 
