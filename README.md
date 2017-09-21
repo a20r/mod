@@ -1,5 +1,5 @@
 # mod
-Machine learning and data analysis for **m**obility **o**n **d**emand
+Preprocessing data for **m**obility **o**n **d**emand [![Build Status](https://travis-ci.org/wallarelvo/mod.svg?branch=master)](https://travis-ci.org/wallarelvo/mod)
 
 # Installing dependencies
 This assumes you have Python 2.7 and pip
