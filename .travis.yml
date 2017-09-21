@@ -1,0 +1,7 @@
+sudo: required
+language: bash
+dist: trusty
+install:
+    - ./install.sh
+before_script:
+    - scripts/download_data.sh

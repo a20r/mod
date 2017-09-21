@@ -95,3 +95,4 @@ include/demand_test
 
 *.dSYM
 third_party/
+figs/
