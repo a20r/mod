@@ -17,16 +17,16 @@ void test_query(mod::DemandLookup& dl)
 
 void test_sample(mod::DemandLookup& dl)
 {
-    const int num = 509;
+    const int num = 10;
     vector<mod::Demand> dems;
-    mod::Time st(0, 0), end(0, 60 * 60);
+    mod::Time st(2, 0), end(4, 60 * 60);
     bool could_sample = dl.sample(num, st, end, dems);
 
     cout << "==================== Sample Test ====================" << endl;
     if (could_sample)
     {
         cout << "Sampling " << num << " Demands" << endl;
-        for (int i = 0; i < num; i++) {
+        for (int i = 0; i < dems.size(); i++) {
             cout << "\t" << dems[i] << endl;
         }
         cout << endl;
@@ -64,8 +64,10 @@ int main() {
     srand(time(NULL));
     mod::DemandLookup dl;
     // dl.load_stations("../data/stations.csv");
-    dl.load_freqs("../data/freqs.npy");
-    dl.load_stations("../data/stations.csv");
+    dl.load_freqs("../data/out/freqs.npy");
+    dl.load_stations("../data/out/stations-mod.csv");
+    // dl.load_times("../data/out/times.csv");
+    // dl.load_nodes("../data/out/stations.csv");
     // dl.load_freqs("../data/freqs.csv");
     // mod::DemandLookup dl(
     //         "../data/stations.csv",
