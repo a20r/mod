@@ -3,9 +3,9 @@ language: bash
 dist: trusty
 install:
     - ./install.sh
-    - cd include; make; cd -;
 before_script:
     - scripts/download_data.sh
+    - cd include; make; cd -;
 script:
     - scripts/create_mod_files.sh data/out
-    - cd include; ./demand_test
+    - cd include; ./demand_test; cd -;
