@@ -37,7 +37,7 @@ n_lines = 165114362
 def calc_freqs(df):
     np.seterr(all='ignore')
     freqs = np.zeros((intervals_per_day, 7, n_stations, n_stations),
-                     dtype=np.int)
+                     dtype=np.in64)
     df = common.clean_df(df)
     for i, row in df.iterrows():
         p_dt = row["pickup_datetime"]
