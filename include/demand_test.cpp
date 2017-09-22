@@ -34,6 +34,7 @@ void test_sample(mod::DemandLookup& dl)
     else
     {
         cout << "Unable to sample due to lack of data" << endl;
+        exit(1);
     }
 }
 
