@@ -1,11 +1,13 @@
 sudo: required
 language: bash
 dist: trusty
+env:
+    - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 install:
     - ./install.sh
 before_script:
     - scripts/download_data.sh
-    - cd include; make; cd -;
+    - cd include && make && cd -;
 script:
     - scripts/create_mod_files.sh data/out
-    - cd include; ./demand_test; cd -;
+    - cd include && ./demand_test && cd -;
