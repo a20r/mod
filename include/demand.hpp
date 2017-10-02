@@ -18,6 +18,7 @@ namespace mod
 {
 
     const int interval_size = 60 * 15;
+    // template<class Type> struct S;
 
     class GeoLocation
     {
@@ -70,32 +71,7 @@ namespace mod
 
             MultiArray(cnpy::NpyArray arr) : arr(arr)
             {
-                const int K = arr.shape[0];
-                const int L = arr.shape[1];
-                const int M = arr.shape[2];
-                const int N = arr.shape[3];
-                // int(&data_ptr)[K][L][M][N];
-                // auto data_ptr = new int[K][L][M][N];
-                // int ****data_ptr;
-                // data_ptr = reinterpret_cast<int[K][L][M][N]>(arr.data<int>());
-                auto data_ptr = reinterpret_cast<long(*)[K][L][M][N]>
-                    (arr.data<long>());
-                data = arr.data<int>();
-                int total = 0;
-                for (int i = 0; i < K; i++)
-                {
-                    for (int j = 2; j <= 2; j++)
-                    {
-                        for (int k = 0; k < M ; k++)
-                        {
-                            for (int l = 0; l < N; l++)
-                            {
-                                total += (*data_ptr)[i][j][k][l];
-                            }
-                        }
-                    }
-                }
-                cout << total << endl;
+                data = arr.data<long>();
             }
 
             ~MultiArray()
@@ -135,7 +111,7 @@ namespace mod
             }
 
         private:
-            int *data;
+            long *data;
     };
 
     class Time

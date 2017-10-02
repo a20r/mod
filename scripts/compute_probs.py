@@ -37,7 +37,7 @@ n_lines = 165114362
 def calc_freqs(df):
     np.seterr(all='ignore')
     freqs = np.zeros((intervals_per_day, 7, n_stations, n_stations),
-                     dtype=np.int)
+                     dtype=np.int64)
     df = common.clean_df(df)
     for i, row in df.iterrows():
         p_dt = row["pickup_datetime"]
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     pool = Pool(n_workers, maxtasksperchild=1)
     dfs = common.load_data(args.fn_cleaned, chunksize)
     freqs = np.zeros((intervals_per_day, 7, n_stations, n_stations),
-                     dtype=np.int)
+                     dtype=np.int64)
     stuff_to_do = True
     pbar = tqdm.tqdm(desc="Computing probabilities")
     while stuff_to_do:
