@@ -15,7 +15,7 @@ from collections import defaultdict
 from tqdm import tqdm
 
 
-aux_fig_size = (1.3 * 5, 3)
+aux_fig_size = (5, 3)
 hours = ["same", "t12", "t19"]
 demands = ["half", "same", "double"]
 intervals = [10, 20, 30, 40, 50]
@@ -270,7 +270,12 @@ def get_avg_dataframe():
         try:
             df = get_metrics(v, cap, wt, p)
             for field in fields:
-                f_vals.append(np.mean(df[field]))
+                if field == "km_travelled_per_car":
+                    last_entries = df[df.time.str.contains("23:59:00")]
+                    val = np.mean(last_entries["km_travelled_per_car"])
+                    f_vals.append(val)
+                else:
+                    f_vals.append(np.mean(df[field]))
             data.loc[counter] = [p, int(v), int(wt), int(cap)] \
                 + f_vals \
                 + [df["n_shared"].sum() / df["n_pickups"].sum()]
@@ -323,7 +328,8 @@ def make_avg_plots(big_d, plot_type):
                                   "Max Waiting Time [min]", [2, 5, 7],
                                   make_wt_title, ["comp_time"])}
     iover, qstr, xcol, xlabel, xticklabels, tfunc, fs = plot_params[plot_type]
-    for field in fs:
+    # for field in fs:
+    for field in ["km_travelled_per_car", "mean_waiting_time"]:
         max_val = None
         min_val = None
         axes = list()
@@ -375,7 +381,11 @@ def make_avg_plots(big_d, plot_type):
             if min_val is None or min_val > min(d[field]):
                 min_val = min(d[field])
         for ax in axes:
-            if not "%" in prettify(field):
+            if field == "km_travelled_per_car":
+                ax.set_ylim(0, 450)
+            elif field == "mean_waiting_time":
+                ax.set_ylim(0, 350)
+            elif not "%" in prettify(field):
                 ax.set_ylim(min_val - 0.1 * max_val, 1.1 * max_val)
             else:
                 ax.set_ylim(0, 1)
@@ -485,6 +495,7 @@ def make_interval_df():
         df["n_shared_per_passenger"] = df["n_shared"].sum() \
             / df["n_pickups"].sum()
         ser = df[fields + ["n_shared_per_passenger"]].mean()
+        ser["km_travelled_per_car"] = df["km_travelled_per_car"].max()
         data = ser.values.reshape((1, 15))
         mean_df = pd.DataFrame(data=data, columns=ser.index)
         mean_df["interval"] = i
@@ -530,6 +541,7 @@ def make_demand_df():
             df["n_shared_per_passenger"] = df["n_shared"].sum() \
                 / df["n_pickups"].sum()
             ser = df[fields + ["n_shared_per_passenger"]].mean()
+            ser["km_travelled_per_car"] = df["km_travelled_per_car"].max()
             data = ser.values.reshape((1, 15))
             mean_df = pd.DataFrame(data=data, columns=ser.index)
             mean_df["demand"] = i
@@ -579,6 +591,7 @@ def make_hour_df():
         df["n_shared_per_passenger"] = df["n_shared"].sum() \
             / df["n_pickups"].sum()
         ser = df[fields + ["n_shared_per_passenger"]].mean()
+        ser["km_travelled_per_car"] = df["km_travelled_per_car"].max()
         data = ser.values.reshape((1, 15))
         mean_df = pd.DataFrame(data=data, columns=ser.index)
         mean_df["hour"] = i
@@ -630,23 +643,24 @@ if __name__ == "__main__":
     matplotlib.rc("ytick", labelsize=16)
     matplotlib.rc("legend", fontsize=12)
 
-
-
+    plt.ioff()
     df = make_hour_df()
-    comp_df = pd.read_csv("data/hour-times.csv")
+    # comp_df = pd.read_csv("data/hour-times.csv")
     make_hour_plots(df)
-    make_hour_comp_plots(comp_df)
+    # make_hour_comp_plots(comp_df)
     df = make_interval_df()
     make_interval_plots(df)
-    comp_df = pd.read_csv("data/interval-times.csv")
-    make_interval_comp_plots(comp_df)
+    # comp_df = pd.read_csv("data/interval-times.csv")
+    # make_interval_comp_plots(comp_df)
     df = make_demand_df()
     make_demand_plots(df)
-    comp_df = pd.read_csv("data/demand-times.csv")
-    make_demand_comp_plots(comp_df)
+    # comp_df = pd.read_csv("data/demand-times.csv")
+    # make_demand_comp_plots(comp_df)
 
     # plt.ioff()
     # sns.set_context("poster", font_scale=2)
+    # big_d = get_avg_dataframe()
+    # make_avg_plots(big_d, "wts")
     # parser = argparse.ArgumentParser(
     #     description=("Creates plots plots for MOD"))
     # parser.add_argument(
@@ -673,8 +687,14 @@ if __name__ == "__main__":
 
     # df = pd.read_csv("data/times.csv")
     # make_avg_plots(df, "comp_times")
-    # big_d = get_avg_dataframe()
-    # make_avg_plots(big_d, "wts")
+    matplotlib.rc("axes", labelsize=12)
+    matplotlib.rc("axes", titlesize=12)
+    matplotlib.rc("xtick", labelsize=12)
+    matplotlib.rc("ytick", labelsize=12)
+    matplotlib.rc("legend", fontsize=12)
+
+    big_d = get_avg_dataframe()
+    make_avg_plots(big_d, "wts")
     #
     # matplotlib.rc("axes", labelsize=18)
     # matplotlib.rc("axes", titlesize=13)
