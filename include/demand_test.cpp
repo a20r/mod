@@ -17,9 +17,9 @@ void test_query(mod::DemandLookup& dl)
 
 void test_sample(mod::DemandLookup& dl)
 {
-    const int num = 100;
+    const int num = 2500;
     vector<mod::Demand> dems;
-    mod::Time st(2, 0), end(4, 60 * 60);
+    mod::Time st(4, 0), end(4, 1800);
     bool could_sample = dl.sample(num, st, end, dems);
 
     cout << "==================== Sample Test ====================" << endl;
@@ -68,8 +68,18 @@ int main() {
     dl.load_freqs("../data/out/freqs.npy");
     dl.load_stations("../data/out/stations-mod.csv");
     // dl.load_times("../data/out/times.csv");
-    // dl.load_nodes("../data/out/stations.csv");
+    dl.load_nodes("../data/out/stations.csv");
     // dl.load_freqs("../data/freqs.csv");
+
+    // std::string fn_stations_mod = "../data/out/stations-mod.csv";
+    // std::string fn_freqs = "../data/out/freqs.npy";
+    // std::string fn_stations = "../data/out/stations.csv";
+    // std::string fn_times = "../data/out/paths.csv";
+    // std::string fn_paths = "../data/out/times.csv";
+
+    // dl.init(fn_stations_mod, fn_freqs, fn_times,
+    //         fn_paths, fn_stations);
+
     // mod::DemandLookup dl(
     //         "../data/stations.csv",
     //         "../data/probs.csv",
