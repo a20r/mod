@@ -36,6 +36,9 @@ void test_sample(mod::DemandLookup& dl)
         cout << "Unable to sample due to lack of data" << endl;
         exit(1);
     }
+
+    std::cout << "Sampled " << dems.size()
+                << "/" << num << std::endl;
 }
 
 void test_path_lookup(mod::DemandLookup& dl)
@@ -68,7 +71,7 @@ int main() {
     dl.load_freqs("../data/out/freqs.npy");
     dl.load_stations("../data/out/stations-mod.csv");
     // dl.load_times("../data/out/times.csv");
-    dl.load_nodes("../data/out/stations.csv");
+    // dl.load_nodes("../data/out/stations.csv");
     // dl.load_freqs("../data/freqs.csv");
 
     // std::string fn_stations_mod = "../data/out/stations-mod.csv";
